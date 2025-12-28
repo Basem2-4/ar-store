@@ -11,7 +11,7 @@ const client = new Client({
 });
 
 // قراءة البيانات من إعدادات Environment في Render
-const TOKEN = process.env.MTQ0ODE2MjI2ODYzMzEwODYwMA.GkijxC.NdE3ZLjL5pDzCrV5oV_Ju1ZiogAguhUkXOkaV4; 
+const TOKEN = process.env.TOKEN; 
 const GUILD_ID = process.env.GUILD_ID; 
 const CATEGORY_ID = process.env.CATEGORY_ID; 
 
@@ -63,4 +63,5 @@ app.listen(PORT, () => {
 });
 
 client.login(TOKEN);
+
 
