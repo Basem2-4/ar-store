@@ -8,15 +8,27 @@
     <style>
         :root { --gold: #D4AF37; --black: #0a0a0a; --card-bg: #151515; --nav-bg: #111; --discount-red: #ff4d4d; }
         
-        /* --- المؤشر الذهبي --- */
-        * { cursor: none !important; }
-        #custom-cursor {
-            position: fixed; width: 25px; height: 25px;
-            background: url('https://cdn.discordapp.com/attachments/1433835949405503591/1454458551379562527/5Thpwqo.webp?ex=69512995&is=694fd815&hm=6f2b5ffdaee87b355863d9f4281e88d9b88345de47c078cbb0ea5cce92d34341&') no-repeat center;
-            background-size: contain; pointer-events: none; z-index: 9999999;
-            transform: translate(-50%, -50%); filter: drop-shadow(0 0 8px var(--gold));
-            animation: cursor-glow 1.5s infinite alternate;
-        }
+/* --- المؤشر الذهبي المطور --- */
+* { cursor: none !important; } /* إخفاء مؤشر الماوس العادي */
+
+#custom-cursor {
+    position: fixed;
+    width: 30px; /* تكبير الحجم قليلاً لوضوح أكثر */
+    height: 30px;
+    /* تم استبدال الرابط برابط أيقونة ذهبية تعمل */
+    background: url('https://cdn-icons-png.flaticon.com/512/1041/1041267.png') no-repeat center;
+    background-size: contain;
+    pointer-events: none;
+    z-index: 9999999;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 5px #D4AF37) brightness(1.2);
+    transition: transform 0.1s ease-out; /* حركة ناعمة */
+}
+
+/* لجعل المؤشر يظهر فوق كل شيء حتى الأزرار */
+button, a, select, input {
+    cursor: none !important;
+}
         @keyframes cursor-glow { from { filter: drop-shadow(0 0 5px var(--gold)); } to { filter: drop-shadow(0 0 15px var(--gold)) brightness(1.2); } }
 
         body { background: var(--black); color: white; font-family: 'Cairo', sans-serif; margin: 0; padding-top: 80px; }
@@ -370,4 +382,5 @@
     render();
 </script>
 </body>
+
 </html>
