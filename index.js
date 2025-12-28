@@ -22,15 +22,26 @@ app.post('/open-ticket', async (req, res) => {
         const guild = await client.guilds.fetch(GUILD_ID);
         
         // إنشاء التذكرة
-        const channel = await guild.channels.create({
-            name: `طلب-${buyerId}`,
-            type: ChannelType.GuildText,
-            parent: CATEGORY_ID,
-            permissionOverwrites: [
-                { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-                { id: buyerId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
-            ],
-        });
+        // تحديث جزء إنشاء القناة في ملف index.js
+const channel = await guild.channels.create({
+    name: `طلب-${buyerId}`,
+    type: ChannelType.GuildText,
+    parent: CATEGORY_ID,
+    permissionOverwrites: [
+        { 
+            id: guild.id, 
+            deny: [PermissionFlagsBits.ViewChannel] 
+        },
+        { 
+            id: buyerId.toString().trim(), // التأكد من تنظيف الايدي
+            allow: [
+                PermissionFlagsBits.ViewChannel, 
+                PermissionFlagsBits.SendMessages, 
+                PermissionFlagsBits.ReadMessageHistory
+            ] 
+        },
+    ],
+});
 
         const embed = new EmbedBuilder()
             .setTitle('🛒 طلب شراء جديد من المتجر')
@@ -63,6 +74,7 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 client.login(TOKEN);
+
 
 
 
