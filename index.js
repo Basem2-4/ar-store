@@ -57,11 +57,12 @@ client.once('ready', () => {
     console.log(`✅ البوت جاهز ومسجل باسم: ${client.user.tag}`);
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 السيرفر يعمل على المنفذ ${PORT}`);
+const PORT = process.env.PORT || 10000; // تغيير المنفذ إلى 10000 ليتوافق مع Render
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 السيرفر يعمل على المنفذ ${PORT} وجاهز للربط الخارجي`);
 });
 
 client.login(TOKEN);
+
 
 
