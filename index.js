@@ -12,8 +12,8 @@ const client = new Client({
 
 // قراءة البيانات من إعدادات Environment في Render
 const TOKEN = process.env.MTQ0ODE2MjI2ODYzMzEwODYwMA.GkijxC.NdE3ZLjL5pDzCrV5oV_Ju1ZiogAguhUkXOkaV4; 
-const GUILD_ID = process.env.1433835382549774376; 
-const CATEGORY_ID = process.env.1433835949405503591; 
+const GUILD_ID = process.env.GUILD_ID; 
+const CATEGORY_ID = process.env.CATEGORY_ID; 
 
 app.post('/open-ticket', async (req, res) => {
     try {
@@ -63,3 +63,4 @@ app.listen(PORT, () => {
 });
 
 client.login(TOKEN);
+
