@@ -8,20 +8,20 @@
     <style>
         :root { --gold: #D4AF37; --black: #0a0a0a; --card-bg: #151515; --nav-bg: #111; --discount-red: #ff4d4d; }
         
-        /* --- المؤشر الذهبي المطور --- */
+        /* --- إصلاح المؤشر الذهبي --- */
         * { cursor: none !important; }
 
         #custom-cursor {
             position: fixed;
-            width: 30px;
-            height: 30px;
-            background: url('https://cdn.discordapp.com/attachments/1433835949405503591/1454504136627454123/7PFOzAO.webp?ex=6951fcc9&is=6950ab49&hm=06c92d1f36ec2d4867c5c01c27adb4e98709fd46be2a30838a8f7e4d7a37a5fb&') no-repeat center;
+            width: 28px;
+            height: 28px;
+            /* تم تغيير الرابط لرابط مستقر ودائم */
+            background: url('https://cur.cursors-4u.net/games/gam-13/gam1214.cur'), auto;
             background-size: contain;
             pointer-events: none;
-            z-index: 9999999;
-            transform: translate(-50%, -50%);
-            filter: drop-shadow(0 0 5px #D4AF37) brightness(1.2);
-            transition: transform 0.1s ease-out;
+            z-index: 99999999; /* زيادة الطبقة لضمان الظهور فوق كل شيء */
+            transform: translate(0, 0); /* تعديل الإزاحة لتناسب رأس السهم */
+            filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.8));
         }
 
         button, a, select, input { cursor: none !important; }
@@ -78,7 +78,6 @@
 
         .card { background: var(--card-bg); border-radius: 12px; border: 1px solid #222; overflow: hidden; position: relative; transition: 0.4s; }
         
-        /* تعديل: جعل الفلتر الرمادي لا يؤثر على أزرار الإدارة */
         .card.out-of-stock img, .card.out-of-stock .price, .card.out-of-stock h3 { filter: grayscale(1); opacity: 0.6; }
         
         .card img { width: 100%; height: 140px; object-fit: cover; } 
@@ -204,6 +203,7 @@
     let currentView = 'home';
     let currentIndex = null;
 
+    // إصلاح حركة المؤشر
     const cursor = document.getElementById('custom-cursor');
     document.addEventListener('mousemove', (e) => { 
         cursor.style.left = e.clientX + 'px'; 
@@ -371,7 +371,7 @@
     function closeModal() { document.getElementById('orderModal').style.display = 'none'; }
     
     function goToPayment() { 
-        if(!document.getElementById('orderDiscord').value) return alert("يرجى كتابة الايدي");
+        if(!document.getElementById('orderDiscord').value) return alert("يرجى كتابة الكوبي يوزر حق دسك/المستلم");
         document.getElementById('modalMain').style.display = 'none'; 
         document.getElementById('paymentScreen').style.display = 'flex'; 
     }
@@ -388,7 +388,7 @@
 
         const btn = document.getElementById('finalBtn');
         btn.disabled = true;
-        btn.innerText = "جاري فتح تذكرة...";
+        btn.innerText = "جاري فتح تذكرة يرجى الانتظار...";
 
         try {
             const response = await fetch(BOT_URL, {
