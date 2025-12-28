@@ -207,8 +207,8 @@ button, a, select, input {
 <script>
     // --- الربط الديناميكي الجديد ---
     const SERVER_IP = window.location.hostname || "localhost";
-    const BOT_URL = `http://${SERVER_IP}:3000/open-ticket`;
-
+const BOT_URL = "https://your-bot-name.onrender.com/open-ticket";
+    
     const rates = { "SR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.082 };
     let currentCurr = "SR";
     let products = JSON.parse(localStorage.getItem('ar_store_v12')) || [];
@@ -384,3 +384,4 @@ button, a, select, input {
 </body>
 
 </html>
+
