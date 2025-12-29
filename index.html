@@ -342,42 +342,45 @@
         document.getElementById('paymentScreen').style.display = 'flex';
     }
 
-    async function finishOrder() {
-        const btn = document.getElementById('finalBtn');
-        btn.disabled = true;
-        btn.innerText = "جاري فتح التذكرة...";
+async function finishOrder() {
+    const btn = document.getElementById('finalBtn');
+    btn.disabled = true;
+    btn.innerText = "جاري الاتصال...";
 
-        const p = products[currentIndex];
-        const qty = document.getElementById('orderQty').value;
-        const disc = document.getElementById('orderDiscord').value;
-        const usage = document.getElementById('usageType').value;
+    const p = products[currentIndex];
+    const qty = document.getElementById('orderQty').value;
+    const disc = document.getElementById('orderDiscord').value;
+    const usage = document.getElementById('usageType').value;
 
-        try {
-            const response = await fetch(BOT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    productName: p.name,
-                    buyerId: disc,
-                    qty: qty,
-                    total: finalOrderPrice,
-                    currency: "SR",
-                    usage: usage
-                })
-            });
+    try {
+        // تأكد أن BOT_URL المعرف فوق هو بالضبط: "https://ar-store-i6tw.onrender.com/open-ticket"
+        const response = await fetch("https://ar-store-i6tw.onrender.com/open-ticket", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                productName: p.name,
+                buyerId: disc.trim(),
+                qty: qty,
+                total: finalOrderPrice,
+                usage: usage
+            })
+        });
 
-            const result = await response.json();
-            if (result.success) {
-                p.stock -= qty;
-                p.sales = (p.sales || 0) + parseInt(qty);
-                saveAll();
-                alert("تم فتح تذكرة بنجاح!");
-                location.reload();
-            } else {
-                alert("خطأ: " + result.error);
-                btn.disabled = false;
-                btn.innerText = "فتح تذكرة الآن ✅";
-            }
+        const result = await response.json();
+        if (result.success) {
+            alert("✅ تم فتح التذكرة بنجاح! توجه للديسكورد.");
+            location.reload();
+        } else {
+            alert("❌ خطأ من البوت: " + result.error);
+            btn.disabled = false;
+        }
+    } catch (err) {
+        console.error(err);
+        alert("❌ فشل الاتصال بالبوت. تأكد أن البوت يعمل في موقع Render");
+        btn.disabled = false;
+        btn.innerText = "فتح تذكرة الآن ✅";
+    }
+}
         } catch (err) {
             alert("فشل الاتصال بالبوت");
             btn.disabled = false;
@@ -470,3 +473,4 @@
 </script>
 </body>
 </html>
+
