@@ -80,6 +80,8 @@ client.on('interactionCreate', async (i) => {
     }
 });
 
-client.once('ready', () => console.log(`✅ ${client.user.tag} جاهز!`));
-app.listen(process.env.PORT || 10000, '0.0.0.0');
+app.listen(process.env.PORT || 10000, '0.0.0.0', () => {
+    console.log(`🚀 السيرفر يعمل على المنفذ ${process.env.PORT || 10000}`);
+});
 client.login(TOKEN);
+
