@@ -100,25 +100,60 @@
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); width: 90%; max-width: 400px; text-align: center; }
         .qr-img { background: white; padding: 10px; border-radius: 10px; width: 180px; height: 180px; margin: 20px auto; display: block; }
 
-        /* تعديلات شاشة الدفع الجديدة */
+      /* تحسين شاشة الدفع لتطابق الصورة */
+        #paymentScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
         .payment-title { 
             color: var(--gold); 
             font-weight: 900; 
-            font-size: 1.8rem; 
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-            animation: glow 2s infinite alternate;
-        }
-        .payment-note {
-            color: var(--discount-red);
-            font-size: 0.95rem;
-            font-weight: 600;
-            margin: 10px 0;
-            display: block;
+            font-size: 1.6rem; 
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
         }
 
-        @keyframes glow {
-            from { text-shadow: 0 0 5px rgba(212, 175, 55, 0.3); }
-            to { text-shadow: 0 0 15px rgba(212, 175, 55, 0.8); }
+        .qr-container {
+            background: white;
+            padding: 12px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .qr-img { 
+            width: 180px; 
+            height: 180px; 
+            display: block;
+            border: none;
+        }
+
+        .payment-note {
+            color: #ff4d4d;
+            font-size: 0.9rem;
+            font-weight: 600;
+            line-height: 1.6;
+            max-width: 250px;
+            margin: 10px 0;
+        }
+
+        .payment-footer-btn {
+            width: 100%;
+            background: #20b2aa; /* اللون السماوي في الصورة */
+            color: black;
+            border: 2px solid #fff;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -433,3 +468,4 @@
 </script>
 </body>
 </html>
+
