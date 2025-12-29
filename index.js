@@ -15,34 +15,43 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// إضافة مسار رئيسي لمنع توقف الخدمة في Render (Health Check)
+app.get('/', (req, res) => {
+    res.send('Bot is running and healthy! 🚀');
+});
+
 // تشغيل البوت مع الصلاحيات المطلوبة
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildMembers, // ضروري لرؤية الأعضاء
+        GatewayIntentBits.GuildMembers, 
         GatewayIntentBits.MessageContent
     ]
 });
 
-// الإعدادات - تأكد من وضع القيم في Render Environment Variables أو استبدلها هنا
+// الإعدادات من متغيرات البيئة
 const TOKEN = process.env.TOKEN; 
 const GUILD_ID = process.env.GUILD_ID; 
 const CATEGORY_ID = process.env.CATEGORY_ID; 
-const LOG_CHANNEL_ID = "1433835949405503591"; // ايدي قناة اللوق (سجل التذاكر)
-const ADMIN_ROLE_ID = "1433835499918983218"; // ايدي رتبة الإدارة لعمل منشن
+const LOG_CHANNEL_ID = "1433835949405503591"; 
+const ADMIN_ROLE_ID = "1433835499918983218"; 
 
 app.post('/open-ticket', async (req, res) => {
     try {
         const { productName, buyerId, qty, total, usage } = req.body;
+        
+        // جلب السيرفر مباشرة
         const guild = await client.guilds.fetch(GUILD_ID);
         
-        // محاولة جلب العضو للتأكد من وجوده في السيرفر
+        // جلب العضو باستخدام fetch لضمان عدم حدوث خطأ "not a cached user"
         let member;
         try {
-            member = await guild.members.fetch(buyerId.toString().trim());
+            const cleanBuyerId = buyerId.toString().trim();
+            member = await guild.members.fetch(cleanBuyerId);
         } catch (e) {
-            return res.status(400).json({ success: false, error: "العضو غير موجود في السيرفر" });
+            console.error("خطأ في جلب العضو:", e.message);
+            return res.status(400).json({ success: false, error: "العضو غير موجود في السيرفر أو الايدي خاطئ" });
         }
 
         // 1. إنشاء قناة التذكرة الجديدة
@@ -85,7 +94,7 @@ app.post('/open-ticket', async (req, res) => {
         // 3. رسالة التذكرة (Embed)
         const ticketEmbed = new EmbedBuilder()
             .setTitle('🛒 تفاصيل طلب الشراء')
-            .setColor('#D4AF37') // لون ذهبي
+            .setColor('#D4AF37') 
             .setThumbnail(member.user.displayAvatarURL())
             .addFields(
                 { name: '👤 المشتري', value: `<@${member.id}>`, inline: true },
@@ -97,7 +106,7 @@ app.post('/open-ticket', async (req, res) => {
             .setFooter({ text: 'متجر AR - نظام التذاكر الآلي' })
             .setTimestamp();
 
-        // إرسال الرسالة في القناة مع منشن الإدارة
+        // إرسال الرسالة في القناة
         await channel.send({ 
             content: `تنبيه الإدارة: <@&${ADMIN_ROLE_ID}> | طلب جديد من <@${member.id}>`, 
             embeds: [ticketEmbed], 
@@ -109,7 +118,7 @@ app.post('/open-ticket', async (req, res) => {
             const logChannel = await guild.channels.fetch(LOG_CHANNEL_ID);
             const logEmbed = new EmbedBuilder()
                 .setTitle('📥 سجل إنشاء تذكرة')
-                .setColor('#2ecc71') // أخضر
+                .setColor('#2ecc71') 
                 .setDescription(`تم فتح تذكرة جديدة بواسطة <@${member.id}>`)
                 .addFields(
                     { name: 'اسم القناة', value: `#${channel.name}` },
@@ -135,12 +144,8 @@ client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return;
 
     if (interaction.customId === 'close_ticket') {
-        // إرسال رسالة تأكيد قبل الحذف
         await interaction.reply({ content: '⚠️ سيتم إغلاق التذكرة وحذف القناة بعد 5 ثوانٍ...' });
         
-        // إرسال لوق الإغلاق (اختياري)
-        console.log(`قناة ${interaction.channel.name} تم إغلاقها بواسطة ${interaction.user.tag}`);
-
         setTimeout(async () => {
             try {
                 await interaction.channel.delete();
