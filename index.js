@@ -1,31 +1,16 @@
 const { 
-    Client, 
-    GatewayIntentBits, 
-    EmbedBuilder, 
-    ChannelType, 
-    PermissionFlagsBits, 
-    ButtonBuilder, 
-    ButtonStyle, 
-    ActionRowBuilder 
+    Client, GatewayIntentBits, EmbedBuilder, ChannelType, 
+    PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder 
 } = require('discord.js');
 const express = require('express');
 const cors = require('cors');
 
 const app = express();
-
-// تصحيح: تفعيل CORS بشكل يسمح للمتصفح بإرسال الطلبات بدون قيود
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type']
-}));
-
+app.use(cors()); // السماح بالاتصال من أي موقع
 app.use(express.json());
 
-// مسار رئيسي لـ Render (Health Check)
-app.get('/', (req, res) => {
-    res.status(200).send('Bot is running and healthy! 🚀');
-});
+// مسار فحص الحالة لضمان بقاء السيرفر حياً في Render
+app.get('/', (req, res) => res.send('Server is Online 🚀'));
 
 const client = new Client({
     intents: [
@@ -45,16 +30,13 @@ const ADMIN_ROLE_ID = "1433835499918983218";
 app.post('/open-ticket', async (req, res) => {
     try {
         const { productName, buyerId, qty, total, usage } = req.body;
-        
         const guild = await client.guilds.fetch(GUILD_ID);
         
         let member;
         try {
-            const cleanBuyerId = buyerId.toString().trim();
-            member = await guild.members.fetch(cleanBuyerId);
+            member = await guild.members.fetch(buyerId.toString().trim());
         } catch (e) {
-            console.error("خطأ في جلب العضو:", e.message);
-            return res.status(400).json({ success: false, error: "العضو غير موجود في السيرفر أو الايدي خاطئ" });
+            return res.status(400).json({ success: false, error: "الايدي غير صحيح أو الشخص غير موجود بالسيرفر" });
         }
 
         const channel = await guild.channels.create({
@@ -63,98 +45,41 @@ app.post('/open-ticket', async (req, res) => {
             parent: CATEGORY_ID,
             permissionOverwrites: [
                 { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-                { 
-                    id: member.id, 
-                    allow: [
-                        PermissionFlagsBits.ViewChannel, 
-                        PermissionFlagsBits.SendMessages, 
-                        PermissionFlagsBits.ReadMessageHistory
-                    ] 
-                },
-                { 
-                    id: ADMIN_ROLE_ID, 
-                    allow: [
-                        PermissionFlagsBits.ViewChannel, 
-                        PermissionFlagsBits.SendMessages
-                    ] 
-                }
+                { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
+                { id: ADMIN_ROLE_ID, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
             ],
         });
 
-        const closeBtn = new ButtonBuilder()
-            .setCustomId('close_ticket')
-            .setLabel('إغلاق التذكرة')
-            .setStyle(ButtonStyle.Danger)
-            .setEmoji('🔒');
-
-        const row = new ActionRowBuilder().addComponents(closeBtn);
-
         const ticketEmbed = new EmbedBuilder()
-            .setTitle('🛒 تفاصيل طلب الشراء')
-            .setColor('#D4AF37') 
-            .setThumbnail(member.user.displayAvatarURL())
+            .setTitle('🛒 طلب شراء جديد')
+            .setColor('#D4AF37')
             .addFields(
                 { name: '👤 المشتري', value: `<@${member.id}>`, inline: true },
                 { name: '📦 المنتج', value: productName, inline: true },
                 { name: '🔢 الكمية', value: qty.toString(), inline: true },
                 { name: '💰 الإجمالي', value: `${total} SR`, inline: true },
-                { name: '📝 نوع الاستخدام', value: usage || 'غير محدد', inline: true }
+                { name: '📝 الاستخدام', value: usage || 'غير محدد', inline: true }
             )
-            .setFooter({ text: 'متجر AR - نظام التذاكر الآلي' })
             .setTimestamp();
 
-        await channel.send({ 
-            content: `تنبيه الإدارة: <@&${ADMIN_ROLE_ID}> | طلب جديد من <@${member.id}>`, 
-            embeds: [ticketEmbed], 
-            components: [row] 
-        });
+        const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق').setStyle(ButtonStyle.Danger).setEmoji('🔒');
+        const row = new ActionRowBuilder().addComponents(closeBtn);
 
-        try {
-            const logChannel = await guild.channels.fetch(LOG_CHANNEL_ID);
-            const logEmbed = new EmbedBuilder()
-                .setTitle('📥 سجل إنشاء تذكرة')
-                .setColor('#2ecc71') 
-                .setDescription(`تم فتح تذكرة جديدة بواسطة <@${member.id}>`)
-                .addFields(
-                    { name: 'اسم القناة', value: `#${channel.name}` },
-                    { name: 'المنتج', value: productName }
-                )
-                .setTimestamp();
-            
-            if (logChannel) await logChannel.send({ embeds: [logEmbed] });
-        } catch (logErr) {
-            console.error("فشل إرسال اللوق:", logErr.message);
-        }
+        await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | طلب جديد من <@${member.id}>`, embeds: [ticketEmbed], components: [row] });
 
-        res.json({ success: true, url: `https://discord.com/channels/${GUILD_ID}/${channel.id}` });
-
+        res.json({ success: true });
     } catch (error) {
-        console.error("Internal Error:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isButton()) return;
-    if (interaction.customId === 'close_ticket') {
-        await interaction.reply({ content: '⚠️ سيتم إغلاق التذكرة وحذف القناة بعد 5 ثوانٍ...' });
-        setTimeout(async () => {
-            try {
-                if (interaction.channel) await interaction.channel.delete();
-            } catch (err) {
-                console.error("فشل في حذف القناة:", err);
-            }
-        }, 5000);
+client.on('interactionCreate', async (i) => {
+    if (i.isButton() && i.customId === 'close_ticket') {
+        await i.reply('⚠️ سيتم حذف القناة خلال 5 ثوانٍ...');
+        setTimeout(() => i.channel.delete().catch(() => {}), 5000);
     }
 });
 
-client.once('ready', () => {
-    console.log(`✅ ${client.user.tag} متصل وجاهز للعمل!`);
-});
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 السيرفر يعمل على المنفذ ${PORT}`);
-});
-
+client.once('ready', () => console.log(`✅ ${client.user.tag} جاهز!`));
+app.listen(process.env.PORT || 10000, '0.0.0.0');
 client.login(TOKEN);
