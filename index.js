@@ -6,8 +6,7 @@ const {
     PermissionFlagsBits, 
     ButtonBuilder, 
     ButtonStyle, 
-    ActionRowBuilder,
-    ComponentType 
+    ActionRowBuilder 
 } = require('discord.js');
 const express = require('express');
 const cors = require('cors');
@@ -29,33 +28,47 @@ const client = new Client({
 const TOKEN = process.env.TOKEN; 
 const GUILD_ID = process.env.GUILD_ID; 
 const CATEGORY_ID = process.env.CATEGORY_ID; 
-const ADMIN_ROLE_ID = "ضع_هنا_ايدي_رتبة_الادارة"; // استبدل هذا بالايدي الخاص برتبة الإدارة لمنشنهم
+const ADMIN_ROLE_ID = "1433835499918983218"; // تأكد من وضع ايدي صحيح هنا
 
 app.post('/open-ticket', async (req, res) => {
     try {
         const { productName, buyerId, qty, total, usage } = req.body;
+        
+        // 1. جلب السيرفر
         const guild = await client.guilds.fetch(GUILD_ID);
         
+        // 2. التحقق من وجود العضو (المشتري)
         let member;
         try {
             member = await guild.members.fetch(buyerId.toString().trim());
         } catch (e) {
-            return res.status(400).json({ success: false, error: "لم يتم العثور على العضو" });
+            return res.status(400).json({ success: false, error: "العضو غير موجود في السيرفر حالياً" });
         }
 
-        // إنشاء القناة
+        // 3. التحقق من رتبة الإدارة (لمنع خطأ InvalidType)
+        const adminRole = guild.roles.cache.get(ADMIN_ROLE_ID);
+        const permissionOverwrites = [
+            { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+            { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] }
+        ];
+
+        // إضافة رتبة الإدارة فقط إذا كانت موجودة فعلياً في السيرفر
+        if (adminRole) {
+            permissionOverwrites.push({
+                id: ADMIN_ROLE_ID,
+                allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+            });
+        }
+
+        // 4. إنشاء القناة
         const channel = await guild.channels.create({
             name: `طلب-${member.user.username}`,
             type: ChannelType.GuildText,
-            parent: CATEGORY_ID,
-            permissionOverwrites: [
-                { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-                { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
-                { id: ADMIN_ROLE_ID, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] } // السماح للإدارة بالرؤية
-            ],
+            parent: CATEGORY_ID || null,
+            permissionOverwrites: permissionOverwrites,
         });
 
-        // إنشاء زر الإغلاق
+        // 5. إرسال المحتوى
         const closeButton = new ButtonBuilder()
             .setCustomId('close_ticket')
             .setLabel('إغلاق التذكرة')
@@ -71,14 +84,15 @@ app.post('/open-ticket', async (req, res) => {
                 { name: 'المنتج', value: productName, inline: true },
                 { name: 'الكمية', value: qty.toString(), inline: true },
                 { name: 'الإجمالي', value: `${total} SR`, inline: true },
-                { name: 'المشتري', value: `<@${member.id}>` }
+                { name: 'المشتري', value: `<@${member.id}>` },
+                { name: 'نوع الاستخدام', value: usage || 'غير محدد' }
             )
             .setFooter({ text: 'اضغط على الزر أدناه لإغلاق التذكرة' })
             .setTimestamp();
 
-        // إرسال الرسالة مع منشن الإدارة والزر
+        const mentionContent = adminRole ? `<@&${ADMIN_ROLE_ID}>` : "@Admin";
         await channel.send({ 
-            content: `منشن الإدارة: <@&${ADMIN_ROLE_ID}> | تذكرة جديدة من <@${member.id}>`, 
+            content: `إشعار: ${mentionContent} | تذكرة جديدة من <@${member.id}>`, 
             embeds: [embed],
             components: [row]
         });
@@ -86,36 +100,30 @@ app.post('/open-ticket', async (req, res) => {
         res.json({ success: true, url: `https://discord.com/channels/${GUILD_ID}/${channel.id}` });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, error: error.message });
+        console.error("خطأ في السيرفر:", error);
+        res.status(500).json({ success: false, error: "حدث خطأ داخلي: " + error.message });
     }
 });
 
-// معالج الضغط على الأزرار
+// معالج الأزرار
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return;
-
     if (interaction.customId === 'close_ticket') {
-        // التحقق مما إذا كان الشخص الذي ضغط هو إداري أو صاحب التذكرة (اختياري)
         await interaction.reply('سيتم إغلاق التذكرة وحذف القناة خلال 5 ثوانٍ...');
-        
         setTimeout(async () => {
-            try {
-                await interaction.channel.delete();
-            } catch (err) {
-                console.error("فشل حذف القناة:", err);
-            }
+            try { await interaction.channel.delete(); } 
+            catch (err) { console.error("فشل حذف القناة:", err); }
         }, 5000);
     }
 });
 
 client.once('ready', () => {
-    console.log(`✅ ${client.user.tag} يعمل الآن`);
+    console.log(`✅ ${client.user.tag} يعمل الآن وجاهز لاستلام الطلبات`);
 });
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 السيرفر على المنفذ ${PORT}`);
+    console.log(`🚀 السيرفر يعمل على المنفذ ${PORT}`);
 });
 
 client.login(TOKEN);
