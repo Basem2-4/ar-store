@@ -99,10 +99,11 @@
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; justify-content: center; align-items: center; }
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); width: 90%; max-width: 400px; text-align: center; }
+        .qr-img { background: white; padding: 10px; border-radius: 10px; width: 180px; height: 180px; margin: 20px auto; display: block; }
 
         #paymentScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
         .payment-title { color: var(--gold); font-weight: 900; font-size: 1.6rem; margin-bottom: 5px; text-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
-        .qr-img { width: 180px; height: 180px; display: block; background: white; padding: 10px; border-radius: 10px; }
+        .qr-img { width: 180px; height: 180px; display: block; border: none; }
         .payment-note { color: #ff4d4d; font-size: 0.9rem; font-weight: 600; line-height: 1.6; max-width: 250px; margin: 10px 0; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -145,36 +146,25 @@
                 <input type="text" id="pImg" class="admin-input" placeholder="رابط الصورة">
                 <button onclick="saveProduct()" class="buy-btn">حفظ المنتج ✅</button>
             </div>
-            
             <div class="admin-box" style="border-top: 4px solid var(--discount-red);">
-                <h4>نظام الخصم المتطور 🔥</h4>
-                <label style="font-size: 12px; color: gray;">نوع التطبيق:</label>
-                <select id="discTargetType" class="admin-input" onchange="toggleDiscTarget()">
+                <h4>نظام الخصم المطور</h4>
+                <select id="discScope" class="admin-input">
                     <option value="single">منتج معين</option>
-                    <option value="category">حسب القسم</option>
-                    <option value="all">جميع المنتجات</option>
-                    <option value="code">كود خصم جديد</option>
+                    <option value="الـسيارات🚗">قسم السيارات</option>
+                    <option value="الـع_قارات🏘️">قسم العقارات</option>
+                    <option value="الـم_تاجـر🏪">قسم المتاجر</option>
+                    <option value="all">جميع المنتجات (المتجر)</option>
+                    <option value="coupon">إضافة كود خصم جديد</option>
                 </select>
-
-                <div id="singleTargetBox">
+                <div id="couponField" style="display:none;">
+                    <input type="text" id="couponCode" class="admin-input" placeholder="أدخل الكود (مثال: AR50)">
+                </div>
+                <div id="productField">
                     <select id="discProduct" class="admin-input"></select>
                 </div>
-
-                <div id="categoryTargetBox" style="display:none;">
-                    <select id="discCat" class="admin-input">
-                        <option value="الـسيارات🚗">قسم السيارات</option>
-                        <option value="الـعـقارات🏘️">قسم العقارات</option>
-                        <option value="الـمـتاجـر🏪">قسم المتاجر</option>
-                    </select>
-                </div>
-
-                <div id="codeTargetBox" style="display:none;">
-                    <input type="text" id="discCodeName" class="admin-input" placeholder="أدخل كود الخصم (مثال: AR50)">
-                </div>
-
                 <input type="number" id="discPercent" class="admin-input" placeholder="نسبة الخصم %">
                 <input type="number" id="discHours" class="admin-input" placeholder="المدة بالساعات">
-                <button onclick="applyAdvancedDiscount()" class="buy-btn" style="background: var(--discount-red); color:white;">تطبيق الخصم الآن</button>
+                <button onclick="applyAdvancedDiscount()" class="buy-btn" style="background: var(--discount-red); color:white;">تفعيل الخصم 🔥</button>
             </div>
         </div>
         <button onclick="closeAdmin()" class="buy-btn" style="background:#222; color:white; margin-top:15px;">إغلاق لوحة التحكم</button>
@@ -199,18 +189,14 @@
         </select>
         <input type="number" id="orderQty" class="admin-input" min="1" value="1">
         <input type="text" id="orderDiscord" class="admin-input" placeholder="ايدي ديسكوردك">
-        <div style="border: 1px dashed var(--gold); padding: 10px; border-radius: 10px; margin: 10px 0;">
-            <input type="text" id="appliedCoupon" class="admin-input" placeholder="كود الخصم (إن وجد)" style="margin:0; width: 70%; display: inline-block;">
-            <button onclick="checkCoupon()" style="width: 25%; padding: 10px; background: var(--gold); border: none; border-radius: 8px; font-weight: bold;">فحص</button>
-        </div>
-        <div id="couponMsg" style="font-size: 12px; margin-bottom: 10px;"></div>
-        <button onclick="goToPayment()" class="buy-btn">متابعة الدفع</button>
+        <input type="text" id="orderCoupon" class="admin-input" placeholder="كود الخصم (اختياري)">
+        <button onclick="goToPayment()" class="buy-btn">متابعة</button>
         <button onclick="closeModal()" style="background:none; border:none; color:gray; margin-top:10px;">إلغاء</button>
     </div>
     
     <div class="modal-content" id="paymentScreen" style="display:none;">
         <div class="payment-title">تأكيد الدفع</div>
-        <div id="finalPriceDisplay" style="font-weight: bold; color: white; margin-bottom: 10px;"></div>
+        <div id="paymentSummary" style="font-size: 0.9rem; margin-bottom: 10px; color: #aaa;"></div>
         <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=AR_PAY" alt="QR Code">
         <span class="payment-note">يجب التحويل عبر البركود قبل فتح تذكرة</span>
         <button onclick="finishOrder()" class="buy-btn" id="finalBtn">فتح تذكرة الآن ✅</button>
@@ -224,75 +210,31 @@
     const rates = { "SR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.082 };
     let currentCurr = "SR";
     let products = JSON.parse(localStorage.getItem('ar_store_v12')) || [];
-    let coupons = JSON.parse(localStorage.getItem('ar_coupons')) || {};
+    let coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
     let currentView = 'home';
     let currentIndex = null;
-    let activeCouponPercent = 0;
+    let finalOrderPrice = 0;
 
+    // تحريك المؤشر
     const cursor = document.getElementById('custom-cursor');
     document.addEventListener('mousemove', (e) => { 
-        cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; 
+        cursor.style.left = e.clientX + 'px'; 
+        cursor.style.top = e.clientY + 'px'; 
     });
 
-    function toggleDiscTarget() {
-        const type = document.getElementById('discTargetType').value;
-        document.getElementById('singleTargetBox').style.display = type === 'single' ? 'block' : 'none';
-        document.getElementById('categoryTargetBox').style.display = type === 'category' ? 'block' : 'none';
-        document.getElementById('codeTargetBox').style.display = type === 'code' ? 'block' : 'none';
-    }
-
-    function applyAdvancedDiscount() {
-        const type = document.getElementById('discTargetType').value;
-        const percent = parseInt(document.getElementById('discPercent').value);
-        const hours = parseFloat(document.getElementById('discHours').value);
-        const expiry = new Date().getTime() + (hours * 3600000);
-
-        if(isNaN(percent) || isNaN(hours)) return alert("يرجى إدخال قيم صحيحة");
-
-        if(type === 'single') {
-            const idx = document.getElementById('discProduct').value;
-            products[idx].discount = { percent, expiry };
-        } else if(type === 'all') {
-            products.forEach(p => p.discount = { percent, expiry });
-        } else if(type === 'category') {
-            const cat = document.getElementById('discCat').value;
-            products.forEach(p => { if(p.category === cat) p.discount = { percent, expiry }; });
-        } else if(type === 'code') {
-            const code = document.getElementById('discCodeName').value.toUpperCase();
-            if(!code) return alert("أدخل اسم الكود");
-            coupons[code] = { percent, expiry };
-            localStorage.setItem('ar_coupons', JSON.stringify(coupons));
-            alert(`تم تفعيل كود الخصم: ${code}`);
-            return;
-        }
-
-        saveAll();
-        alert("تم تطبيق الخصم بنجاح! 🔥");
-        render();
-    }
-
-    function checkCoupon() {
-        const code = document.getElementById('appliedCoupon').value.toUpperCase();
-        const msg = document.getElementById('couponMsg');
-        const now = new Date().getTime();
-
-        if(coupons[code] && coupons[code].expiry > now) {
-            activeCouponPercent = coupons[code].percent;
-            msg.innerText = `تم تطبيق خصم الكود ${activeCouponPercent}% ✅`;
-            msg.style.color = "#2ecc71";
-        } else {
-            activeCouponPercent = 0;
-            msg.innerText = "كود غير صحيح أو منتهي الصلاحية ❌";
-            msg.style.color = "#ff4d4d";
-        }
-    }
+    // تبديل الحقول في لوحة الادارة
+    document.getElementById('discScope').addEventListener('change', function() {
+        document.getElementById('productField').style.display = (this.value === 'single') ? 'block' : 'none';
+        document.getElementById('couponField').style.display = (this.value === 'coupon') ? 'block' : 'none';
+    });
 
     function getRemainingTime(expiry) {
         const diff = expiry - new Date().getTime();
         if (diff <= 0) return null;
         const h = Math.floor(diff / 3600000);
         const m = Math.floor((diff % 3600000) / 60000);
-        return `${h}h:${m}m`;
+        const s = Math.floor((diff % 60000) / 1000);
+        return `${h}h:${m}m:${s}s`;
     }
 
     function render() {
@@ -307,7 +249,224 @@
         products.forEach((p, i) => {
             let price = p.price;
             let hasDisc = (p.discount && p.discount.expiry > now);
+            let timeText = hasDisc ? getRemainingTime(p.discount.expiry) : null;
             if (hasDisc) price = p.price - (p.price * (p.discount.percent / 100));
 
             const convPrice = (price * rates[currentCurr]).toFixed(2);
-            const convOld = (p.price * rates[currentCurr
+            const convOld = (p.price * rates[currentCurr]).toFixed(2);
+            const isOut = p.stock <= 0;
+
+            const cardHtml = `
+                <div class="card ${isOut ? 'out-of-stock' : ''}">
+                    ${hasDisc ? `<div class="discount-badge">خصم ${p.discount.percent}%</div>` : ''}
+                    <img src="${p.img || 'https://via.placeholder.com/160'}">
+                    <div class="card-content">
+                        <h3>${p.name}</h3>
+                        <div>
+                            ${hasDisc ? `<span class="old-price">${convOld} ${currentCurr}</span>` : ''}
+                            <span class="price">${convPrice} ${currentCurr}</span>
+                        </div>
+                        <p style="font-size:10px; color:gray; margin: 5px 0;">المخزون: ${p.stock}</p>
+                        ${hasDisc && timeText ? `<div class="timer-display" id="timer-${i}">${timeText}</div>` : ''}
+                        <button class="buy-btn" onclick="openOrder(${i})">${isOut ? 'نفذت الكمية' : 'اطلب الآن'}</button>
+                        ${isAdminOpen ? `
+                            <div style="display:flex; gap:5px; margin-top:10px;">
+                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; cursor:pointer !important; font-weight:bold; pointer-events: auto;">تعديل</button>
+                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; cursor:pointer !important; font-weight:bold; pointer-events: auto;">حذف</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>`;
+
+            if (currentView === 'home' && (p.sales > 0 || hasDisc)) bestGrid.innerHTML += cardHtml;
+            if (p.category === currentView) catGrid.innerHTML += cardHtml;
+        });
+    }
+
+    function applyAdvancedDiscount() {
+        const scope = document.getElementById('discScope').value;
+        const percent = parseInt(document.getElementById('discPercent').value);
+        const hours = parseFloat(document.getElementById('discHours').value);
+        const now = new Date().getTime();
+        const expiry = now + (hours * 3600000);
+
+        if(isNaN(percent) || isNaN(hours)) return alert("يرجى إكمال البيانات");
+
+        if(scope === 'coupon') {
+            const code = document.getElementById('couponCode').value;
+            if(!code) return alert("أدخل كود الخصم");
+            coupons.push({ code, percent, expiry });
+            localStorage.setItem('ar_coupons_v12', JSON.stringify(coupons));
+            alert("تمت إضافة كود الخصم بنجاح!");
+        } else {
+            products.forEach((p, i) => {
+                if(scope === 'all' || p.category === scope || (scope === 'single' && i == document.getElementById('discProduct').value)) {
+                    p.discount = { percent, expiry };
+                }
+            });
+            saveAll();
+            alert("تم تفعيل الخصم!");
+        }
+        render();
+    }
+
+    function goToPayment() {
+        const qty = parseInt(document.getElementById('orderQty').value);
+        const discord = document.getElementById('orderDiscord').value;
+        const couponInput = document.getElementById('orderCoupon').value.trim();
+        const now = new Date().getTime();
+
+        if(!discord) return alert("يرجى كتابة ايدي ديسكوردك");
+
+        let p = products[currentIndex];
+        let pricePerUnit = p.price;
+
+        // تطبيق خصم المنتج الأساسي
+        if(p.discount && p.discount.expiry > now) {
+            pricePerUnit = p.price - (p.price * (p.discount.percent / 100));
+        }
+
+        // تطبيق كود الخصم إذا وجد
+        const coupon = coupons.find(c => c.code === couponInput && c.expiry > now);
+        if(coupon) {
+            pricePerUnit = pricePerUnit - (pricePerUnit * (coupon.percent / 100));
+            alert(`تم تطبيق كود الخصم بنجاح! نسبة الخصم: ${coupon.percent}%`);
+        } else if(couponInput !== "") {
+            alert("كود الخصم غير صحيح أو منتهي");
+        }
+
+        finalOrderPrice = (pricePerUnit * qty).toFixed(2);
+        document.getElementById('paymentSummary').innerText = `إجمالي المبلغ: ${finalOrderPrice} SR لعدد ${qty} من ${p.name}`;
+        
+        document.getElementById('modalMain').style.display = 'none';
+        document.getElementById('paymentScreen').style.display = 'flex';
+    }
+
+    async function finishOrder() {
+        const btn = document.getElementById('finalBtn');
+        btn.disabled = true;
+        btn.innerText = "جاري فتح التذكرة...";
+
+        const p = products[currentIndex];
+        const qty = document.getElementById('orderQty').value;
+        const disc = document.getElementById('orderDiscord').value;
+        const usage = document.getElementById('usageType').value;
+
+        try {
+            const response = await fetch(BOT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productName: p.name,
+                    buyerId: disc,
+                    qty: qty,
+                    total: finalOrderPrice,
+                    currency: "SR",
+                    usage: usage
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                p.stock -= qty;
+                p.sales = (p.sales || 0) + parseInt(qty);
+                saveAll();
+                alert("تم فتح تذكرة بنجاح!");
+                location.reload();
+            } else {
+                alert("خطأ: " + result.error);
+                btn.disabled = false;
+                btn.innerText = "فتح تذكرة الآن ✅";
+            }
+        } catch (err) {
+            alert("فشل الاتصال بالبوت");
+            btn.disabled = false;
+        }
+    }
+
+    function updateTimers() {
+        const now = new Date().getTime();
+        products.forEach((p, i) => {
+            const timerEl = document.getElementById(`timer-${i}`);
+            if (timerEl && p.discount && p.discount.expiry > now) {
+                timerEl.innerText = getRemainingTime(p.discount.expiry);
+            } else if (timerEl && p.discount && p.discount.expiry <= now) {
+                render();
+            }
+        });
+    }
+
+    function saveProduct() {
+        const idx = document.getElementById('editIndex').value;
+        const name = document.getElementById('pName').value;
+        const price = parseFloat(document.getElementById('pPrice').value);
+        const category = document.getElementById('pCategory').value;
+        const stock = parseInt(document.getElementById('pStock').value);
+        const img = document.getElementById('pImg').value;
+
+        if (!name || isNaN(price)) return alert("أكمل البيانات");
+
+        const p = {
+            name: name,
+            price: price,
+            category: category,
+            stock: stock,
+            img: img,
+            sales: (idx !== "" && products[idx]) ? (products[idx].sales || 0) : 0,
+            discount: (idx !== "" && products[idx]) ? products[idx].discount : null
+        };
+
+        if(idx === "") products.push(p);
+        else { products[idx] = p; document.getElementById('editIndex').value = ""; }
+        
+        saveAll();
+        render();
+        document.getElementById('pName').value = ""; document.getElementById('pPrice').value = "";
+        document.getElementById('pStock').value = ""; document.getElementById('pImg').value = "";
+    }
+
+    function deleteP(i) {
+        if(confirm("حذف المنتج؟")) { products.splice(i, 1); saveAll(); render(); }
+    }
+    
+    function editP(i) {
+        const p = products[i];
+        document.getElementById('pName').value = p.name;
+        document.getElementById('pPrice').value = p.price;
+        document.getElementById('pCategory').value = p.category;
+        document.getElementById('pStock').value = p.stock;
+        document.getElementById('pImg').value = p.img;
+        document.getElementById('editIndex').value = i;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function saveAll() { localStorage.setItem('ar_store_v12', JSON.stringify(products)); }
+    function openAdmin() { if(prompt("الباسورد:") === "admin123") { document.getElementById('adminSection').style.display = 'block'; render(); } }
+    function closeAdmin() { document.getElementById('adminSection').style.display = 'none'; render(); }
+    function updateCurrency() { currentCurr = document.getElementById('currSelect').value; render(); }
+
+    function showSection(s) {
+        currentView = s;
+        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+        document.getElementById('homeSection').style.display = (s === 'home') ? 'block' : 'none';
+        document.getElementById('categorySection').style.display = (s === 'home') ? 'none' : 'block';
+        if(s === 'home') document.getElementById('nav-home').classList.add('active');
+        else document.getElementById('categoryTitle').innerHTML = `قسم ${s}`;
+        render();
+    }
+
+    function openOrder(i) {
+        currentIndex = i;
+        document.getElementById('modalTitle').innerText = products[i].name;
+        document.getElementById('modalMain').style.display = 'block';
+        document.getElementById('paymentScreen').style.display = 'none';
+        document.getElementById('orderModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('orderModal').style.display = 'none'; }
+
+    setInterval(updateTimers, 1000);
+    render();
+</script>
+</body>
+</html>
