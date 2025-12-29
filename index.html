@@ -16,6 +16,8 @@
 
         /* --- المؤشر الذهبي المطور --- */
         * { cursor: none !important; }
+        /* السماح بالتفاعل مع العناصر القابلة للنقر */
+        button, a, select, input { cursor: none !important; pointer-events: auto !important; }
 
         #custom-cursor {
             position: fixed;
@@ -32,7 +34,6 @@
 
         body { background: var(--black); color: white; font-family: 'Cairo', sans-serif; margin: 0; padding-top: 80px; overflow-x: hidden; }
 
-        /* --- العناوين --- */
         h2 {
             color: var(--gold);
             font-weight: 900;
@@ -51,7 +52,6 @@
 
         .section-header { width: 100%; display: block; overflow: hidden; margin-bottom: 20px; padding: 0 20px; }
 
-        /* --- الهيدر --- */
         nav { 
             position: fixed; top: 0; width: 100%; background: var(--nav-bg); 
             border-bottom: 2px solid var(--gold); display: flex; justify-content: center; 
@@ -69,7 +69,6 @@
 
         #currSelect { background: none; color: #fff; border: none; font-family: 'Cairo'; font-weight: 700; outline: none; }
 
-        /* --- الشبكة والبطاقات --- */
         .container { max-width: 1100px; margin: auto; padding: 10px; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; clear: both; }
 
@@ -90,16 +89,14 @@
         .price { color: #fff; font-size: 1.1rem; font-weight: 700; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
         .old-price { text-decoration: line-through; color: #777; font-size: 0.8rem; margin-left: 8px; }
 
-        .buy-btn { background: var(--gold); color: #000; border: none; padding: 10px; width: 100%; font-weight: 800; border-radius: 8px; margin-top: 10px; transition: 0.3s; font-size: 0.9rem; }
+        .buy-btn { background: var(--gold); color: #000; border: none; padding: 10px; width: 100%; font-weight: 800; border-radius: 8px; margin-top: 10px; transition: 0.3s; font-size: 0.9rem; pointer-events: auto; }
         .buy-btn:hover { background: #fff; }
 
-        /* --- لوحة التحكم --- */
         #adminSection { display: none; margin-bottom: 30px; animation: fadeIn 0.5s; padding: 0 20px; }
         .admin-flex { display: flex; gap: 20px; flex-wrap: wrap; }
         .admin-box { flex: 1; min-width: 250px; background: #111; padding: 20px; border: 1px solid #333; border-radius: 15px; }
         .admin-input { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; font-family: 'Cairo'; box-sizing: border-box; }
 
-        /* --- المودال --- */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; justify-content: center; align-items: center; }
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); width: 90%; max-width: 400px; text-align: center; }
         .qr-img { background: white; padding: 10px; border-radius: 10px; width: 180px; height: 180px; margin: 20px 0; }
@@ -244,8 +241,8 @@
                         <button class="buy-btn" onclick="openOrder(${i})">${isOut ? 'نفذت الكمية' : 'اطلب الآن'}</button>
                         ${isAdminOpen ? `
                             <div style="display:flex; gap:5px; margin-top:10px;">
-                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:5px; border-radius:5px; cursor:pointer !important;">تعديل</button>
-                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:5px; border-radius:5px; cursor:pointer !important;">حذف</button>
+                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; cursor:pointer !important; font-weight:bold; pointer-events: auto;">تعديل</button>
+                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; cursor:pointer !important; font-weight:bold; pointer-events: auto;">حذف</button>
                             </div>
                         ` : ''}
                     </div>
@@ -256,13 +253,14 @@
         });
     }
 
-    // تحديث الوقت فقط بدون إعادة رسم البطاقات لتجنب تعطيل الأزرار
     function updateTimers() {
         const now = new Date().getTime();
         products.forEach((p, i) => {
             const timerEl = document.getElementById(`timer-${i}`);
             if (timerEl && p.discount && p.discount.expiry > now) {
                 timerEl.innerText = getRemainingTime(p.discount.expiry);
+            } else if (timerEl && p.discount && p.discount.expiry <= now) {
+                render(); // إعادة الرندر في حال انتهى الخصم لإزالة Badge الخصم
             }
         });
     }
@@ -316,32 +314,50 @@
 
     function saveProduct() {
         const idx = document.getElementById('editIndex').value;
+        const name = document.getElementById('pName').value;
+        const price = parseFloat(document.getElementById('pPrice').value);
+        const category = document.getElementById('pCategory').value;
+        const stock = parseInt(document.getElementById('pStock').value);
+        const img = document.getElementById('pImg').value;
+
+        if (!name || isNaN(price)) return alert("يرجى إكمال البيانات الأساسية");
+
         const p = {
-            name: document.getElementById('pName').value,
-            price: parseFloat(document.getElementById('pPrice').value),
-            category: document.getElementById('pCategory').value,
-            stock: parseInt(document.getElementById('pStock').value),
-            img: document.getElementById('pImg').value,
+            name: name,
+            price: price,
+            category: category,
+            stock: stock,
+            img: img,
             sales: (idx !== "" && products[idx]) ? (products[idx].sales || 0) : 0,
             discount: (idx !== "" && products[idx]) ? products[idx].discount : null
         };
-        if (!p.name || isNaN(p.price)) return alert("أكمل البيانات");
-        if(idx === "") products.push(p); else products[idx] = p;
+
+        if(idx === "") {
+            products.push(p);
+        } else {
+            products[idx] = p;
+            document.getElementById('editIndex').value = ""; // تصفير الاندكس بعد التعديل
+        }
+        
         saveAll();
-        document.getElementById('editIndex').value = ""; // تصفير الاندكس بعد الحفظ
-        alert("تم حفظ المنتج بنجاح!");
+        alert("تم الحفظ بنجاح!");
         render();
+        // مسح الحقول بعد الحفظ
+        document.getElementById('pName').value = "";
+        document.getElementById('pPrice').value = "";
+        document.getElementById('pStock').value = "";
+        document.getElementById('pImg').value = "";
     }
 
-    function deleteP(i) { 
-        if(confirm("هل أنت متأكد من الحذف؟")) { 
-            products.splice(i, 1); 
-            saveAll(); 
-            render(); 
-        } 
+    function deleteP(i) {
+        if(confirm("هل أنت متأكد من حذف هذا المنتج نهائياً؟")) {
+            products.splice(i, 1);
+            saveAll();
+            render();
+        }
     }
     
-    function editP(i) { 
+    function editP(i) {
         const p = products[i];
         document.getElementById('pName').value = p.name;
         document.getElementById('pPrice').value = p.price;
@@ -356,7 +372,7 @@
         const idx = document.getElementById('discProduct').value;
         const percent = parseInt(document.getElementById('discPercent').value);
         const hours = parseFloat(document.getElementById('discHours').value);
-        if(isNaN(percent) || isNaN(hours)) return alert("ضع قيم صحيحة");
+        if(isNaN(percent) || isNaN(hours)) return alert("يرجى كتابة أرقام صحيحة");
         
         products[idx].discount = { 
             percent: percent, 
@@ -368,9 +384,23 @@
     }
 
     function saveAll() { localStorage.setItem('ar_store_v12', JSON.stringify(products)); }
-    function openAdmin() { if(prompt("الباسورد:") === "admin123") { document.getElementById('adminSection').style.display = 'block'; render(); } }
-    function closeAdmin() { document.getElementById('adminSection').style.display = 'none'; render(); }
-    function updateCurrency() { currentCurr = document.getElementById('currSelect').value; render(); }
+    
+    function openAdmin() { 
+        if(prompt("الباسورد:") === "admin123") { 
+            document.getElementById('adminSection').style.display = 'block'; 
+            render(); 
+        } 
+    }
+    
+    function closeAdmin() { 
+        document.getElementById('adminSection').style.display = 'none'; 
+        render(); 
+    }
+    
+    function updateCurrency() { 
+        currentCurr = document.getElementById('currSelect').value; 
+        render(); 
+    }
 
     function showSection(s) {
         currentView = s;
@@ -398,7 +428,6 @@
         document.getElementById('paymentScreen').style.display = 'flex';
     }
 
-    // بدلاً من رندر كامل كل ثانية، نحدث التايمر فقط
     setInterval(updateTimers, 1000);
     render();
 </script>
