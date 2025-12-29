@@ -12,15 +12,21 @@ const express = require('express');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+
+// تصحيح: تفعيل CORS بشكل يسمح للمتصفح بإرسال الطلبات بدون قيود
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
-// إضافة مسار رئيسي لمنع توقف الخدمة في Render (Health Check)
+// مسار رئيسي لـ Render (Health Check)
 app.get('/', (req, res) => {
-    res.send('Bot is running and healthy! 🚀');
+    res.status(200).send('Bot is running and healthy! 🚀');
 });
 
-// تشغيل البوت مع الصلاحيات المطلوبة
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -30,7 +36,6 @@ const client = new Client({
     ]
 });
 
-// الإعدادات من متغيرات البيئة
 const TOKEN = process.env.TOKEN; 
 const GUILD_ID = process.env.GUILD_ID; 
 const CATEGORY_ID = process.env.CATEGORY_ID; 
@@ -41,10 +46,8 @@ app.post('/open-ticket', async (req, res) => {
     try {
         const { productName, buyerId, qty, total, usage } = req.body;
         
-        // جلب السيرفر مباشرة
         const guild = await client.guilds.fetch(GUILD_ID);
         
-        // جلب العضو باستخدام fetch لضمان عدم حدوث خطأ "not a cached user"
         let member;
         try {
             const cleanBuyerId = buyerId.toString().trim();
@@ -54,16 +57,12 @@ app.post('/open-ticket', async (req, res) => {
             return res.status(400).json({ success: false, error: "العضو غير موجود في السيرفر أو الايدي خاطئ" });
         }
 
-        // 1. إنشاء قناة التذكرة الجديدة
         const channel = await guild.channels.create({
             name: `طلب-${member.user.username}`,
             type: ChannelType.GuildText,
             parent: CATEGORY_ID,
             permissionOverwrites: [
-                { 
-                    id: guild.id, 
-                    deny: [PermissionFlagsBits.ViewChannel] 
-                },
+                { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
                 { 
                     id: member.id, 
                     allow: [
@@ -82,7 +81,6 @@ app.post('/open-ticket', async (req, res) => {
             ],
         });
 
-        // 2. إنشاء زر الإغلاق
         const closeBtn = new ButtonBuilder()
             .setCustomId('close_ticket')
             .setLabel('إغلاق التذكرة')
@@ -91,7 +89,6 @@ app.post('/open-ticket', async (req, res) => {
 
         const row = new ActionRowBuilder().addComponents(closeBtn);
 
-        // 3. رسالة التذكرة (Embed)
         const ticketEmbed = new EmbedBuilder()
             .setTitle('🛒 تفاصيل طلب الشراء')
             .setColor('#D4AF37') 
@@ -106,14 +103,12 @@ app.post('/open-ticket', async (req, res) => {
             .setFooter({ text: 'متجر AR - نظام التذاكر الآلي' })
             .setTimestamp();
 
-        // إرسال الرسالة في القناة
         await channel.send({ 
             content: `تنبيه الإدارة: <@&${ADMIN_ROLE_ID}> | طلب جديد من <@${member.id}>`, 
             embeds: [ticketEmbed], 
             components: [row] 
         });
 
-        // 4. إرسال سجل (Log) إلى قناة اللوق
         try {
             const logChannel = await guild.channels.fetch(LOG_CHANNEL_ID);
             const logEmbed = new EmbedBuilder()
@@ -139,16 +134,13 @@ app.post('/open-ticket', async (req, res) => {
     }
 });
 
-// معالج زر إغلاق التذكرة
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return;
-
     if (interaction.customId === 'close_ticket') {
         await interaction.reply({ content: '⚠️ سيتم إغلاق التذكرة وحذف القناة بعد 5 ثوانٍ...' });
-        
         setTimeout(async () => {
             try {
-                await interaction.channel.delete();
+                if (interaction.channel) await interaction.channel.delete();
             } catch (err) {
                 console.error("فشل في حذف القناة:", err);
             }
@@ -160,7 +152,6 @@ client.once('ready', () => {
     console.log(`✅ ${client.user.tag} متصل وجاهز للعمل!`);
 });
 
-// منفذ السيرفر لـ Render
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 السيرفر يعمل على المنفذ ${PORT}`);
