@@ -217,6 +217,8 @@
         bestGrid.innerHTML = ''; catGrid.innerHTML = '';
         document.getElementById('discProduct').innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
 
+        const isAdminOpen = document.getElementById('adminSection').style.display === 'block';
+
         products.forEach((p, i) => {
             let price = p.price;
             let hasDisc = (p.discount && p.discount.expiry > now);
@@ -238,12 +240,12 @@
                             <span class="price">${convPrice} ${currentCurr}</span>
                         </div>
                         <p style="font-size:10px; color:gray; margin: 5px 0;">المخزون: ${p.stock}</p>
-                        ${hasDisc && timeText ? `<div class="timer-display">${timeText}</div>` : ''}
+                        ${hasDisc && timeText ? `<div class="timer-display" id="timer-${i}">${timeText}</div>` : ''}
                         <button class="buy-btn" onclick="openOrder(${i})">${isOut ? 'نفذت الكمية' : 'اطلب الآن'}</button>
-                        ${document.getElementById('adminSection').style.display === 'block' ? `
+                        ${isAdminOpen ? `
                             <div style="display:flex; gap:5px; margin-top:10px;">
-                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:5px; border-radius:5px;">تعديل</button>
-                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:5px; border-radius:5px;">حذف</button>
+                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:5px; border-radius:5px; cursor:pointer !important;">تعديل</button>
+                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:5px; border-radius:5px; cursor:pointer !important;">حذف</button>
                             </div>
                         ` : ''}
                     </div>
@@ -251,6 +253,17 @@
 
             if (currentView === 'home' && (p.sales > 0 || hasDisc)) bestGrid.innerHTML += cardHtml;
             if (p.category === currentView) catGrid.innerHTML += cardHtml;
+        });
+    }
+
+    // تحديث الوقت فقط بدون إعادة رسم البطاقات لتجنب تعطيل الأزرار
+    function updateTimers() {
+        const now = new Date().getTime();
+        products.forEach((p, i) => {
+            const timerEl = document.getElementById(`timer-${i}`);
+            if (timerEl && p.discount && p.discount.expiry > now) {
+                timerEl.innerText = getRemainingTime(p.discount.expiry);
+            }
         });
     }
 
@@ -301,7 +314,6 @@
         }
     }
 
-    // دوال الإدارة
     function saveProduct() {
         const idx = document.getElementById('editIndex').value;
         const p = {
@@ -310,16 +322,24 @@
             category: document.getElementById('pCategory').value,
             stock: parseInt(document.getElementById('pStock').value),
             img: document.getElementById('pImg').value,
-            sales: (idx !== "" && products[idx]) ? products[idx].sales : 0,
+            sales: (idx !== "" && products[idx]) ? (products[idx].sales || 0) : 0,
             discount: (idx !== "" && products[idx]) ? products[idx].discount : null
         };
         if (!p.name || isNaN(p.price)) return alert("أكمل البيانات");
         if(idx === "") products.push(p); else products[idx] = p;
         saveAll();
-        location.reload();
+        document.getElementById('editIndex').value = ""; // تصفير الاندكس بعد الحفظ
+        alert("تم حفظ المنتج بنجاح!");
+        render();
     }
 
-    function deleteP(i) { if(confirm("هل أنت متأكد من الحذف؟")) { products.splice(i, 1); saveAll(); render(); } }
+    function deleteP(i) { 
+        if(confirm("هل أنت متأكد من الحذف؟")) { 
+            products.splice(i, 1); 
+            saveAll(); 
+            render(); 
+        } 
+    }
     
     function editP(i) { 
         const p = products[i];
@@ -329,19 +349,25 @@
         document.getElementById('pStock').value = p.stock;
         document.getElementById('pImg').value = p.img;
         document.getElementById('editIndex').value = i;
-        window.scrollTo(0,0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function applyDiscount() {
         const idx = document.getElementById('discProduct').value;
+        const percent = parseInt(document.getElementById('discPercent').value);
+        const hours = parseFloat(document.getElementById('discHours').value);
+        if(isNaN(percent) || isNaN(hours)) return alert("ضع قيم صحيحة");
+        
         products[idx].discount = { 
-            percent: parseInt(document.getElementById('discPercent').value), 
-            expiry: new Date().getTime() + (document.getElementById('discHours').value * 3600000) 
+            percent: percent, 
+            expiry: new Date().getTime() + (hours * 3600000) 
         };
-        saveAll(); alert("تم تفعيل الخصم! 🔥");
+        saveAll(); 
+        alert("تم تفعيل الخصم! 🔥");
+        render();
     }
 
-    function saveAll() { localStorage.setItem('ar_store_v12', JSON.stringify(products)); render(); }
+    function saveAll() { localStorage.setItem('ar_store_v12', JSON.stringify(products)); }
     function openAdmin() { if(prompt("الباسورد:") === "admin123") { document.getElementById('adminSection').style.display = 'block'; render(); } }
     function closeAdmin() { document.getElementById('adminSection').style.display = 'none'; render(); }
     function updateCurrency() { currentCurr = document.getElementById('currSelect').value; render(); }
@@ -372,7 +398,8 @@
         document.getElementById('paymentScreen').style.display = 'flex';
     }
 
-    setInterval(render, 1000);
+    // بدلاً من رندر كامل كل ثانية، نحدث التايمر فقط
+    setInterval(updateTimers, 1000);
     render();
 </script>
 </body>
