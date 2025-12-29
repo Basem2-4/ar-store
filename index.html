@@ -140,7 +140,7 @@
                 <select id="pCategory" class="admin-input">
                     <option value="الـسيارات🚗">سيارات</option>
                     <option value="الـعـقارات🏘️">عقارات</option>
-                    <option value="الـمـتاجـر🏪">متاجر</option>
+                    <option value="الـم_تاجـر🏪">متاجر</option>
                 </select>
                 <input type="number" id="pStock" class="admin-input" placeholder="المخزون">
                 <input type="text" id="pImg" class="admin-input" placeholder="رابط الصورة">
@@ -151,7 +151,7 @@
                 <select id="discScope" class="admin-input">
                     <option value="single">منتج معين</option>
                     <option value="الـسيارات🚗">قسم السيارات</option>
-                    <option value="الـع_قارات🏘️">قسم العقارات</option>
+                    <option value="الـعـقارات🏘️">قسم العقارات</option>
                     <option value="الـم_تاجـر🏪">قسم المتاجر</option>
                     <option value="all">جميع المنتجات (المتجر)</option>
                     <option value="coupon">إضافة كود خصم جديد</option>
@@ -215,14 +215,12 @@
     let currentIndex = null;
     let finalOrderPrice = 0;
 
-    // تحريك المؤشر
     const cursor = document.getElementById('custom-cursor');
     document.addEventListener('mousemove', (e) => { 
         cursor.style.left = e.clientX + 'px'; 
         cursor.style.top = e.clientY + 'px'; 
     });
 
-    // تبديل الحقول في لوحة الادارة
     document.getElementById('discScope').addEventListener('change', function() {
         document.getElementById('productField').style.display = (this.value === 'single') ? 'block' : 'none';
         document.getElementById('couponField').style.display = (this.value === 'coupon') ? 'block' : 'none';
@@ -271,8 +269,8 @@
                         <button class="buy-btn" onclick="openOrder(${i})">${isOut ? 'نفذت الكمية' : 'اطلب الآن'}</button>
                         ${isAdminOpen ? `
                             <div style="display:flex; gap:5px; margin-top:10px;">
-                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; cursor:pointer !important; font-weight:bold; pointer-events: auto;">تعديل</button>
-                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; cursor:pointer !important; font-weight:bold; pointer-events: auto;">حذف</button>
+                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; pointer-events: auto; font-weight:bold;">تعديل</button>
+                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; pointer-events: auto; font-weight:bold;">حذف</button>
                             </div>
                         ` : ''}
                     </div>
@@ -281,6 +279,46 @@
             if (currentView === 'home' && (p.sales > 0 || hasDisc)) bestGrid.innerHTML += cardHtml;
             if (p.category === currentView) catGrid.innerHTML += cardHtml;
         });
+    }
+
+    async function finishOrder() {
+        const btn = document.getElementById('finalBtn');
+        btn.disabled = true;
+        btn.innerText = "جاري الاتصال...";
+
+        const p = products[currentIndex];
+        const qty = document.getElementById('orderQty').value;
+        const disc = document.getElementById('orderDiscord').value;
+        const usage = document.getElementById('usageType').value;
+
+        try {
+            const response = await fetch(BOT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productName: p.name,
+                    buyerId: disc.trim(),
+                    qty: qty,
+                    total: finalOrderPrice,
+                    usage: usage
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert("✅ تم فتح التذكرة بنجاح! توجه للديسكورد.");
+                location.reload();
+            } else {
+                alert("❌ خطأ من البوت: " + result.error);
+                btn.disabled = false;
+                btn.innerText = "فتح تذكرة الآن ✅";
+            }
+        } catch (err) {
+            console.error(err);
+            alert("❌ فشل الاتصال بالبوت. تأكد أنه يعمل في Render.");
+            btn.disabled = false;
+            btn.innerText = "فتح تذكرة الآن ✅";
+        }
     }
 
     function applyAdvancedDiscount() {
@@ -321,18 +359,14 @@
         let p = products[currentIndex];
         let pricePerUnit = p.price;
 
-        // تطبيق خصم المنتج الأساسي
         if(p.discount && p.discount.expiry > now) {
             pricePerUnit = p.price - (p.price * (p.discount.percent / 100));
         }
 
-        // تطبيق كود الخصم إذا وجد
         const coupon = coupons.find(c => c.code === couponInput && c.expiry > now);
         if(coupon) {
             pricePerUnit = pricePerUnit - (pricePerUnit * (coupon.percent / 100));
-            alert(`تم تطبيق كود الخصم بنجاح! نسبة الخصم: ${coupon.percent}%`);
-        } else if(couponInput !== "") {
-            alert("كود الخصم غير صحيح أو منتهي");
+            alert(`تم تطبيق كود الخصم! الخصم: ${coupon.percent}%`);
         }
 
         finalOrderPrice = (pricePerUnit * qty).toFixed(2);
@@ -340,51 +374,6 @@
         
         document.getElementById('modalMain').style.display = 'none';
         document.getElementById('paymentScreen').style.display = 'flex';
-    }
-
-async function finishOrder() {
-    const btn = document.getElementById('finalBtn');
-    btn.disabled = true;
-    btn.innerText = "جاري الاتصال...";
-
-    const p = products[currentIndex];
-    const qty = document.getElementById('orderQty').value;
-    const disc = document.getElementById('orderDiscord').value;
-    const usage = document.getElementById('usageType').value;
-
-    try {
-        // تأكد أن BOT_URL المعرف فوق هو بالضبط: "https://ar-store-i6tw.onrender.com/open-ticket"
-        const response = await fetch("https://ar-store-i6tw.onrender.com/open-ticket", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                productName: p.name,
-                buyerId: disc.trim(),
-                qty: qty,
-                total: finalOrderPrice,
-                usage: usage
-            })
-        });
-
-        const result = await response.json();
-        if (result.success) {
-            alert("✅ تم فتح التذكرة بنجاح! توجه للديسكورد.");
-            location.reload();
-        } else {
-            alert("❌ خطأ من البوت: " + result.error);
-            btn.disabled = false;
-        }
-    } catch (err) {
-        console.error(err);
-        alert("❌ فشل الاتصال بالبوت. تأكد أن البوت يعمل في موقع Render");
-        btn.disabled = false;
-        btn.innerText = "فتح تذكرة الآن ✅";
-    }
-}
-        } catch (err) {
-            alert("فشل الاتصال بالبوت");
-            btn.disabled = false;
-        }
     }
 
     function updateTimers() {
@@ -410,11 +399,7 @@ async function finishOrder() {
         if (!name || isNaN(price)) return alert("أكمل البيانات");
 
         const p = {
-            name: name,
-            price: price,
-            category: category,
-            stock: stock,
-            img: img,
+            name, price, category, stock, img,
             sales: (idx !== "" && products[idx]) ? (products[idx].sales || 0) : 0,
             discount: (idx !== "" && products[idx]) ? products[idx].discount : null
         };
@@ -428,9 +413,7 @@ async function finishOrder() {
         document.getElementById('pStock').value = ""; document.getElementById('pImg').value = "";
     }
 
-    function deleteP(i) {
-        if(confirm("حذف المنتج؟")) { products.splice(i, 1); saveAll(); render(); }
-    }
+    function deleteP(i) { if(confirm("حذف المنتج؟")) { products.splice(i, 1); saveAll(); render(); } }
     
     function editP(i) {
         const p = products[i];
@@ -473,4 +456,3 @@ async function finishOrder() {
 </script>
 </body>
 </html>
-
