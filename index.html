@@ -8,9 +8,10 @@
     <style>
         :root { 
             --gold: #D4AF37; 
+            --gold-glow: 0 0 15px rgba(212, 175, 55, 0.8);
             --black: #0a0a0a; 
             --card-bg: #151515; 
-            --nav-bg: #111; 
+            --nav-bg: transparent; 
             --discount-red: #ff4d4d; 
         }
 
@@ -31,34 +32,102 @@
             transition: transform 0.1s ease-out;
         }
 
-        body { background: var(--black); color: white; font-family: 'Cairo', sans-serif; margin: 0; padding-top: 80px; overflow-x: hidden; }
+        body { background: var(--black); color: white; font-family: 'Cairo', sans-serif; margin: 0; padding-top: 120px; overflow-x: hidden; position: relative; }
+
+        #section-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.8s ease-in-out;
+            filter: blur(8px) brightness(0.3);
+            opacity: 0.6;
+        }
+
+        /* --- القائمة العلوية --- */
+        nav { 
+            position: fixed; 
+            top: 20px; 
+            width: 100%; 
+            background: var(--nav-bg); 
+            display: flex; 
+            flex-direction: row; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 0 50px; 
+            z-index: 9000;
+            box-sizing: border-box;
+        }
+
+        .nav-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 25px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--gold);
+            border-radius: 15px;
+            box-shadow: var(--gold-glow);
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-direction: row;
+        }
+
+        .brand-logo {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: var(--gold-glow);
+            padding: 0;
+            border: none !important;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .brand-img {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            order: 2;
+        }
+
+        nav a { color: #fff; text-decoration: none; font-weight: bold; transition: 0.3s; padding: 8px 15px; border-radius: 5px; }
+        nav a:hover, nav a.active { color: var(--gold); text-shadow: var(--gold-glow); }
+
+        .gold-line {
+            position: fixed;
+            top: 100px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--gold);
+            box-shadow: 0 0 10px var(--gold);
+            z-index: 8999;
+        }
+
+        .section-header { 
+            width: 100%; 
+            display: flex; 
+            justify-content: flex-start; 
+            padding: 0 40px; 
+        }
 
         h2 {
             color: var(--gold);
             font-weight: 900;
-            margin: 40px 0 25px 0;
+            margin: 20px 0;
             display: inline-flex;
             align-items: center;
             gap: 12px;
-            padding: 10px 25px;
-            background: rgba(212, 175, 55, 0.05);
-            border: 1.5px solid rgba(212, 175, 55, 0.3);
-            border-radius: 50px;
+            padding: 10px 0;
             text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
-            float: right;
-            clear: both;
         }
-
-        .section-header { width: 100%; display: block; overflow: hidden; margin-bottom: 20px; padding: 0 20px; }
-
-        nav { 
-            position: fixed; top: 0; width: 100%; background: var(--nav-bg); 
-            border-bottom: 2px solid var(--gold); display: flex; justify-content: center; 
-            align-items: center; gap: 20px; padding: 15px 0; z-index: 9000;
-        }
-
-        nav a { color: #fff; text-decoration: none; font-weight: bold; transition: 0.3s; padding: 8px 15px; border-radius: 5px; }
-        nav a:hover, nav a.active { color: var(--gold); background: rgba(212,175,55,0.1); }
 
         .currency-container {
             display: flex; align-items: center; gap: 10px;
@@ -69,16 +138,32 @@
         #currSelect { background: none; color: #fff; border: none; font-family: 'Cairo'; font-weight: 700; outline: none; }
         #currSelect option { background: #000; color: #fff; }
 
-        .container { max-width: 1100px; margin: auto; padding: 10px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; clear: both; }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 10px 40px; 
+            position: relative; 
+            z-index: 1; 
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 25px; 
+            width: 100%;
+            justify-content: flex-start;
+        }
 
-        .card { background: var(--card-bg); border-radius: 12px; border: 1px solid #222; overflow: hidden; position: relative; transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); border-color: var(--gold); }
+        .card { background: rgba(21, 21, 21, 0.8); backdrop-filter: blur(5px); border-radius: 12px; border: 1px solid #222; overflow: hidden; position: relative; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2); }
         .card.out-of-stock { filter: grayscale(1); opacity: 0.6; pointer-events: none; }
         .card img { width: 100%; height: 160px; object-fit: cover; } 
         .card-content { padding: 15px; text-align: center; }
 
-        .discount-badge { position: absolute; top: 10px; right: 10px; background: var(--discount-red); color: white; padding: 4px 10px; border-radius: 5px; font-weight: 800; font-size: 0.75rem; z-index: 10; }
+        .discount-badge { position: absolute; top: 10px; left: 10px; background: var(--discount-red); color: white; padding: 4px 10px; border-radius: 5px; font-weight: 800; font-size: 0.75rem; z-index: 10; }
 
         .timer-display {
             position: absolute; bottom: 65px; left: 10px;
@@ -87,45 +172,75 @@
         }
 
         .price { color: #fff; font-size: 1.1rem; font-weight: 700; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
-        .old-price { text-decoration: line-through; color: #777; font-size: 0.8rem; margin-left: 8px; }
+        .old-price { text-decoration: line-through; color: #777; font-size: 0.8rem; margin-right: 8px; }
 
         .buy-btn { background: var(--gold); color: #000; border: none; padding: 10px; width: 100%; font-weight: 800; border-radius: 8px; margin-top: 10px; transition: 0.3s; font-size: 0.9rem; pointer-events: auto; }
-        .buy-btn:hover { background: #fff; }
+        .buy-btn:hover { background: #fff; box-shadow: var(--gold-glow); }
 
-        #adminSection { display: none; margin-bottom: 30px; animation: fadeIn 0.5s; padding: 0 20px; }
+        .admin-trigger {
+            position: fixed; 
+            bottom: 25px; 
+            left: 25px; 
+            background: url('https://cdn.discordapp.com/attachments/1331789439915266049/1455082018877735103/PsBMwzV.webp?ex=69536e3b&is=69521cbb&hm=1b0b626b03dc2254beb7ea42eb3975028f74e1b0f6a2c6dcde4efd80665e6e34&') no-repeat center; 
+            background-size: 70%; 
+            border: 1px solid var(--gold); 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            z-index: 10001;
+            transition: 0.3s;
+        }
+        .admin-trigger:hover { transform: rotate(45deg); box-shadow: var(--gold-glow); }
+
+        #adminSection { width: 100%; display: none; margin-bottom: 30px; animation: fadeIn 0.5s; padding: 0 20px; }
         .admin-flex { display: flex; gap: 20px; flex-wrap: wrap; }
         .admin-box { flex: 1; min-width: 250px; background: #111; padding: 20px; border: 1px solid #333; border-radius: 15px; }
         .admin-input { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; font-family: 'Cairo'; box-sizing: border-box; }
+        
+        .layout-btn { background: #222; color: gold; border: 1px solid #444; padding: 8px; width: 100%; margin: 5px 0; border-radius: 5px; font-size: 0.8rem; font-family: 'Cairo'; font-weight: bold; }
+        .layout-btn:hover { background: gold; color: black; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; justify-content: center; align-items: center; }
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); width: 90%; max-width: 400px; text-align: center; }
         .qr-img { background: white; padding: 10px; border-radius: 10px; width: 180px; height: 180px; margin: 20px auto; display: block; }
-
         #paymentScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
         .payment-title { color: var(--gold); font-weight: 900; font-size: 1.6rem; margin-bottom: 5px; text-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
-        .qr-img { width: 180px; height: 180px; display: block; border: none; }
         .payment-note { color: #ff4d4d; font-size: 0.9rem; font-weight: 600; line-height: 1.6; max-width: 250px; margin: 10px 0; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+        
+        @media (max-width: 768px) { 
+            nav { padding: 0 15px; flex-direction: column; gap: 10px; top: 10px; }
+            .brand-logo { border: none; padding: 0; }
+            .nav-wrapper { padding: 5px 10px; font-size: 0.8rem; }
+        }
     </style>
 </head>
 <body>
 
 <div id="custom-cursor"></div>
+<div id="section-bg"></div>
+<div class="gold-line"></div>
 
-<nav>
-    <a href="#" onclick="showSection('home')" id="nav-home" class="active">الرئيسية</a>
-    <a href="#" onclick="showSection('الـسيارات🚗')">سيارات</a>
-    <a href="#" onclick="showSection('الـعـقارات🏘️')">عقارات</a>
-    <a href="#" onclick="showSection('الـمـتاجـر🏪')">متاجر</a>
-    <div class="currency-container">
-        <select id="currSelect" onchange="updateCurrency()">
-            <option value="SR">SR</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="KWD">KWD</option>
-        </select>
+<nav id="navbar">
+    <div class="nav-wrapper" id="navMenu">
+        <a href="#" onclick="showSection('home')" id="nav-home" class="active">الرئيسية</a>
+        <a href="#" onclick="showSection('الـسيارات🚗')">سيارات</a>
+        <a href="#" onclick="showSection('الـعـقارات🏘️')">عقارات</a>
+        <a href="#" onclick="showSection('الـمـتاجـر🏪')">متاجر</a>
+        <div class="currency-container">
+            <select id="currSelect" onchange="updateCurrency()">
+                <option value="SR">SR</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="KWD">KWD</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="brand-container" id="brandContainer">
+        <div class="brand-logo">Alamariyah RP</div>
+        <img id="logoImg" src="https://cdn.discordapp.com/attachments/1331789439915266049/1455082018877735103/PsBMwzV.webp?ex=69536e3b&is=69521cbb&hm=1b0b626b03dc2254beb7ea42eb3975028f74e1b0f6a2c6dcde4efd80665e6e34&" class="brand-img" alt="Logo">
     </div>
 </nav>
 
@@ -140,19 +255,28 @@
                 <select id="pCategory" class="admin-input">
                     <option value="الـسيارات🚗">سيارات</option>
                     <option value="الـعـقارات🏘️">عقارات</option>
-                    <option value="الـم_تاجـر🏪">متاجر</option>
+                    <option value="الـمـتاجـر🏪">متاجر</option>
                 </select>
                 <input type="number" id="pStock" class="admin-input" placeholder="المخزون">
                 <input type="text" id="pImg" class="admin-input" placeholder="رابط الصورة">
                 <button onclick="saveProduct()" class="buy-btn">حفظ المنتج ✅</button>
             </div>
+
+            <div class="admin-box" style="border-top: 4px solid #00c3ff;">
+                <h4>إعدادات المظهر (UI)</h4>
+                <label style="font-size: 12px; color: #888;">تغيير خلفية القسم الحالي:</label>
+                <input type="text" id="bgUrlInput" class="admin-input" placeholder="ضع رابط الصورة هنا...">
+                <button onclick="updateSectionBG()" class="layout-btn" style="background:#00c3ff; color:white;">تطبيق الخلفية 🖼️</button>
+                <button onclick="resetBackgrounds()" class="layout-btn" style="background: #c0392b; color: white; margin-top: 10px;">إعادة تعيين الخلفيات الأصلية ↩️</button>
+            </div>
+
             <div class="admin-box" style="border-top: 4px solid var(--discount-red);">
                 <h4>نظام الخصم المطور</h4>
                 <select id="discScope" class="admin-input">
                     <option value="single">منتج معين</option>
                     <option value="الـسيارات🚗">قسم السيارات</option>
                     <option value="الـعـقارات🏘️">قسم العقارات</option>
-                    <option value="الـم_تاجـر🏪">قسم المتاجر</option>
+                    <option value="الـمـتاجـر🏪">قسم المتاجر</option>
                     <option value="all">جميع المنتجات (المتجر)</option>
                     <option value="coupon">إضافة كود خصم جديد</option>
                 </select>
@@ -170,15 +294,17 @@
         <button onclick="closeAdmin()" class="buy-btn" style="background:#222; color:white; margin-top:15px;">إغلاق لوحة التحكم</button>
     </div>
 
-    <div id="homeSection">
+    <div id="homeSection" style="width: 100%;">
         <div class="section-header"><h2>الأكثر مبيعاً 🔥</h2></div>
         <div class="grid" id="bestSellerGrid"></div>
     </div>
-    <div id="categorySection" style="display:none;">
+    <div id="categorySection" style="display:none; width: 100%;">
         <div class="section-header"><h2 id="categoryTitle"></h2></div>
         <div class="grid" id="categoryGrid"></div>
     </div>
 </div>
+
+<button onclick="openAdmin()" class="admin-trigger"></button>
 
 <div id="orderModal" class="modal">
     <div class="modal-content" id="modalMain">
@@ -203,11 +329,38 @@
     </div>
 </div>
 
-<button onclick="openAdmin()" style="position:fixed; bottom:25px; left:25px; background:#222; color:var(--gold); border:1px solid var(--gold); width:50px; height:50px; border-radius:50%; z-index:10001; font-size:22px;">⚙️</button>
-
 <script>
+    let customSectionImages = JSON.parse(localStorage.getItem('ar_custom_bgs')) || {};
+
+    function updateSectionBG() {
+        const url = document.getElementById('bgUrlInput').value;
+        if(url) {
+            customSectionImages[currentView] = url;
+            localStorage.setItem('ar_custom_bgs', JSON.stringify(customSectionImages));
+            document.getElementById('section-bg').style.backgroundImage = `url('${url}')`;
+            alert("تم حفظ خلفية قسم " + currentView);
+            document.getElementById('bgUrlInput').value = "";
+        }
+    }
+
+    function resetBackgrounds() {
+        if(confirm("هل تريد العودة للخلفيات الأصلية لجميع الأقسام؟")) {
+            localStorage.removeItem('ar_custom_bgs');
+            customSectionImages = {};
+            showSection(currentView);
+        }
+    }
+
     const BOT_URL = "https://ar-store-i6tw.onrender.com/open-ticket";
     const rates = { "SR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.082 };
+    
+    const sectionImages = {
+        'home': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=2070',
+        'الـسيارات🚗': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=2070',
+        'الـعـقارات🏘️': 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070',
+        'الـمـتاجـر🏪': 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?q=80&w=2070'
+    };
+
     let currentCurr = "SR";
     let products = JSON.parse(localStorage.getItem('ar_store_v12')) || [];
     let coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
@@ -265,12 +418,12 @@
                             <span class="price">${convPrice} ${currentCurr}</span>
                         </div>
                         <p style="font-size:10px; color:gray; margin: 5px 0;">المخزون: ${p.stock}</p>
-                        ${hasDisc && timeText ? `<div class="timer-display" id="timer-${i}">${timeText}</div>` : ''}
+                        ${hasDisc && timeText ? `<div class="timer-display">${timeText}</div>` : ''}
                         <button class="buy-btn" onclick="openOrder(${i})">${isOut ? 'نفذت الكمية' : 'اطلب الآن'}</button>
                         ${isAdminOpen ? `
                             <div style="display:flex; gap:5px; margin-top:10px;">
-                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; pointer-events: auto; font-weight:bold;">تعديل</button>
-                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; pointer-events: auto; font-weight:bold;">حذف</button>
+                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; font-weight:bold;">تعديل</button>
+                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; font-weight:bold;">حذف</button>
                             </div>
                         ` : ''}
                     </div>
@@ -283,9 +436,7 @@
 
     async function finishOrder() {
         const btn = document.getElementById('finalBtn');
-        btn.disabled = true;
-        btn.innerText = "جاري الاتصال...";
-
+        btn.disabled = true; btn.innerText = "جاري الاتصال...";
         const p = products[currentIndex];
         const qty = document.getElementById('orderQty').value;
         const disc = document.getElementById('orderDiscord').value;
@@ -296,28 +447,20 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    productName: p.name,
-                    buyerId: disc.trim(),
-                    qty: qty,
-                    total: finalOrderPrice,
-                    usage: usage
+                    productName: p.name, buyerId: disc.trim(), qty: qty, total: finalOrderPrice, usage: usage
                 })
             });
-
             const result = await response.json();
             if (result.success) {
-                alert("✅ تم فتح التذكرة بنجاح! توجه للديسكورد.");
+                alert("✅ تم فتح التذكرة بنجاح!");
                 location.reload();
             } else {
-                alert("❌ خطأ من البوت: " + result.error);
-                btn.disabled = false;
-                btn.innerText = "فتح تذكرة الآن ✅";
+                alert("❌ خطأ: " + result.error);
+                btn.disabled = false; btn.innerText = "فتح تذكرة الآن ✅";
             }
         } catch (err) {
-            console.error(err);
-            alert("❌ فشل الاتصال بالبوت. تأكد أنه يعمل في Render.");
+            alert("❌ فشل الاتصال بالبوت.");
             btn.disabled = false;
-            btn.innerText = "فتح تذكرة الآن ✅";
         }
     }
 
@@ -335,7 +478,7 @@
             if(!code) return alert("أدخل كود الخصم");
             coupons.push({ code, percent, expiry });
             localStorage.setItem('ar_coupons_v12', JSON.stringify(coupons));
-            alert("تمت إضافة كود الخصم بنجاح!");
+            alert("تمت إضافة كود الخصم!");
         } else {
             products.forEach((p, i) => {
                 if(scope === 'all' || p.category === scope || (scope === 'single' && i == document.getElementById('discProduct').value)) {
@@ -343,7 +486,6 @@
                 }
             });
             saveAll();
-            alert("تم تفعيل الخصم!");
         }
         render();
     }
@@ -353,39 +495,18 @@
         const discord = document.getElementById('orderDiscord').value;
         const couponInput = document.getElementById('orderCoupon').value.trim();
         const now = new Date().getTime();
-
         if(!discord) return alert("يرجى كتابة ايدي ديسكوردك");
 
         let p = products[currentIndex];
         let pricePerUnit = p.price;
-
-        if(p.discount && p.discount.expiry > now) {
-            pricePerUnit = p.price - (p.price * (p.discount.percent / 100));
-        }
-
+        if(p.discount && p.discount.expiry > now) pricePerUnit = p.price - (p.price * (p.discount.percent / 100));
         const coupon = coupons.find(c => c.code === couponInput && c.expiry > now);
-        if(coupon) {
-            pricePerUnit = pricePerUnit - (pricePerUnit * (coupon.percent / 100));
-            alert(`تم تطبيق كود الخصم! الخصم: ${coupon.percent}%`);
-        }
+        if(coupon) pricePerUnit = pricePerUnit - (pricePerUnit * (coupon.percent / 100));
 
         finalOrderPrice = (pricePerUnit * qty).toFixed(2);
-        document.getElementById('paymentSummary').innerText = `إجمالي المبلغ: ${finalOrderPrice} SR لعدد ${qty} من ${p.name}`;
-        
+        document.getElementById('paymentSummary').innerText = `إجمالي المبلغ: ${finalOrderPrice} SR`;
         document.getElementById('modalMain').style.display = 'none';
         document.getElementById('paymentScreen').style.display = 'flex';
-    }
-
-    function updateTimers() {
-        const now = new Date().getTime();
-        products.forEach((p, i) => {
-            const timerEl = document.getElementById(`timer-${i}`);
-            if (timerEl && p.discount && p.discount.expiry > now) {
-                timerEl.innerText = getRemainingTime(p.discount.expiry);
-            } else if (timerEl && p.discount && p.discount.expiry <= now) {
-                render();
-            }
-        });
     }
 
     function saveProduct() {
@@ -395,37 +516,27 @@
         const category = document.getElementById('pCategory').value;
         const stock = parseInt(document.getElementById('pStock').value);
         const img = document.getElementById('pImg').value;
-
         if (!name || isNaN(price)) return alert("أكمل البيانات");
 
-        const p = {
-            name, price, category, stock, img,
-            sales: (idx !== "" && products[idx]) ? (products[idx].sales || 0) : 0,
-            discount: (idx !== "" && products[idx]) ? products[idx].discount : null
-        };
-
+        const p = { name, price, category, stock, img, sales: 0, discount: null };
         if(idx === "") products.push(p);
         else { products[idx] = p; document.getElementById('editIndex').value = ""; }
-        
-        saveAll();
+        saveAll(); 
         render();
-        document.getElementById('pName').value = ""; document.getElementById('pPrice').value = "";
-        document.getElementById('pStock').value = ""; document.getElementById('pImg').value = "";
+        alert("تم حفظ المنتج بنجاح!");
     }
 
     function deleteP(i) { if(confirm("حذف المنتج؟")) { products.splice(i, 1); saveAll(); render(); } }
-    
     function editP(i) {
         const p = products[i];
+        document.getElementById('editIndex').value = i;
         document.getElementById('pName').value = p.name;
         document.getElementById('pPrice').value = p.price;
         document.getElementById('pCategory').value = p.category;
         document.getElementById('pStock').value = p.stock;
         document.getElementById('pImg').value = p.img;
-        document.getElementById('editIndex').value = i;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo(0,0);
     }
-
     function saveAll() { localStorage.setItem('ar_store_v12', JSON.stringify(products)); }
     function openAdmin() { if(prompt("الباسورد:") === "admin123") { document.getElementById('adminSection').style.display = 'block'; render(); } }
     function closeAdmin() { document.getElementById('adminSection').style.display = 'none'; render(); }
@@ -433,11 +544,20 @@
 
     function showSection(s) {
         currentView = s;
+        const bg = customSectionImages[s] || sectionImages[s];
+        document.getElementById('section-bg').style.backgroundImage = `url('${bg}')`;
         document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
         document.getElementById('homeSection').style.display = (s === 'home') ? 'block' : 'none';
         document.getElementById('categorySection').style.display = (s === 'home') ? 'none' : 'block';
-        if(s === 'home') document.getElementById('nav-home').classList.add('active');
-        else document.getElementById('categoryTitle').innerHTML = `قسم ${s}`;
+        if(s === 'home') {
+            document.getElementById('nav-home').classList.add('active');
+        } else {
+            // تفعيل الرابط المناسب في القائمة
+            document.querySelectorAll('nav a').forEach(a => {
+                if(a.innerText.includes(s.replace(/🚗|🏘️|🏪/g, ''))) a.classList.add('active');
+            });
+            document.getElementById('categoryTitle').innerHTML = `قسم ${s.replace(/🚗|🏘️|🏪/g, '')}`;
+        }
         render();
     }
 
@@ -448,11 +568,12 @@
         document.getElementById('paymentScreen').style.display = 'none';
         document.getElementById('orderModal').style.display = 'flex';
     }
-
     function closeModal() { document.getElementById('orderModal').style.display = 'none'; }
 
-    setInterval(updateTimers, 1000);
-    render();
+    window.addEventListener('load', () => {
+        showSection('home');
+        setInterval(render, 1000);
+    });
 </script>
 </body>
 </html>
