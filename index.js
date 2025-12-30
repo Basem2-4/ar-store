@@ -4,12 +4,59 @@ const {
 } = require('discord.js');
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose'); // إضافة مكتبة قاعدة البيانات
 
 const app = express();
-app.use(cors()); // السماح بالاتصال من أي موقع
+app.use(cors()); 
 app.use(express.json());
 
-// مسار فحص الحالة لضمان بقاء السيرفر حياً في Render
+// --- إعداد الاتصال بقاعدة بيانات MongoDB ---
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log("✅ متصل بقاعدة بيانات MongoDB بنجاح!"))
+    .catch(err => console.error("❌ فشل الاتصال بقاعدة البيانات:", err));
+
+// تعريف "الموديل" لحفظ بيانات المتجر
+const StoreSchema = new mongoose.Schema({
+    configId: { type: String, default: "main" },
+    products: Array,
+    customBgs: Object
+});
+const Store = mongoose.model('Store', StoreSchema);
+
+// --- مسارات جلب وحفظ البيانات (للمتجر) ---
+
+// جلب المنتجات والخلفيات
+app.get('/get-store-data', async (req, res) => {
+    try {
+        let data = await Store.findOne({ configId: "main" });
+        if (!data) data = { products: [], customBgs: {} };
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: "خطأ في جلب البيانات" });
+    }
+});
+
+// حفظ المنتجات
+app.post('/save-products', async (req, res) => {
+    try {
+        await Store.findOneAndUpdate({ configId: "main" }, { products: req.body.products }, { upsert: true });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// حفظ الخلفيات
+app.post('/save-bgs', async (req, res) => {
+    try {
+        await Store.findOneAndUpdate({ configId: "main" }, { customBgs: req.body.customBgs }, { upsert: true });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// مسار فحص الحالة
 app.get('/', (req, res) => res.send('Server is Online 🚀'));
 
 const client = new Client({
@@ -84,4 +131,3 @@ app.listen(process.env.PORT || 10000, '0.0.0.0', () => {
     console.log(`🚀 السيرفر يعمل على المنفذ ${process.env.PORT || 10000}`);
 });
 client.login(TOKEN);
-
