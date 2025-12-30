@@ -224,7 +224,7 @@
 
 <nav id="navbar">
     <div class="nav-wrapper" id="navMenu">
-        <a href="#" onclick="showSection('home')" id="nav-home" class="active">الرئيسية</a>
+        <a href="#" onclick="showSection('home')" id="nav-home">الرئيسية</a>
         <a href="#" onclick="showSection('الـسيارات🚗')">سيارات</a>
         <a href="#" onclick="showSection('الـعـقارات🏘️')">عقارات</a>
         <a href="#" onclick="showSection('الـمـتاجـر🏪')">متاجر</a>
@@ -330,27 +330,8 @@
 </div>
 
 <script>
+    // تهيئة البيانات
     let customSectionImages = JSON.parse(localStorage.getItem('ar_custom_bgs')) || {};
-
-    function updateSectionBG() {
-        const url = document.getElementById('bgUrlInput').value;
-        if(url) {
-            customSectionImages[currentView] = url;
-            localStorage.setItem('ar_custom_bgs', JSON.stringify(customSectionImages));
-            document.getElementById('section-bg').style.backgroundImage = `url('${url}')`;
-            alert("تم حفظ خلفية قسم " + currentView);
-            document.getElementById('bgUrlInput').value = "";
-        }
-    }
-
-    function resetBackgrounds() {
-        if(confirm("هل تريد العودة للخلفيات الأصلية لجميع الأقسام؟")) {
-            localStorage.removeItem('ar_custom_bgs');
-            customSectionImages = {};
-            showSection(currentView);
-        }
-    }
-
     const BOT_URL = "https://ar-store-i6tw.onrender.com/open-ticket";
     const rates = { "SR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.082 };
     
@@ -368,12 +349,14 @@
     let currentIndex = null;
     let finalOrderPrice = 0;
 
+    // الماوس
     const cursor = document.getElementById('custom-cursor');
     document.addEventListener('mousemove', (e) => { 
         cursor.style.left = e.clientX + 'px'; 
         cursor.style.top = e.clientY + 'px'; 
     });
 
+    // تبديل حقول الخصم
     document.getElementById('discScope').addEventListener('change', function() {
         document.getElementById('productField').style.display = (this.value === 'single') ? 'block' : 'none';
         document.getElementById('couponField').style.display = (this.value === 'coupon') ? 'block' : 'none';
@@ -392,7 +375,11 @@
         const now = new Date().getTime();
         const bestGrid = document.getElementById('bestSellerGrid');
         const catGrid = document.getElementById('categoryGrid');
-        bestGrid.innerHTML = ''; catGrid.innerHTML = '';
+        if(!bestGrid || !catGrid) return;
+
+        bestGrid.innerHTML = ''; 
+        catGrid.innerHTML = '';
+        
         document.getElementById('discProduct').innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
 
         const isAdminOpen = document.getElementById('adminSection').style.display === 'block';
@@ -410,7 +397,7 @@
             const cardHtml = `
                 <div class="card ${isOut ? 'out-of-stock' : ''}">
                     ${hasDisc ? `<div class="discount-badge">خصم ${p.discount.percent}%</div>` : ''}
-                    <img src="${p.img || 'https://via.placeholder.com/160'}">
+                    <img src="${p.img || 'https://via.placeholder.com/160'}" onerror="this.src='https://via.placeholder.com/160?text=No+Image'">
                     <div class="card-content">
                         <h3>${p.name}</h3>
                         <div>
@@ -429,9 +416,76 @@
                     </div>
                 </div>`;
 
-            if (currentView === 'home' && (p.sales > 0 || hasDisc)) bestGrid.innerHTML += cardHtml;
-            if (p.category === currentView) catGrid.innerHTML += cardHtml;
+            if (currentView === 'home' && (p.sales > 0 || hasDisc || i < 3)) {
+                bestGrid.innerHTML += cardHtml;
+            }
+            if (p.category === currentView) {
+                catGrid.innerHTML += cardHtml;
+            }
         });
+    }
+
+    function showSection(s) {
+        currentView = s;
+        const bg = customSectionImages[s] || sectionImages[s];
+        document.getElementById('section-bg').style.backgroundImage = `url('${bg}')`;
+        
+        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+        
+        if(s === 'home') {
+            document.getElementById('homeSection').style.display = 'block';
+            document.getElementById('categorySection').style.display = 'none';
+            document.getElementById('nav-home').classList.add('active');
+        } else {
+            document.getElementById('homeSection').style.display = 'none';
+            document.getElementById('categorySection').style.display = 'block';
+            document.getElementById('categoryTitle').innerHTML = `قسم ${s.replace(/🚗|🏘️|🏪/g, '')}`;
+            
+            document.querySelectorAll('nav a').forEach(a => {
+                if(a.innerText.includes(s.replace(/🚗|🏘️|🏪/g, ''))) a.classList.add('active');
+            });
+        }
+        render();
+    }
+
+    function saveProduct() {
+        const idx = document.getElementById('editIndex').value;
+        const name = document.getElementById('pName').value;
+        const price = parseFloat(document.getElementById('pPrice').value);
+        const category = document.getElementById('pCategory').value;
+        const stock = parseInt(document.getElementById('pStock').value);
+        const img = document.getElementById('pImg').value;
+
+        if (!name || isNaN(price)) return alert("أكمل البيانات");
+
+        const p = { name, price, category, stock, img, sales: 0, discount: null };
+        if(idx === "") products.push(p);
+        else { 
+            products[idx] = {...products[idx], ...p}; 
+            document.getElementById('editIndex').value = ""; 
+        }
+        saveAll(); 
+        render();
+        alert("تم حفظ المنتج بنجاح!");
+    }
+
+    function updateSectionBG() {
+        const url = document.getElementById('bgUrlInput').value;
+        if(url) {
+            customSectionImages[currentView] = url;
+            localStorage.setItem('ar_custom_bgs', JSON.stringify(customSectionImages));
+            document.getElementById('section-bg').style.backgroundImage = `url('${url}')`;
+            alert("تم حفظ خلفية قسم " + currentView);
+            document.getElementById('bgUrlInput').value = "";
+        }
+    }
+
+    function resetBackgrounds() {
+        if(confirm("هل تريد العودة للخلفيات الأصلية لجميع الأقسام؟")) {
+            localStorage.removeItem('ar_custom_bgs');
+            customSectionImages = {};
+            showSection(currentView);
+        }
     }
 
     async function finishOrder() {
@@ -460,7 +514,7 @@
             }
         } catch (err) {
             alert("❌ فشل الاتصال بالبوت.");
-            btn.disabled = false;
+            btn.disabled = false; btn.innerText = "فتح تذكرة الآن ✅";
         }
     }
 
@@ -509,24 +563,8 @@
         document.getElementById('paymentScreen').style.display = 'flex';
     }
 
-    function saveProduct() {
-        const idx = document.getElementById('editIndex').value;
-        const name = document.getElementById('pName').value;
-        const price = parseFloat(document.getElementById('pPrice').value);
-        const category = document.getElementById('pCategory').value;
-        const stock = parseInt(document.getElementById('pStock').value);
-        const img = document.getElementById('pImg').value;
-        if (!name || isNaN(price)) return alert("أكمل البيانات");
-
-        const p = { name, price, category, stock, img, sales: 0, discount: null };
-        if(idx === "") products.push(p);
-        else { products[idx] = p; document.getElementById('editIndex').value = ""; }
-        saveAll(); 
-        render();
-        alert("تم حفظ المنتج بنجاح!");
-    }
-
     function deleteP(i) { if(confirm("حذف المنتج؟")) { products.splice(i, 1); saveAll(); render(); } }
+    
     function editP(i) {
         const p = products[i];
         document.getElementById('editIndex').value = i;
@@ -537,28 +575,24 @@
         document.getElementById('pImg').value = p.img;
         window.scrollTo(0,0);
     }
-    function saveAll() { localStorage.setItem('ar_store_v12', JSON.stringify(products)); }
-    function openAdmin() { if(prompt("الباسورد:") === "admin123") { document.getElementById('adminSection').style.display = 'block'; render(); } }
-    function closeAdmin() { document.getElementById('adminSection').style.display = 'none'; render(); }
-    function updateCurrency() { currentCurr = document.getElementById('currSelect').value; render(); }
 
-    function showSection(s) {
-        currentView = s;
-        const bg = customSectionImages[s] || sectionImages[s];
-        document.getElementById('section-bg').style.backgroundImage = `url('${bg}')`;
-        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-        document.getElementById('homeSection').style.display = (s === 'home') ? 'block' : 'none';
-        document.getElementById('categorySection').style.display = (s === 'home') ? 'none' : 'block';
-        if(s === 'home') {
-            document.getElementById('nav-home').classList.add('active');
-        } else {
-            // تفعيل الرابط المناسب في القائمة
-            document.querySelectorAll('nav a').forEach(a => {
-                if(a.innerText.includes(s.replace(/🚗|🏘️|🏪/g, ''))) a.classList.add('active');
-            });
-            document.getElementById('categoryTitle').innerHTML = `قسم ${s.replace(/🚗|🏘️|🏪/g, '')}`;
-        }
-        render();
+    function saveAll() { localStorage.setItem('ar_store_v12', JSON.stringify(products)); }
+    
+    function openAdmin() { 
+        if(prompt("الباسورد:") === "admin123") { 
+            document.getElementById('adminSection').style.display = 'block'; 
+            render(); 
+        } 
+    }
+    
+    function closeAdmin() { 
+        document.getElementById('adminSection').style.display = 'none'; 
+        render(); 
+    }
+    
+    function updateCurrency() { 
+        currentCurr = document.getElementById('currSelect').value; 
+        render(); 
     }
 
     function openOrder(i) {
@@ -568,12 +602,14 @@
         document.getElementById('paymentScreen').style.display = 'none';
         document.getElementById('orderModal').style.display = 'flex';
     }
+    
     function closeModal() { document.getElementById('orderModal').style.display = 'none'; }
 
-    window.addEventListener('load', () => {
+    // تشغيل الصفحة
+    window.onload = () => {
         showSection('home');
-        setInterval(render, 1000);
-    });
+        setInterval(render, 1000); // لتحديث عداد الخصم
+    };
 </script>
 </body>
 </html>
