@@ -330,30 +330,47 @@
 </div>
 
 <script>
-    let customSectionImages = JSON.parse(localStorage.getItem('ar_custom_bgs')) || {};
+    // --- الربط بـ MongoDB وسيرفر Render ---
+    const API_BASE = "https://ar-store-i6tw.onrender.com";
+    const BOT_URL = `${API_BASE}/open-ticket`;
 
-    function updateSectionBG() {
-        const url = document.getElementById('bgUrlInput').value;
-        if(url) {
-            customSectionImages[currentView] = url;
-            localStorage.setItem('ar_custom_bgs', JSON.stringify(customSectionImages));
-            document.getElementById('section-bg').style.backgroundImage = `url('${url}')`;
-            alert("تم حفظ خلفية قسم " + currentView);
-            document.getElementById('bgUrlInput').value = "";
-        }
-    }
-
-    function resetBackgrounds() {
-        if(confirm("هل تريد العودة للخلفيات الأصلية لجميع الأقسام؟")) {
-            localStorage.removeItem('ar_custom_bgs');
-            customSectionImages = {};
-            showSection(currentView);
-        }
-    }
-
-    const BOT_URL = "https://ar-store-i6tw.onrender.com/open-ticket";
-    const rates = { "SR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.082 };
+    let products = [];
+    let customSectionImages = {};
+    let coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
     
+    // جلب البيانات من MongoDB عند التشغيل
+    async function loadFromDatabase() {
+        try {
+            const res = await fetch(`${API_BASE}/get-store-data`);
+            const data = await res.json();
+            products = data.products || [];
+            customSectionImages = data.customBgs || {};
+            render();
+            // تحديث الخلفية للقسم الحالي بعد التحميل
+            const bg = customSectionImages[currentView] || sectionImages[currentView];
+            document.getElementById('section-bg').style.backgroundImage = `url('${bg}')`;
+        } catch (e) { console.log("خطأ في الاتصال بقاعدة البيانات"); }
+    }
+
+    // حفظ البيانات في MongoDB
+    async function saveProductsToDB() {
+        await fetch(`${API_BASE}/save-products`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ products })
+        });
+    }
+
+    async function saveBgsToDB() {
+        await fetch(`${API_BASE}/save-bgs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ customBgs: customSectionImages })
+        });
+    }
+
+    // --- بقية المتغيرات الأساسية ---
+    const rates = { "SR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.082 };
     const sectionImages = {
         'home': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=2070',
         'الـسيارات🚗': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=2070',
@@ -362,8 +379,6 @@
     };
 
     let currentCurr = "SR";
-    let products = JSON.parse(localStorage.getItem('ar_store_v12')) || [];
-    let coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
     let currentView = 'home';
     let currentIndex = null;
     let finalOrderPrice = 0;
@@ -392,6 +407,8 @@
         const now = new Date().getTime();
         const bestGrid = document.getElementById('bestSellerGrid');
         const catGrid = document.getElementById('categoryGrid');
+        if(!bestGrid || !catGrid) return;
+        
         bestGrid.innerHTML = ''; catGrid.innerHTML = '';
         document.getElementById('discProduct').innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
 
@@ -464,6 +481,25 @@
         }
     }
 
+    async function updateSectionBG() {
+        const url = document.getElementById('bgUrlInput').value;
+        if(url) {
+            customSectionImages[currentView] = url;
+            await saveBgsToDB(); // حفظ في MongoDB
+            document.getElementById('section-bg').style.backgroundImage = `url('${url}')`;
+            alert("تم حفظ خلفية قسم " + currentView + " للجميع!");
+            document.getElementById('bgUrlInput').value = "";
+        }
+    }
+
+    async function resetBackgrounds() {
+        if(confirm("هل تريد العودة للخلفيات الأصلية لجميع الأقسام؟")) {
+            customSectionImages = {};
+            await saveBgsToDB(); // تصفير في MongoDB
+            showSection(currentView);
+        }
+    }
+
     function applyAdvancedDiscount() {
         const scope = document.getElementById('discScope').value;
         const percent = parseInt(document.getElementById('discPercent').value);
@@ -485,7 +521,7 @@
                     p.discount = { percent, expiry };
                 }
             });
-            saveAll();
+            saveProductsToDB(); // حفظ التغييرات في MongoDB
         }
         render();
     }
@@ -509,7 +545,7 @@
         document.getElementById('paymentScreen').style.display = 'flex';
     }
 
-    function saveProduct() {
+    async function saveProduct() {
         const idx = document.getElementById('editIndex').value;
         const name = document.getElementById('pName').value;
         const price = parseFloat(document.getElementById('pPrice').value);
@@ -521,12 +557,20 @@
         const p = { name, price, category, stock, img, sales: 0, discount: null };
         if(idx === "") products.push(p);
         else { products[idx] = p; document.getElementById('editIndex').value = ""; }
-        saveAll(); 
+        
+        await saveProductsToDB(); // حفظ في MongoDB
         render();
-        alert("تم حفظ المنتج بنجاح!");
+        alert("تم حفظ المنتج في قاعدة البيانات للجميع!");
     }
 
-    function deleteP(i) { if(confirm("حذف المنتج؟")) { products.splice(i, 1); saveAll(); render(); } }
+    async function deleteP(i) { 
+        if(confirm("حذف المنتج؟")) { 
+            products.splice(i, 1); 
+            await saveProductsToDB(); 
+            render(); 
+        } 
+    }
+
     function editP(i) {
         const p = products[i];
         document.getElementById('editIndex').value = i;
@@ -537,7 +581,7 @@
         document.getElementById('pImg').value = p.img;
         window.scrollTo(0,0);
     }
-    function saveAll() { localStorage.setItem('ar_store_v12', JSON.stringify(products)); }
+
     function openAdmin() { if(prompt("الباسورد:") === "admin123") { document.getElementById('adminSection').style.display = 'block'; render(); } }
     function closeAdmin() { document.getElementById('adminSection').style.display = 'none'; render(); }
     function updateCurrency() { currentCurr = document.getElementById('currSelect').value; render(); }
@@ -552,7 +596,6 @@
         if(s === 'home') {
             document.getElementById('nav-home').classList.add('active');
         } else {
-            // تفعيل الرابط المناسب في القائمة
             document.querySelectorAll('nav a').forEach(a => {
                 if(a.innerText.includes(s.replace(/🚗|🏘️|🏪/g, ''))) a.classList.add('active');
             });
@@ -571,8 +614,11 @@
     function closeModal() { document.getElementById('orderModal').style.display = 'none'; }
 
     window.addEventListener('load', () => {
+        loadFromDatabase(); // تحميل البيانات عند فتح الصفحة
         showSection('home');
         setInterval(render, 1000);
+        // تحديث البيانات تلقائياً كل 30 ثانية لمزامنة المتغيرات بين المستخدمين
+        setInterval(loadFromDatabase, 30000);
     });
 </script>
 </body>
