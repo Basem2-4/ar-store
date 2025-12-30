@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر AR | الإصدار الاحترافي المطور</title>
+    <title>متجر AR | الإصدار الاحترافي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root { 
             --gold: #D4AF37; 
             --gold-glow: 0 0 15px rgba(212, 175, 55, 0.8);
             --black: #0a0a0a; 
-            --card-bg: rgba(21, 21, 21, 0.9); 
+            --card-bg: #151515; 
             --nav-bg: transparent; 
             --discount-red: #ff4d4d; 
         }
@@ -29,10 +29,10 @@
             z-index: 9999999;
             transform: translate(-50%, -50%);
             filter: drop-shadow(0 0 5px #D4AF37) brightness(1.2);
-            transition: transform 0.08s ease-out;
+            transition: transform 0.1s ease-out;
         }
 
-        body { background: var(--black); color: white; font-family: 'Cairo', sans-serif; margin: 0; padding-top: 140px; overflow-x: hidden; position: relative; }
+        body { background: var(--black); color: white; font-family: 'Cairo', sans-serif; margin: 0; padding-top: 120px; overflow-x: hidden; position: relative; }
 
         #section-bg {
             position: fixed;
@@ -41,20 +41,21 @@
             background-size: cover;
             background-position: center;
             transition: background-image 0.8s ease-in-out;
-            filter: blur(8px) brightness(0.25);
-            opacity: 0.7;
+            filter: blur(8px) brightness(0.3);
+            opacity: 0.6;
         }
 
-        /* --- القائمة العلوية المحدثة --- */
+        /* --- القائمة العلوية --- */
         nav { 
             position: fixed; 
             top: 20px; 
             width: 100%; 
+            background: var(--nav-bg); 
             display: flex; 
             flex-direction: row; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 0 5%; 
+            padding: 0 50px; 
             z-index: 9000;
             box-sizing: border-box;
         }
@@ -63,10 +64,9 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            padding: 12px 25px;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--gold);
+            padding: 10px 25px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--gold);
             border-radius: 15px;
             box-shadow: var(--gold-glow);
         }
@@ -75,151 +75,144 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 5px 15px;
-            border-radius: 12px;
-            border: 1px solid rgba(212, 175, 55, 0.3);
+            flex-direction: row;
         }
 
         .brand-logo {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: 900;
             color: var(--gold);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             text-shadow: var(--gold-glow);
+            padding: 0;
+            border: none !important;
+            font-family: 'Cairo', sans-serif;
         }
 
-        .brand-img { width: 40px; height: 40px; object-fit: contain; }
+        .brand-img {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            order: 2;
+        }
 
-        nav a { color: #fff; text-decoration: none; font-weight: bold; transition: 0.3s; padding: 8px 12px; border-radius: 8px; font-size: 0.95rem; }
-        nav a:hover, nav a.active { color: var(--gold); background: rgba(212, 175, 55, 0.1); }
+        nav a { color: #fff; text-decoration: none; font-weight: bold; transition: 0.3s; padding: 8px 15px; border-radius: 5px; }
+        nav a:hover, nav a.active { color: var(--gold); text-shadow: var(--gold-glow); }
 
         .gold-line {
             position: fixed;
-            top: 115px;
+            top: 100px;
             left: 0;
             width: 100%;
             height: 2px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            background: var(--gold);
             box-shadow: 0 0 10px var(--gold);
             z-index: 8999;
         }
 
-        /* --- الحاويات --- */
-        .container { 
-            max-width: 1300px; 
-            margin: 0 auto; 
-            padding: 20px; 
-            position: relative; 
-            z-index: 1; 
+        .section-header { 
+            width: 100%; 
+            display: flex; 
+            justify-content: flex-start; 
+            padding: 0 40px; 
         }
 
-        .section-header h2 {
+        h2 {
             color: var(--gold);
             font-weight: 900;
-            font-size: 2rem;
-            margin-bottom: 30px;
-            border-right: 5px solid var(--gold);
-            padding-right: 15px;
-            text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+            margin: 20px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
         }
 
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-            gap: 25px; 
-            width: 100%;
+        .currency-container {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255, 255, 255, 0.05); padding: 5px 15px;
+            border-radius: 50px; border: 1px solid rgba(212, 175, 55, 0.3);
         }
 
-        /* --- البطاقات --- */
-        .card { 
-            background: var(--card-bg); 
-            backdrop-filter: blur(10px); 
-            border-radius: 18px; 
-            border: 1px solid rgba(255,255,255,0.05); 
-            overflow: hidden; 
+        #currSelect { background: none; color: #fff; border: none; font-family: 'Cairo'; font-weight: 700; outline: none; }
+        #currSelect option { background: #000; color: #fff; }
+
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 10px 40px; 
             position: relative; 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            z-index: 1; 
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
         
-        .card:hover { 
-            transform: translateY(-10px); 
-            border-color: var(--gold); 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.2); 
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 25px; 
+            width: 100%;
+            justify-content: flex-start;
         }
 
-        .card img { width: 100%; height: 180px; object-fit: cover; border-bottom: 1px solid rgba(212, 175, 55, 0.2); } 
-        .card-content { padding: 20px; text-align: center; }
+        .card { background: rgba(21, 21, 21, 0.8); backdrop-filter: blur(5px); border-radius: 12px; border: 1px solid #222; overflow: hidden; position: relative; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2); }
+        .card.out-of-stock { filter: grayscale(1); opacity: 0.6; pointer-events: none; }
+        .card img { width: 100%; height: 160px; object-fit: cover; } 
+        .card-content { padding: 15px; text-align: center; }
 
-        .discount-badge { 
-            position: absolute; top: 15px; right: 15px; 
-            background: var(--discount-red); color: white; 
-            padding: 5px 12px; border-radius: 8px; 
-            font-weight: 900; font-size: 0.8rem; z-index: 10;
-            box-shadow: 0 4px 10px rgba(255, 77, 77, 0.4);
-        }
+        .discount-badge { position: absolute; top: 10px; left: 10px; background: var(--discount-red); color: white; padding: 4px 10px; border-radius: 5px; font-weight: 800; font-size: 0.75rem; z-index: 10; }
 
         .timer-display {
-            display: inline-block;
-            margin-top: 10px;
-            color: var(--discount-red); font-weight: 800; font-size: 11px;
-            background: rgba(255, 77, 77, 0.1); padding: 5px 10px; border-radius: 6px; border: 1px solid var(--discount-red);
+            position: absolute; bottom: 65px; left: 10px;
+            color: var(--discount-red); font-weight: 800; font-size: 10px;
+            background: rgba(0, 0, 0, 0.7); padding: 3px 8px; border-radius: 4px; direction: ltr;
         }
 
-        .price { color: #fff; font-size: 1.3rem; font-weight: 800; display: block; margin-top: 5px; }
-        .old-price { text-decoration: line-through; color: #888; font-size: 0.9rem; margin-left: 10px; }
+        .price { color: #fff; font-size: 1.1rem; font-weight: 700; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .old-price { text-decoration: line-through; color: #777; font-size: 0.8rem; margin-right: 8px; }
 
-        .buy-btn { 
-            background: var(--gold); color: #000; border: none; 
-            padding: 12px; width: 100%; font-weight: 900; 
-            border-radius: 10px; margin-top: 15px; transition: 0.3s; 
-            font-size: 1rem; cursor: pointer;
+        .buy-btn { background: var(--gold); color: #000; border: none; padding: 10px; width: 100%; font-weight: 800; border-radius: 8px; margin-top: 10px; transition: 0.3s; font-size: 0.9rem; pointer-events: auto; }
+        .buy-btn:hover { background: #fff; box-shadow: var(--gold-glow); }
+
+        .admin-trigger {
+            position: fixed; 
+            bottom: 25px; 
+            left: 25px; 
+            background: url('https://cdn.discordapp.com/attachments/1331789439915266049/1455082018877735103/PsBMwzV.webp?ex=69536e3b&is=69521cbb&hm=1b0b626b03dc2254beb7ea42eb3975028f74e1b0f6a2c6dcde4efd80665e6e34&') no-repeat center; 
+            background-size: 70%; 
+            border: 1px solid var(--gold); 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            z-index: 10001;
+            transition: 0.3s;
         }
-        .buy-btn:hover { background: #fff; transform: scale(1.02); box-shadow: var(--gold-glow); }
+        .admin-trigger:hover { transform: rotate(45deg); box-shadow: var(--gold-glow); }
 
-        /* --- لوحة التحكم --- */
-        #adminSection { 
-            background: rgba(10,10,10,0.95); 
-            border-radius: 20px; border: 2px solid var(--gold); 
-            margin-bottom: 40px; padding: 30px; display: none;
-            animation: fadeIn 0.5s ease;
-        }
+        #adminSection { width: 100%; display: none; margin-bottom: 30px; animation: fadeIn 0.5s; padding: 0 20px; }
+        .admin-flex { display: flex; gap: 20px; flex-wrap: wrap; }
+        .admin-box { flex: 1; min-width: 250px; background: #111; padding: 20px; border: 1px solid #333; border-radius: 15px; }
+        .admin-input { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; font-family: 'Cairo'; box-sizing: border-box; }
+        
+        .layout-btn { background: #222; color: gold; border: 1px solid #444; padding: 8px; width: 100%; margin: 5px 0; border-radius: 5px; font-size: 0.8rem; font-family: 'Cairo'; font-weight: bold; }
+        .layout-btn:hover { background: gold; color: black; }
 
-        .admin-box { 
-            background: rgba(255,255,255,0.03); 
-            padding: 20px; border-radius: 15px; 
-            border: 1px solid rgba(255,255,255,0.05);
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; justify-content: center; align-items: center; }
+        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); width: 90%; max-width: 400px; text-align: center; }
+        .qr-img { background: white; padding: 10px; border-radius: 10px; width: 180px; height: 180px; margin: 20px auto; display: block; }
+        #paymentScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
+        .payment-title { color: var(--gold); font-weight: 900; font-size: 1.6rem; margin-bottom: 5px; text-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
+        .payment-note { color: #ff4d4d; font-size: 0.9rem; font-weight: 600; line-height: 1.6; max-width: 250px; margin: 10px 0; }
 
-        .admin-input { 
-            width: 100%; padding: 12px; margin: 10px 0; 
-            background: #000; border: 1px solid #333; 
-            color: white; border-radius: 10px; font-family: 'Cairo';
-            box-sizing: border-box; 
-        }
-
-        /* --- المودال (النافذة المنبثقة) --- */
-        .modal { 
-            display: none; position: fixed; top: 0; left: 0; 
-            width: 100%; height: 100%; background: rgba(0,0,0,0.95); 
-            z-index: 99999; justify-content: center; align-items: center; 
-            backdrop-filter: blur(5px);
-        }
-        .modal-content { 
-            background: #111; padding: 40px; border-radius: 25px; 
-            border: 1px solid var(--gold); width: 90%; max-width: 450px; text-align: center; 
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* التجاوب مع الجوال */
-        @media (max-width: 768px) {
-            body { padding-top: 180px; }
-            nav { flex-direction: column; gap: 15px; }
-            .nav-wrapper { flex-wrap: wrap; justify-content: center; padding: 10px; font-size: 0.8rem; }
-            .gold-line { top: 165px; }
-            .brand-container { order: -1; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media (max-width: 768px) { 
+            nav { padding: 0 15px; flex-direction: column; gap: 10px; top: 10px; }
+            .brand-logo { border: none; padding: 0; }
+            .nav-wrapper { padding: 5px 10px; font-size: 0.8rem; }
         }
     </style>
 </head>
@@ -231,12 +224,12 @@
 
 <nav id="navbar">
     <div class="nav-wrapper" id="navMenu">
-        <a href="#" onclick="showSection('home')" id="nav-home">الرئيسية</a>
-        <a href="#" onclick="showSection('الـسيارات🚗')">السيارات</a>
-        <a href="#" onclick="showSection('الـعـقارات🏘️')">العقارات</a>
-        <a href="#" onclick="showSection('الـمـتاجـر🏪')">المتاجر</a>
-        <div class="currency-container" style="display:flex; align-items:center; background:rgba(255,255,255,0.1); padding:2px 10px; border-radius:10px;">
-            <select id="currSelect" onchange="updateCurrency()" style="background:none; color:white; border:none; font-family:'Cairo'; font-weight:700; outline:none;">
+        <a href="#" onclick="showSection('home')" id="nav-home" class="active">الرئيسية</a>
+        <a href="#" onclick="showSection('الـسيارات🚗')">سيارات</a>
+        <a href="#" onclick="showSection('الـعـقارات🏘️')">عقارات</a>
+        <a href="#" onclick="showSection('الـمـتاجـر🏪')">متاجر</a>
+        <div class="currency-container">
+            <select id="currSelect" onchange="updateCurrency()">
                 <option value="SR">SR</option>
                 <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
@@ -245,18 +238,17 @@
         </div>
     </div>
 
-    <div class="brand-container">
+    <div class="brand-container" id="brandContainer">
         <div class="brand-logo">Alamariyah RP</div>
-        <img src="https://cdn.discordapp.com/attachments/1331789439915266049/1455082018877735103/PsBMwzV.webp?ex=69536e3b&is=69521cbb&hm=1b0b626b03dc2254beb7ea42eb3975028f74e1b0f6a2c6dcde4efd80665e6e34&" class="brand-img" alt="Logo">
+        <img id="logoImg" src="https://cdn.discordapp.com/attachments/1331789439915266049/1455082018877735103/PsBMwzV.webp?ex=69536e3b&is=69521cbb&hm=1b0b626b03dc2254beb7ea42eb3975028f74e1b0f6a2c6dcde4efd80665e6e34&" class="brand-img" alt="Logo">
     </div>
 </nav>
 
 <div class="container">
     <div id="adminSection">
-        <h3 style="color:var(--gold); margin-top:0;">🛠️ لوحة الإدارة الاحترافية</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-            <div class="admin-box">
-                <h4>📦 إدارة المنتجات</h4>
+        <div class="admin-flex">
+            <div class="admin-box" style="border-top: 4px solid var(--gold);">
+                <h4>إدارة المنتجات</h4>
                 <input type="hidden" id="editIndex" value="">
                 <input type="text" id="pName" class="admin-input" placeholder="اسم المنتج">
                 <input type="number" id="pPrice" class="admin-input" placeholder="السعر (SR)">
@@ -265,90 +257,103 @@
                     <option value="الـعـقارات🏘️">عقارات</option>
                     <option value="الـمـتاجـر🏪">متاجر</option>
                 </select>
-                <input type="number" id="pStock" class="admin-input" placeholder="الكمية المتوفرة">
-                <input type="text" id="pImg" class="admin-input" placeholder="رابط صورة المنتج">
-                <button onclick="saveProduct()" class="buy-btn">حفظ وتحديث المتجر ✅</button>
+                <input type="number" id="pStock" class="admin-input" placeholder="المخزون">
+                <input type="text" id="pImg" class="admin-input" placeholder="رابط الصورة">
+                <button onclick="saveProduct()" class="buy-btn">حفظ المنتج ✅</button>
             </div>
 
-            <div class="admin-box">
-                <h4>🔥 نظام الخصومات</h4>
+            <div class="admin-box" style="border-top: 4px solid #00c3ff;">
+                <h4>إعدادات المظهر (UI)</h4>
+                <label style="font-size: 12px; color: #888;">تغيير خلفية القسم الحالي:</label>
+                <input type="text" id="bgUrlInput" class="admin-input" placeholder="ضع رابط الصورة هنا...">
+                <button onclick="updateSectionBG()" class="layout-btn" style="background:#00c3ff; color:white;">تطبيق الخلفية 🖼️</button>
+                <button onclick="resetBackgrounds()" class="layout-btn" style="background: #c0392b; color: white; margin-top: 10px;">إعادة تعيين الخلفيات الأصلية ↩️</button>
+            </div>
+
+            <div class="admin-box" style="border-top: 4px solid var(--discount-red);">
+                <h4>نظام الخصم المطور</h4>
                 <select id="discScope" class="admin-input">
-                    <option value="single">منتج محدد</option>
+                    <option value="single">منتج معين</option>
                     <option value="الـسيارات🚗">قسم السيارات</option>
                     <option value="الـعـقارات🏘️">قسم العقارات</option>
                     <option value="الـمـتاجـر🏪">قسم المتاجر</option>
-                    <option value="all">كل المتجر</option>
-                    <option value="coupon">إنشاء كود خصم</option>
+                    <option value="all">جميع المنتجات (المتجر)</option>
+                    <option value="coupon">إضافة كود خصم جديد</option>
                 </select>
-                <div id="productField"><select id="discProduct" class="admin-input"></select></div>
-                <div id="couponField" style="display:none;"><input type="text" id="couponCode" class="admin-input" placeholder="أدخل الكود (مثال: SAVE20)"></div>
+                <div id="couponField" style="display:none;">
+                    <input type="text" id="couponCode" class="admin-input" placeholder="أدخل الكود (مثال: AR50)">
+                </div>
+                <div id="productField">
+                    <select id="discProduct" class="admin-input"></select>
+                </div>
                 <input type="number" id="discPercent" class="admin-input" placeholder="نسبة الخصم %">
                 <input type="number" id="discHours" class="admin-input" placeholder="المدة بالساعات">
-                <button onclick="applyAdvancedDiscount()" class="buy-btn" style="background:var(--discount-red); color:white;">تفعيل العرض فوراً</button>
-            </div>
-
-            <div class="admin-box">
-                <h4>🎨 مظهر القسم</h4>
-                <input type="text" id="bgUrlInput" class="admin-input" placeholder="رابط الخلفية الجديد">
-                <button onclick="updateSectionBG()" class="buy-btn" style="background:#3498db; color:white;">تغيير الخلفية</button>
-                <button onclick="resetBackgrounds()" class="buy-btn" style="background:#555; color:white; margin-top:10px;">إعادة الافتراضي</button>
+                <button onclick="applyAdvancedDiscount()" class="buy-btn" style="background: var(--discount-red); color:white;">تفعيل الخصم 🔥</button>
             </div>
         </div>
-        <button onclick="closeAdmin()" class="buy-btn" style="background:#222; color:white; margin-top:20px;">إغلاق اللوحة</button>
+        <button onclick="closeAdmin()" class="buy-btn" style="background:#222; color:white; margin-top:15px;">إغلاق لوحة التحكم</button>
     </div>
 
-    <div id="homeSection">
-        <div class="section-header"><h2>أفضل العروض 🔥</h2></div>
+    <div id="homeSection" style="width: 100%;">
+        <div class="section-header"><h2>الأكثر مبيعاً 🔥</h2></div>
         <div class="grid" id="bestSellerGrid"></div>
     </div>
-    
-    <div id="categorySection" style="display:none;">
+    <div id="categorySection" style="display:none; width: 100%;">
         <div class="section-header"><h2 id="categoryTitle"></h2></div>
         <div class="grid" id="categoryGrid"></div>
     </div>
 </div>
 
-<button onclick="openAdmin()" style="position:fixed; bottom:20px; left:20px; width:40px; height:40px; border-radius:50%; background:rgba(212,175,55,0.2); border:1px solid var(--gold); z-index:10000; cursor:pointer; opacity:0.5;"></button>
+<button onclick="openAdmin()" class="admin-trigger"></button>
 
 <div id="orderModal" class="modal">
     <div class="modal-content" id="modalMain">
-        <h2 id="modalTitle" style="color:var(--gold); margin-bottom:20px;"></h2>
+        <h2 id="modalTitle" style="color:var(--gold)"></h2>
         <select id="usageType" class="admin-input">
             <option value="شخصي">استعمال شخصي</option>
-            <option value="هدية">إهداء لصديق</option>
+            <option value="هدية">هدية (منشن)</option>
         </select>
-        <input type="number" id="orderQty" class="admin-input" min="1" value="1" placeholder="الكمية">
-        <input type="text" id="orderDiscord" class="admin-input" placeholder="اسمك في ديسكورد أو الايدي">
-        <input type="text" id="orderCoupon" class="admin-input" placeholder="كود الخصم (إن وجد)">
-        <button onclick="goToPayment()" class="buy-btn">تأكيد ومتابعة</button>
-        <button onclick="closeModal()" style="background:none; border:none; color:gray; margin-top:15px; cursor:pointer;">إلغاء الطلب</button>
+        <input type="number" id="orderQty" class="admin-input" min="1" value="1">
+        <input type="text" id="orderDiscord" class="admin-input" placeholder="ايدي ديسكوردك">
+        <input type="text" id="orderCoupon" class="admin-input" placeholder="كود الخصم (اختياري)">
+        <button onclick="goToPayment()" class="buy-btn">متابعة</button>
+        <button onclick="closeModal()" style="background:none; border:none; color:gray; margin-top:10px;">إلغاء</button>
     </div>
     
     <div class="modal-content" id="paymentScreen" style="display:none;">
-        <h2 style="color:var(--gold)">إتمام عملية الدفع</h2>
-        <div id="paymentSummary" style="margin: 15px 0; font-weight: bold; background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;"></div>
-        <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=AR_STORE_PAYMENT" style="background:white; padding:10px; border-radius:15px; margin:15px 0;">
-        <p style="color:var(--discount-red); font-size:0.85rem;">يرجى تصوير إيصال التحويل لتقديمه في التذكرة</p>
-        <button onclick="finishOrder()" class="buy-btn" id="finalBtn">فتح تذكرة استلام ✅</button>
+        <div class="payment-title">تأكيد الدفع</div>
+        <div id="paymentSummary" style="font-size: 0.9rem; margin-bottom: 10px; color: #aaa;"></div>
+        <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=AR_PAY" alt="QR Code">
+        <span class="payment-note">يجب التحويل عبر البركود قبل فتح تذكرة</span>
+        <button onclick="finishOrder()" class="buy-btn" id="finalBtn">فتح تذكرة الآن ✅</button>
     </div>
 </div>
 
 <script>
-    // --- الإعدادات والروابط ---
-    const BASE_URL = "https://ar-store-i6tw.onrender.com"; 
-    const BOT_URL = `${BASE_URL}/open-ticket`;
-    const DATA_URL = `${BASE_URL}/get-data`; 
-    const SAVE_URL = `${BASE_URL}/save-data`; 
+    let customSectionImages = JSON.parse(localStorage.getItem('ar_custom_bgs')) || {};
 
-    let products = [];
-    let coupons = [];
-    let customSectionImages = {};
-    let currentCurr = "SR";
-    let currentView = 'home';
-    let currentIndex = null;
-    let finalOrderPrice = 0;
+    function updateSectionBG() {
+        const url = document.getElementById('bgUrlInput').value;
+        if(url) {
+            customSectionImages[currentView] = url;
+            localStorage.setItem('ar_custom_bgs', JSON.stringify(customSectionImages));
+            document.getElementById('section-bg').style.backgroundImage = `url('${url}')`;
+            alert("تم حفظ خلفية قسم " + currentView);
+            document.getElementById('bgUrlInput').value = "";
+        }
+    }
 
+    function resetBackgrounds() {
+        if(confirm("هل تريد العودة للخلفيات الأصلية لجميع الأقسام؟")) {
+            localStorage.removeItem('ar_custom_bgs');
+            customSectionImages = {};
+            showSection(currentView);
+        }
+    }
+
+    const BOT_URL = "https://ar-store-i6tw.onrender.com/open-ticket";
     const rates = { "SR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.082 };
+    
     const sectionImages = {
         'home': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=2070',
         'الـسيارات🚗': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=2070',
@@ -356,43 +361,31 @@
         'الـمـتاجـر🏪': 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?q=80&w=2070'
     };
 
-    // الماوس الذهبي
+    let currentCurr = "SR";
+    let products = JSON.parse(localStorage.getItem('ar_store_v12')) || [];
+    let coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
+    let currentView = 'home';
+    let currentIndex = null;
+    let finalOrderPrice = 0;
+
     const cursor = document.getElementById('custom-cursor');
     document.addEventListener('mousemove', (e) => { 
         cursor.style.left = e.clientX + 'px'; 
         cursor.style.top = e.clientY + 'px'; 
     });
 
-    // جلب البيانات
-    async function loadDataFromServer() {
-        try {
-            const res = await fetch(DATA_URL);
-            const data = await res.json();
-            if(data) {
-                products = data.products || [];
-                coupons = data.coupons || [];
-                customSectionImages = data.backgrounds || {};
-            }
-        } catch (e) {
-            products = JSON.parse(localStorage.getItem('ar_store_v12')) || [];
-            coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
-            customSectionImages = JSON.parse(localStorage.getItem('ar_custom_bgs')) || {};
-        }
-        render();
-        showSection(currentView);
-    }
+    document.getElementById('discScope').addEventListener('change', function() {
+        document.getElementById('productField').style.display = (this.value === 'single') ? 'block' : 'none';
+        document.getElementById('couponField').style.display = (this.value === 'coupon') ? 'block' : 'none';
+    });
 
-    async function saveAll() { 
-        localStorage.setItem('ar_store_v12', JSON.stringify(products));
-        localStorage.setItem('ar_coupons_v12', JSON.stringify(coupons));
-        localStorage.setItem('ar_custom_bgs', JSON.stringify(customSectionImages));
-        try {
-            await fetch(SAVE_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ products, coupons, backgrounds: customSectionImages })
-            });
-        } catch(e) {}
+    function getRemainingTime(expiry) {
+        const diff = expiry - new Date().getTime();
+        if (diff <= 0) return null;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        return `${h}h:${m}m:${s}s`;
     }
 
     function render() {
@@ -400,110 +393,172 @@
         const bestGrid = document.getElementById('bestSellerGrid');
         const catGrid = document.getElementById('categoryGrid');
         bestGrid.innerHTML = ''; catGrid.innerHTML = '';
-        
         document.getElementById('discProduct').innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
-        const isAdmin = document.getElementById('adminSection').style.display === 'block';
+
+        const isAdminOpen = document.getElementById('adminSection').style.display === 'block';
 
         products.forEach((p, i) => {
             let price = p.price;
             let hasDisc = (p.discount && p.discount.expiry > now);
+            let timeText = hasDisc ? getRemainingTime(p.discount.expiry) : null;
             if (hasDisc) price = p.price - (p.price * (p.discount.percent / 100));
 
             const convPrice = (price * rates[currentCurr]).toFixed(2);
             const convOld = (p.price * rates[currentCurr]).toFixed(2);
-            
+            const isOut = p.stock <= 0;
+
             const cardHtml = `
-                <div class="card ${p.stock <= 0 ? 'out-of-stock' : ''}">
-                    ${hasDisc ? `<div class="discount-badge">-${p.discount.percent}%</div>` : ''}
-                    <img src="${p.img || 'https://via.placeholder.com/300x180'}" onerror="this.src='https://via.placeholder.com/300x180?text=AR+STORE'">
+                <div class="card ${isOut ? 'out-of-stock' : ''}">
+                    ${hasDisc ? `<div class="discount-badge">خصم ${p.discount.percent}%</div>` : ''}
+                    <img src="${p.img || 'https://via.placeholder.com/160'}">
                     <div class="card-content">
-                        <h3 style="margin:0 0 10px 0; font-size:1.1rem;">${p.name}</h3>
+                        <h3>${p.name}</h3>
                         <div>
-                            ${hasDisc ? `<span class="old-price">${convOld}</span>` : ''}
+                            ${hasDisc ? `<span class="old-price">${convOld} ${currentCurr}</span>` : ''}
                             <span class="price">${convPrice} ${currentCurr}</span>
                         </div>
-                        <p style="font-size:11px; color:#666; margin:10px 0;">المخزون: ${p.stock}</p>
-                        ${hasDisc ? `<div class="timer-display" id="timer-${i}">جاري الحساب...</div>` : ''}
-                        <button class="buy-btn" onclick="openOrder(${i})">${p.stock <= 0 ? 'نفذت الكمية' : 'طلب المنتج'}</button>
-                        ${isAdmin ? `<div style="display:flex; gap:5px; margin-top:10px;">
-                            <button onclick="editP(${i})" style="flex:1; padding:5px; border-radius:5px; background:#444; color:gold; border:none; font-weight:bold;">تعديل</button>
-                            <button onclick="deleteP(${i})" style="flex:1; padding:5px; border-radius:5px; background:#444; color:red; border:none; font-weight:bold;">حذف</button>
-                        </div>` : ''}
+                        <p style="font-size:10px; color:gray; margin: 5px 0;">المخزون: ${p.stock}</p>
+                        ${hasDisc && timeText ? `<div class="timer-display">${timeText}</div>` : ''}
+                        <button class="buy-btn" onclick="openOrder(${i})">${isOut ? 'نفذت الكمية' : 'اطلب الآن'}</button>
+                        ${isAdminOpen ? `
+                            <div style="display:flex; gap:5px; margin-top:10px;">
+                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; font-weight:bold;">تعديل</button>
+                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; font-weight:bold;">حذف</button>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>`;
 
-            if (currentView === 'home' && (hasDisc || i < 4)) bestGrid.innerHTML += cardHtml;
+            if (currentView === 'home' && (p.sales > 0 || hasDisc)) bestGrid.innerHTML += cardHtml;
             if (p.category === currentView) catGrid.innerHTML += cardHtml;
-            
-            if(hasDisc) updateTimer(i, p.discount.expiry);
         });
     }
 
-    function updateTimer(idx, expiry) {
-        setInterval(() => {
-            const el = document.getElementById(`timer-${idx}`);
-            if(!el) return;
-            const diff = expiry - new Date().getTime();
-            if(diff <= 0) { el.innerText = "انتهى العرض"; return; }
-            const h = Math.floor(diff / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            el.innerText = `ينتهي خلال: ${h}س ${m}د ${s}ث`;
-        }, 1000);
-    }
+    async function finishOrder() {
+        const btn = document.getElementById('finalBtn');
+        btn.disabled = true; btn.innerText = "جاري الاتصال...";
+        const p = products[currentIndex];
+        const qty = document.getElementById('orderQty').value;
+        const disc = document.getElementById('orderDiscord').value;
+        const usage = document.getElementById('usageType').value;
 
-    function showSection(s) {
-        currentView = s;
-        const bg = customSectionImages[s] || sectionImages[s];
-        document.getElementById('section-bg').style.backgroundImage = `url('${bg}')`;
-        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-        
-        if(s === 'home') {
-            document.getElementById('homeSection').style.display = 'block';
-            document.getElementById('categorySection').style.display = 'none';
-            document.getElementById('nav-home').classList.add('active');
-        } else {
-            document.getElementById('homeSection').style.display = 'none';
-            document.getElementById('categorySection').style.display = 'block';
-            document.getElementById('categoryTitle').innerText = `قسم ${s.replace(/🚗|🏘️|🏪/g, '')}`;
-            document.querySelectorAll('nav a').forEach(a => {
-                if(a.innerText.includes(s.replace(/🚗|🏘️|🏪/g, ''))) a.classList.add('active');
+        try {
+            const response = await fetch(BOT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productName: p.name, buyerId: disc.trim(), qty: qty, total: finalOrderPrice, usage: usage
+                })
             });
+            const result = await response.json();
+            if (result.success) {
+                alert("✅ تم فتح التذكرة بنجاح!");
+                location.reload();
+            } else {
+                alert("❌ خطأ: " + result.error);
+                btn.disabled = false; btn.innerText = "فتح تذكرة الآن ✅";
+            }
+        } catch (err) {
+            alert("❌ فشل الاتصال بالبوت.");
+            btn.disabled = false;
         }
-        render();
-    }
-
-    function saveProduct() {
-        const idx = document.getElementById('editIndex').value;
-        const p = {
-            name: document.getElementById('pName').value,
-            price: parseFloat(document.getElementById('pPrice').value),
-            category: document.getElementById('pCategory').value,
-            stock: parseInt(document.getElementById('pStock').value),
-            img: document.getElementById('pImg').value,
-            sales: 0, discount: null
-        };
-        if(!p.name || isNaN(p.price)) return alert("يرجى ملء الحقول الأساسية");
-        if(idx === "") products.push(p); else products[idx] = {...products[idx], ...p};
-        document.getElementById('editIndex').value = "";
-        saveAll(); render(); alert("تم التحديث بنجاح!");
     }
 
     function applyAdvancedDiscount() {
         const scope = document.getElementById('discScope').value;
         const percent = parseInt(document.getElementById('discPercent').value);
-        const expiry = new Date().getTime() + (parseFloat(document.getElementById('discHours').value) * 3600000);
+        const hours = parseFloat(document.getElementById('discHours').value);
+        const now = new Date().getTime();
+        const expiry = now + (hours * 3600000);
+
+        if(isNaN(percent) || isNaN(hours)) return alert("يرجى إكمال البيانات");
 
         if(scope === 'coupon') {
-            coupons.push({ code: document.getElementById('couponCode').value, percent, expiry });
+            const code = document.getElementById('couponCode').value;
+            if(!code) return alert("أدخل كود الخصم");
+            coupons.push({ code, percent, expiry });
+            localStorage.setItem('ar_coupons_v12', JSON.stringify(coupons));
+            alert("تمت إضافة كود الخصم!");
         } else {
             products.forEach((p, i) => {
                 if(scope === 'all' || p.category === scope || (scope === 'single' && i == document.getElementById('discProduct').value)) {
                     p.discount = { percent, expiry };
                 }
             });
+            saveAll();
         }
-        saveAll(); render(); alert("تم تفعيل الخصم!");
+        render();
+    }
+
+    function goToPayment() {
+        const qty = parseInt(document.getElementById('orderQty').value);
+        const discord = document.getElementById('orderDiscord').value;
+        const couponInput = document.getElementById('orderCoupon').value.trim();
+        const now = new Date().getTime();
+        if(!discord) return alert("يرجى كتابة ايدي ديسكوردك");
+
+        let p = products[currentIndex];
+        let pricePerUnit = p.price;
+        if(p.discount && p.discount.expiry > now) pricePerUnit = p.price - (p.price * (p.discount.percent / 100));
+        const coupon = coupons.find(c => c.code === couponInput && c.expiry > now);
+        if(coupon) pricePerUnit = pricePerUnit - (pricePerUnit * (coupon.percent / 100));
+
+        finalOrderPrice = (pricePerUnit * qty).toFixed(2);
+        document.getElementById('paymentSummary').innerText = `إجمالي المبلغ: ${finalOrderPrice} SR`;
+        document.getElementById('modalMain').style.display = 'none';
+        document.getElementById('paymentScreen').style.display = 'flex';
+    }
+
+    function saveProduct() {
+        const idx = document.getElementById('editIndex').value;
+        const name = document.getElementById('pName').value;
+        const price = parseFloat(document.getElementById('pPrice').value);
+        const category = document.getElementById('pCategory').value;
+        const stock = parseInt(document.getElementById('pStock').value);
+        const img = document.getElementById('pImg').value;
+        if (!name || isNaN(price)) return alert("أكمل البيانات");
+
+        const p = { name, price, category, stock, img, sales: 0, discount: null };
+        if(idx === "") products.push(p);
+        else { products[idx] = p; document.getElementById('editIndex').value = ""; }
+        saveAll(); 
+        render();
+        alert("تم حفظ المنتج بنجاح!");
+    }
+
+    function deleteP(i) { if(confirm("حذف المنتج؟")) { products.splice(i, 1); saveAll(); render(); } }
+    function editP(i) {
+        const p = products[i];
+        document.getElementById('editIndex').value = i;
+        document.getElementById('pName').value = p.name;
+        document.getElementById('pPrice').value = p.price;
+        document.getElementById('pCategory').value = p.category;
+        document.getElementById('pStock').value = p.stock;
+        document.getElementById('pImg').value = p.img;
+        window.scrollTo(0,0);
+    }
+    function saveAll() { localStorage.setItem('ar_store_v12', JSON.stringify(products)); }
+    function openAdmin() { if(prompt("الباسورد:") === "admin123") { document.getElementById('adminSection').style.display = 'block'; render(); } }
+    function closeAdmin() { document.getElementById('adminSection').style.display = 'none'; render(); }
+    function updateCurrency() { currentCurr = document.getElementById('currSelect').value; render(); }
+
+    function showSection(s) {
+        currentView = s;
+        const bg = customSectionImages[s] || sectionImages[s];
+        document.getElementById('section-bg').style.backgroundImage = `url('${bg}')`;
+        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+        document.getElementById('homeSection').style.display = (s === 'home') ? 'block' : 'none';
+        document.getElementById('categorySection').style.display = (s === 'home') ? 'none' : 'block';
+        if(s === 'home') {
+            document.getElementById('nav-home').classList.add('active');
+        } else {
+            // تفعيل الرابط المناسب في القائمة
+            document.querySelectorAll('nav a').forEach(a => {
+                if(a.innerText.includes(s.replace(/🚗|🏘️|🏪/g, ''))) a.classList.add('active');
+            });
+            document.getElementById('categoryTitle').innerHTML = `قسم ${s.replace(/🚗|🏘️|🏪/g, '')}`;
+        }
+        render();
     }
 
     function openOrder(i) {
@@ -513,73 +568,12 @@
         document.getElementById('paymentScreen').style.display = 'none';
         document.getElementById('orderModal').style.display = 'flex';
     }
-
-    function goToPayment() {
-        const qty = parseInt(document.getElementById('orderQty').value);
-        const discord = document.getElementById('orderDiscord').value;
-        const couponInput = document.getElementById('orderCoupon').value.trim();
-        if(!discord) return alert("يرجى إدخال معرف الديسكورد");
-
-        let p = products[currentIndex];
-        let price = p.price;
-        if(p.discount && p.discount.expiry > new Date().getTime()) price -= (price * p.discount.percent / 100);
-        
-        const cp = coupons.find(c => c.code === couponInput && c.expiry > new Date().getTime());
-        if(cp) price -= (price * cp.percent / 100);
-
-        finalOrderPrice = (price * qty).toFixed(2);
-        document.getElementById('paymentSummary').innerText = `المطلوب تحويله: ${finalOrderPrice} SR`;
-        document.getElementById('modalMain').style.display = 'none';
-        document.getElementById('paymentScreen').style.display = 'flex';
-    }
-
-    async function finishOrder() {
-        const btn = document.getElementById('finalBtn');
-        btn.disabled = true; btn.innerText = "جاري الإرسال...";
-        try {
-            const res = await fetch(BOT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    productName: products[currentIndex].name,
-                    buyerId: document.getElementById('orderDiscord').value,
-                    qty: document.getElementById('orderQty').value,
-                    total: finalOrderPrice,
-                    usage: document.getElementById('usageType').value
-                })
-            });
-            const data = await res.json();
-            if(data.success) { alert("تم فتح التذكرة بنجاح!"); location.reload(); }
-            else { alert("خطأ: " + data.error); btn.disabled = false; }
-        } catch(e) { alert("فشل الاتصال بالبوت"); btn.disabled = false; }
-    }
-
-    function openAdmin() { if(prompt("كلمة المرور:") === "admin123") { document.getElementById('adminSection').style.display = 'block'; render(); } }
-    function closeAdmin() { document.getElementById('adminSection').style.display = 'none'; render(); }
     function closeModal() { document.getElementById('orderModal').style.display = 'none'; }
-    function updateCurrency() { currentCurr = document.getElementById('currSelect').value; render(); }
-    function deleteP(i) { if(confirm("حذف؟")) { products.splice(i,1); saveAll(); render(); } }
-    function editP(i) {
-        const p = products[i];
-        document.getElementById('editIndex').value = i;
-        document.getElementById('pName').value = p.name;
-        document.getElementById('pPrice').value = p.price;
-        document.getElementById('pStock').value = p.stock;
-        document.getElementById('pImg').value = p.img;
-        window.scrollTo(0,0);
-    }
-    function updateSectionBG() {
-        customSectionImages[currentView] = document.getElementById('bgUrlInput').value;
-        saveAll(); showSection(currentView);
-    }
-    function resetBackgrounds() { customSectionImages = {}; saveAll(); showSection(currentView); }
 
-    document.getElementById('discScope').onchange = function() {
-        document.getElementById('productField').style.display = this.value === 'single' ? 'block' : 'none';
-        document.getElementById('couponField').style.display = this.value === 'coupon' ? 'block' : 'none';
-    };
-
-    window.onload = loadDataFromServer;
+    window.addEventListener('load', () => {
+        showSection('home');
+        setInterval(render, 1000);
+    });
 </script>
 </body>
 </html>
