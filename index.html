@@ -330,9 +330,13 @@
 </div>
 
 <script>
-    // تهيئة البيانات
-    let customSectionImages = JSON.parse(localStorage.getItem('ar_custom_bgs')) || {};
-    const BOT_URL = "https://ar-store-i6tw.onrender.com/open-ticket";
+    // الإعدادات والعناوين
+    const BASE_URL = "https://ar-store-i6tw.onrender.com"; // رابط السيرفر الخاص بك
+    const BOT_URL = `${BASE_URL}/open-ticket`;
+    const DATA_URL = `${BASE_URL}/get-data`; // رابط لجلب المنتجات والخلفيات
+    const SAVE_URL = `${BASE_URL}/save-data`; // رابط لحفظ المنتجات والخلفيات
+
+    let customSectionImages = {};
     const rates = { "SR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.082 };
     
     const sectionImages = {
@@ -343,8 +347,8 @@
     };
 
     let currentCurr = "SR";
-    let products = JSON.parse(localStorage.getItem('ar_store_v12')) || [];
-    let coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
+    let products = [];
+    let coupons = [];
     let currentView = 'home';
     let currentIndex = null;
     let finalOrderPrice = 0;
@@ -356,7 +360,44 @@
         cursor.style.top = e.clientY + 'px'; 
     });
 
-    // تبديل حقول الخصم
+    // جلب البيانات من السيرفر عند التحميل
+    async function loadDataFromServer() {
+        try {
+            const response = await fetch(DATA_URL);
+            const data = await response.json();
+            if(data) {
+                products = data.products || [];
+                coupons = data.coupons || [];
+                customSectionImages = data.backgrounds || {};
+                render();
+                showSection(currentView);
+            }
+        } catch (e) {
+            console.log("فشل جلب البيانات من السيرفر، استخدام البيانات المحلية مؤقتاً");
+            products = JSON.parse(localStorage.getItem('ar_store_v12')) || [];
+            coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
+            customSectionImages = JSON.parse(localStorage.getItem('ar_custom_bgs')) || {};
+            render();
+        }
+    }
+
+    // حفظ البيانات للسيرفر (ليراها الجميع)
+    async function syncWithServer() {
+        try {
+            await fetch(SAVE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    products: products,
+                    coupons: coupons,
+                    backgrounds: customSectionImages
+                })
+            });
+        } catch (e) {
+            console.error("خطأ في المزامنة مع السيرفر");
+        }
+    }
+
     document.getElementById('discScope').addEventListener('change', function() {
         document.getElementById('productField').style.display = (this.value === 'single') ? 'block' : 'none';
         document.getElementById('couponField').style.display = (this.value === 'coupon') ? 'block' : 'none';
@@ -466,24 +507,24 @@
         }
         saveAll(); 
         render();
-        alert("تم حفظ المنتج بنجاح!");
+        alert("تم حفظ المنتج بنجاح ونشره للجميع!");
     }
 
     function updateSectionBG() {
         const url = document.getElementById('bgUrlInput').value;
         if(url) {
             customSectionImages[currentView] = url;
-            localStorage.setItem('ar_custom_bgs', JSON.stringify(customSectionImages));
+            saveAll();
             document.getElementById('section-bg').style.backgroundImage = `url('${url}')`;
-            alert("تم حفظ خلفية قسم " + currentView);
+            alert("تم حفظ الخلفية ونشرها للجميع في قسم " + currentView);
             document.getElementById('bgUrlInput').value = "";
         }
     }
 
     function resetBackgrounds() {
         if(confirm("هل تريد العودة للخلفيات الأصلية لجميع الأقسام؟")) {
-            localStorage.removeItem('ar_custom_bgs');
             customSectionImages = {};
+            saveAll();
             showSection(currentView);
         }
     }
@@ -531,7 +572,7 @@
             const code = document.getElementById('couponCode').value;
             if(!code) return alert("أدخل كود الخصم");
             coupons.push({ code, percent, expiry });
-            localStorage.setItem('ar_coupons_v12', JSON.stringify(coupons));
+            saveAll();
             alert("تمت إضافة كود الخصم!");
         } else {
             products.forEach((p, i) => {
@@ -576,7 +617,12 @@
         window.scrollTo(0,0);
     }
 
-    function saveAll() { localStorage.setItem('ar_store_v12', JSON.stringify(products)); }
+    function saveAll() { 
+        localStorage.setItem('ar_store_v12', JSON.stringify(products));
+        localStorage.setItem('ar_coupons_v12', JSON.stringify(coupons));
+        localStorage.setItem('ar_custom_bgs', JSON.stringify(customSectionImages));
+        syncWithServer(); // إرسال البيانات للسيرفر ليراها الآخرون
+    }
     
     function openAdmin() { 
         if(prompt("الباسورد:") === "admin123") { 
@@ -607,8 +653,8 @@
 
     // تشغيل الصفحة
     window.onload = () => {
-        showSection('home');
-        setInterval(render, 1000); // لتحديث عداد الخصم
+        loadDataFromServer(); // جلب البيانات من السيرفر فور فتح الصفحة
+        setInterval(render, 1000); 
     };
 </script>
 </body>
