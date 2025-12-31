@@ -495,14 +495,47 @@
 
         const isAdminOpen = document.getElementById('adminSection').style.display === 'block';
 
-        // عرض شريط اختيار الشركات إذا كنا في قسم السيارات
-        if (currentView === 'الـسيارات🚗') {
-            brandSelector.style.display = 'flex';
-            brandSelector.innerHTML = `<button class="brand-btn ${selectedBrand === 'all' ? 'active' : ''}" onclick="filterByBrand('all')">الكل</button>` + 
-                carBrands.map(b => `<button class="brand-btn ${selectedBrand === b.id ? 'active' : ''}" onclick="filterByBrand('${b.id}')"><img src="${b.logo}">${b.name}</button>`).join('');
-        } else {
-            brandSelector.style.display = 'none';
-        }
+// --- تعديل قسم اختيار الشركات إلى Select Menu ---
+
+const { ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
+
+// مصفوفة الشركات مع الشعارات المقترحة (Emoji)
+const brands = [
+    { label: 'الكل', value: 'all', emoji: '🌐' },
+    { label: 'Nissan', value: 'nissan', emoji: '🚗' },
+    { label: 'Lexus', value: 'lexus', emoji: '🏎️' },
+    { label: 'Mercedes', value: 'mercedes', emoji: '🇩🇪' },
+    { label: 'Hyundai', value: 'hyundai', emoji: '🇰🇷' },
+    { label: 'Honda', value: 'honda', emoji: '🇯🇵' },
+    { label: 'Rolls Royce', value: 'rolls_royce', emoji: '💎' },
+    { label: 'Dodge', value: 'dodge', emoji: '🇺🇸' },
+    { label: 'Toyota', value: 'toyota', emoji: '🇯🇵' },
+    { label: 'Kia', value: 'kia', emoji: '🇰🇷' },
+    { label: 'Ford', value: 'ford', emoji: '🚙' }, // تم إضافة شعار للفورد
+    { label: 'Chevrolet', value: 'chevrolet', emoji: '🏁' },
+    { label: 'BMW', value: 'bmw', emoji: '🏁' },
+    { label: 'Geely', value: 'geely', emoji: '🇨🇳' },
+    { label: 'Mazda', value: 'mazda', emoji: '🇯🇵' }
+];
+
+// إنشاء المنيو
+const selectMenu = new StringSelectMenuBuilder()
+    .setCustomId('select_brand')
+    .setPlaceholder('اختر شركة السيارة من هنا...')
+    .addOptions(
+        brands.map(brand => 
+            new StringSelectMenuOptionBuilder()
+                .setLabel(brand.label)
+                .setValue(brand.value)
+                .setEmoji(brand.emoji)
+        )
+    );
+
+// وضع المنيو في Row
+const row = new ActionRowBuilder().addComponents(selectMenu);
+
+// عند إرسال الرسالة (Embed)، أضف الـ row إليها
+// سيظهر المنيو بشكل عرضي كامل أسفل النص، وهو التصميم القياسي والأجمل في ديسكورد
 
         // تجميع المنتجات حسب الشركة إذا كان الاختيار "الكل"
         const groupedProducts = {};
@@ -763,3 +796,4 @@
 </script>
 </body>
 </html>
+
