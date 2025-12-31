@@ -554,22 +554,34 @@
         const isAdminOpen = document.getElementById('adminSection').style.display === 'block';
 
         bestGrid.innerHTML = ''; 
+function render() {
+        // التحقق من وجود العناصر قبل البدء لتجنب توقف الكود
+        const catGrid = document.getElementById('catGrid');
+        const gridContainer = document.getElementById('gridContainer');
+        const catLogo = document.getElementById('catLogo');
+        const bestGrid = document.getElementById('bestGrid'); // العنصر المسبب للمشكلة
+        const discProduct = document.getElementById('discProduct');
+
+        // إذا كانت العناصر الأساسية غير موجودة، نوقف الدالة حتى لا يحدث خطأ
+        if (!catGrid || !gridContainer || !catLogo) return;
+
         catGrid.innerHTML = '';
         gridContainer.innerHTML = '';
         catLogo.style.display = 'none';
 
-        document.getElementById('discProduct').innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+        if (discProduct) {
+            discProduct.innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+        }
 
         if (currentView === 'الـسيارات🚗') {
             if (currentBrandFilter === 'all') {
-                // عرض مقسم حسب الشركات
                 const brandsPresent = [...new Set(products.filter(p => p.category === 'الـسيارات🚗' && p.brand !== 'none').map(p => p.brand))];
                 brandsPresent.forEach(brandKey => {
                     const brandSection = document.createElement('div');
                     brandSection.innerHTML = `
                         <div style="display:flex; align-items:center; gap:15px; margin-top:20px;">
-                            <img src="${brandLogos[brandKey]}" style="width:40px; height:40px; object-fit:contain;">
-                            <h3 style="color:var(--gold); margin:0;">${brandNames[brandKey]}</h3>
+                            <img src="${brandLogos[brandKey] || ''}" style="width:40px; height:40px; object-fit:contain;">
+                            <h3 style="color:var(--gold); margin:0;">${brandNames[brandKey] || brandKey}</h3>
                         </div>
                         <div class="grid" style="margin-top:15px;">
                             ${products.map((p, i) => (p.category === 'الـسيارات🚗' && p.brand === brandKey) ? generateCardHtml(p, i, isAdminOpen) : '').join('')}
@@ -579,10 +591,10 @@
                     gridContainer.appendChild(brandSection);
                 });
             } else {
-                // شركة واحدة فقط
-                catLogo.src = brandLogos[currentBrandFilter];
+                catLogo.src = brandLogos[currentBrandFilter] || '';
                 catLogo.style.display = 'block';
-                document.getElementById('categoryTitle').innerText = `قسم ${brandNames[currentBrandFilter]}`;
+                const catTitle = document.getElementById('categoryTitle');
+                if (catTitle) catTitle.innerText = `قسم ${brandNames[currentBrandFilter]}`;
                 
                 const singleGrid = document.createElement('div');
                 singleGrid.className = 'grid';
@@ -590,61 +602,23 @@
                 gridContainer.appendChild(singleGrid);
             }
         } else {
-            // الأقسام الأخرى (عقارات / متاجر)
             const otherGrid = document.createElement('div');
             otherGrid.className = 'grid';
             otherGrid.innerHTML = products.map((p, i) => (p.category === currentView) ? generateCardHtml(p, i, isAdminOpen) : '').join('');
             gridContainer.appendChild(otherGrid);
         }
 
-        // الرئيسية - الأكثر مبيعاً
-        products.forEach((p, i) => {
-            const now = new Date().getTime();
-            let hasDisc = (p.discount && p.discount.expiry > now);
-            if (currentView === 'home' && (p.sales > 0 || hasDisc)) {
-                bestGrid.innerHTML += generateCardHtml(p, i, isAdminOpen);
-            }
-        });
-    }
-
-    function getRemainingTime(expiry) {
-        const diff = expiry - new Date().getTime();
-        if (diff <= 0) return null;
-        const h = Math.floor(diff / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        return `${h}h:${m}m:${s}s`;
-    }
-
-    async function applyAdvancedDiscount() {
-        const scope = document.getElementById('discScope').value;
-        const percent = parseFloat(document.getElementById('discPercent').value);
-        const hours = parseFloat(document.getElementById('discHours').value);
-        const expiry = new Date().getTime() + (hours * 3600000);
-
-        if(isNaN(percent) || isNaN(hours)) return alert("يرجى إدخال أرقام صحيحة");
-
-        if (scope === 'brand_cars') {
-            const targetBrand = document.getElementById('discBrandSelect').value;
-            products.forEach(p => {
-                if(p.category === 'الـسيارات🚗' && p.brand === targetBrand) p.discount = { percent, expiry };
-            });
-        } else if (scope === 'single') {
-            const idx = document.getElementById('discProduct').value;
-            products[idx].discount = { percent, expiry };
-        } else if (scope === 'coupon') {
-            const code = document.getElementById('couponCode').value;
-            if(!code) return alert("ادخل الكود");
-            coupons.push({ code, percent, expiry });
-            localStorage.setItem('ar_coupons_v12', JSON.stringify(coupons));
-        } else {
-            products.forEach(p => {
-                if(scope === 'all' || p.category === scope) p.discount = { percent, expiry };
+        // الرئيسية - الأكثر مبيعاً (إصلاح الخطأ هنا)
+        if (bestGrid) {
+            bestGrid.innerHTML = ''; // تنظيف المحتوى أولاً
+            products.forEach((p, i) => {
+                const now = new Date().getTime();
+                let hasDisc = (p.discount && p.discount.expiry > now);
+                if (currentView === 'home' && (p.sales > 0 || hasDisc)) {
+                    bestGrid.innerHTML += generateCardHtml(p, i, isAdminOpen);
+                }
             });
         }
-        await saveProductsToDB();
-        render();
-        alert("تم تفعيل الخصم!");
     }
 
     async function saveProduct() {
@@ -655,17 +629,30 @@
         const stock = parseInt(document.getElementById('pStock').value);
         const img = document.getElementById('pImg').value;
         const brand = document.getElementById('pBrandAttr').value;
+        
         if (!name || isNaN(price)) return alert("أكمل البيانات");
 
         const p = { name, price, category, stock, img, brand, sales: 0, discount: null };
-        if(idx === "") products.push(p);
-        else { 
-            const old = products[idx];
-            products[idx] = {...p, sales: old.sales, discount: old.discount};
-            document.getElementById('editIndex').value = ""; 
+        
+        try {
+            if(idx === "") {
+                products.push(p);
+            } else { 
+                const old = products[idx];
+                products[idx] = {...p, sales: old.sales, discount: old.discount};
+                document.getElementById('editIndex').value = ""; 
+            }
+            
+            await saveProductsToDB();
+            render();
+            alert("تم الحفظ بنجاح!");
+            // إغلاق المودال أو النافذة بعد الحفظ إذا أردت
+            if(typeof closeModal === 'function') closeModal();
+        } catch (error) {
+            console.error("خطأ في الحفظ:", error);
+            alert("حدث خطأ أثناء الاتصال بالسيرفر");
         }
-        await saveProductsToDB();
-        render();
+    }
         alert("تم الحفظ!");
     }
 
@@ -764,3 +751,4 @@
 </script>
 </body>
 </html>
+
