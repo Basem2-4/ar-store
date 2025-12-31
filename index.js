@@ -4,7 +4,7 @@ const {
 } = require('discord.js');
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose'); // إضافة مكتبة قاعدة البيانات
+const mongoose = require('mongoose');
 
 const app = express();
 app.use(cors()); 
@@ -23,9 +23,7 @@ const StoreSchema = new mongoose.Schema({
 });
 const Store = mongoose.model('Store', StoreSchema);
 
-// --- مسارات جلب وحفظ البيانات (للمتجر) ---
-
-// جلب المنتجات والخلفيات
+// --- مسارات جلب وحفظ البيانات ---
 app.get('/get-store-data', async (req, res) => {
     try {
         let data = await Store.findOne({ configId: "main" });
@@ -36,7 +34,6 @@ app.get('/get-store-data', async (req, res) => {
     }
 });
 
-// حفظ المنتجات
 app.post('/save-products', async (req, res) => {
     try {
         await Store.findOneAndUpdate({ configId: "main" }, { products: req.body.products }, { upsert: true });
@@ -46,7 +43,6 @@ app.post('/save-products', async (req, res) => {
     }
 });
 
-// حفظ الخلفيات
 app.post('/save-bgs', async (req, res) => {
     try {
         await Store.findOneAndUpdate({ configId: "main" }, { customBgs: req.body.customBgs }, { upsert: true });
@@ -56,7 +52,6 @@ app.post('/save-bgs', async (req, res) => {
     }
 });
 
-// مسار فحص الحالة
 app.get('/', (req, res) => res.send('Server is Online 🚀'));
 
 const client = new Client({
@@ -120,19 +115,34 @@ app.post('/open-ticket', async (req, res) => {
     }
 });
 
+// --- تعديل لوق إغلاق التذكرة ---
 client.on('interactionCreate', async (i) => {
     if (i.isButton() && i.customId === 'close_ticket') {
+        const logChannel = i.guild.channels.cache.get(LOG_CHANNEL_ID);
+        
+        // إنشاء إمبيد اللوج
+        const closeLogEmbed = new EmbedBuilder()
+            .setTitle('🔒 تم إغلاق تذكرة')
+            .setColor('#ff0000')
+            .addFields(
+                { name: '📝 اسم القناة', value: i.channel.name, inline: true },
+                { name: '👤 أغلق بواسطة', value: `<@${i.user.id}>`, inline: true }
+            )
+            .setTimestamp();
+
+        // إرسال اللوج قبل حذف القناة
+        if (logChannel) {
+            await logChannel.send({ embeds: [closeLogEmbed] });
+        }
+
         await i.reply('⚠️ سيتم حذف القناة خلال 5 ثوانٍ...');
         setTimeout(() => i.channel.delete().catch(() => {}), 5000);
     }
 });
 
-// ابحث عن السطر الذي يبدأ بـ app.listen واستبدله بهذا:
 const port = process.env.PORT || 10000;
 app.listen(port, '0.0.0.0', () => {
     console.log(`🚀 السيرفر يعمل على المنفذ ${port}`);
 });
 
-// تأكد أن سطر تسجيل دخول البوت موجود في نهاية الملف:
 client.login(process.env.TOKEN);
-
