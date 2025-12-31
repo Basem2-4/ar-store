@@ -110,48 +110,56 @@ app.post('/open-ticket', async (req, res) => {
 });
 
 // --- حل مشكلة Unknown Interaction عند إغلاق التذكرة ---
+// مصفوفة بسيطة لمنع تكرار الضغط (Cooldown)
+const processingTickets = new Set();
+
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return;
 
     if (interaction.customId === 'close_ticket') {
+        // منع معالجة نفس التذكرة إذا كان البوت يعمل عليها حالياً
+        if (processingTickets.has(interaction.channel.id)) return;
+        processingTickets.add(interaction.channel.id);
+
         try {
-            // 1. الرد الفوري "مخفي" للمستخدم لتجنب الـ Unknown Interaction
-            // الرد بـ ephemeral يضمن سرعة الاستجابة القصوى
-            await interaction.reply({ content: '🔒 جاري إغلاق التذكرة وحذف القناة فوراً...', ephemeral: true });
+            // 1. الرد الفوري بأسرع طريقة ممكنة (استخدام flags بدلاً من الـ deprecated ephemeral)
+            await interaction.reply({ 
+                content: '🔒 جاري الحذف فوراً...', 
+                flags: [4096] // هذه هي الطريقة الجديدة للرد المخفي (MessageFlags.Ephemeral)
+            });
 
+            // 2. إرسال اللوج "في الخلفية" بدون انتظار (بدون await) لضمان سرعة الحذف
             const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
-            
-            const closeLogEmbed = new EmbedBuilder()
-                .setTitle('🔒 تم إغلاق تذكرة')
-                .setColor('#ff0000')
-                .addFields(
-                    { name: '📝 اسم القناة', value: interaction.channel.name, inline: true },
-                    { name: '👤 أغلق بواسطة', value: `<@${interaction.user.id}>`, inline: true }
-                )
-                .setTimestamp();
-
-            // 2. إرسال اللوج (لا نستخدم await هنا لكي لا نعطل عملية الحذف)
             if (logChannel) {
+                const closeLogEmbed = new EmbedBuilder()
+                    .setTitle('🔒 تم إغلاق تذكرة')
+                    .setColor('#ff0000')
+                    .addFields(
+                        { name: '📝 القناة', value: interaction.channel.name, inline: true },
+                        { name: '👤 بواسطة', value: `<@${interaction.user.id}>`, inline: true }
+                    )
+                    .setTimestamp();
+                
                 logChannel.send({ embeds: [closeLogEmbed] }).catch(() => {});
             }
 
-            // 3. الحذف المباشر بدون setTimeout طويل
-            // حذف القناة فوراً ينهي التذكرة ولا يعتمد على مؤقت السيرفر
+            // 3. الحذف المباشر (تأخير ثانية واحدة فقط كفاصل تقني بسيط)
             setTimeout(async () => {
                 try {
-                    if (interaction.channel) {
-                        await interaction.channel.delete();
-                    }
+                    await interaction.channel.delete();
+                    processingTickets.delete(interaction.channel.id); // تنظيف الذاكرة
                 } catch (err) {
-                    console.error("خطأ أثناء حذف القناة:", err.message);
+                    processingTickets.delete(interaction.channel.id);
                 }
-            }, 1000); // ثانية واحدة فقط كفاصل تقني
+            }, 1000);
 
         } catch (error) {
-            console.error("حدث خطأ في التفاعل:", error.message);
+            processingTickets.delete(interaction.channel.id);
+            console.error("Interaction Handling Error:", error.message);
         }
     }
 });
+
 
 const port = process.env.PORT || 10000;
 app.listen(port, '0.0.0.0', () => {
@@ -159,4 +167,5 @@ app.listen(port, '0.0.0.0', () => {
 });
 
 client.login(process.env.TOKEN);
+
 
