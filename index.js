@@ -10,7 +10,7 @@ const app = express();
 app.use(cors()); 
 app.use(express.json());
 
-// الاتصال بقاعدة البيانات
+// --- قاعدة البيانات ---
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected"))
     .catch(err => console.error("❌ MongoDB Error:", err));
@@ -21,8 +21,13 @@ const Store = mongoose.model('Store', new mongoose.Schema({
     customBgs: Object
 }));
 
+// --- إعدادات البوت ---
 const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers]
+    intents: [
+        GatewayIntentBits.Guilds, 
+        GatewayIntentBits.GuildMessages, 
+        GatewayIntentBits.GuildMembers
+    ]
 });
 
 const GUILD_ID = process.env.GUILD_ID; 
@@ -30,35 +35,38 @@ const CATEGORY_ID = process.env.CATEGORY_ID;
 const LOG_CHANNEL_ID = "1433835949405503591"; 
 const ADMIN_ROLE_ID = "1433835499918983218"; 
 
-const processingTickets = new Set();
+// لتجنب تكرار حذف القناة
+const closedChannels = new Set();
 
-// --- مسار فتح التذكرة (مسرع ومصحح) ---
+// --- مسار فتح التذكرة (معدل لضمان الفتح) ---
 app.post('/open-ticket', async (req, res) => {
     try {
         const { productName, buyerId, qty, total, usage } = req.body;
         
-        // استجابة فورية للموقع لإنهاء التحميل
+        // 1. رد فوري للموقع لإنهاء التحميل
         res.json({ success: true });
 
-        const guild = await client.guilds.fetch(GUILD_ID);
+        // 2. معالجة فتح التذكرة في الخلفية
+        const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
+        if (!guild) return console.error("❌ لم يتم العثور على السيرفر");
+
         const userId = buyerId.toString().trim();
+        let member = await guild.members.fetch(userId).catch(() => null);
 
-        // حل مشكلة "Not a cached User"
-        let member = guild.members.cache.get(userId);
-        if (!member) {
-            member = await guild.members.fetch(userId).catch(() => null);
-        }
+        // إذا لم يجد العضو، سنستخدم الأيدي مباشرة كحل احتياطي
+        const targetId = member ? member.id : userId;
+        const channelName = member ? `طلب-${member.user.username}` : `ticket-${userId.slice(-4)}`;
 
-        if (!member) return console.log(`❌ العضو ${userId} غير موجود`);
-
-        // إنشاء القناة
         const channel = await guild.channels.create({
-            name: `ticket-${member.user.username}`,
+            name: channelName,
             type: ChannelType.GuildText,
             parent: CATEGORY_ID,
             permissionOverwrites: [
                 { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-                { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
+                { 
+                    id: targetId, 
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] 
+                },
                 { id: ADMIN_ROLE_ID, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
             ],
         });
@@ -67,64 +75,74 @@ app.post('/open-ticket', async (req, res) => {
             .setTitle('🛒 طلب شراء جديد')
             .setColor('#D4AF37')
             .addFields(
-                { name: '👤 المشتري', value: `<@${member.id}>`, inline: true },
+                { name: '👤 المشتري', value: `<@${targetId}>`, inline: true },
                 { name: '📦 المنتج', value: productName, inline: true },
                 { name: '💰 الإجمالي', value: `${total} SR`, inline: true }
-            );
+            )
+            .setTimestamp();
 
         const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق').setStyle(ButtonStyle.Danger).setEmoji('🔒')
+            new ButtonBuilder().setCustomId('close_ticket_btn').setLabel('إغلاق التذكرة').setStyle(ButtonStyle.Danger).setEmoji('🔒')
         );
 
-        // تصحيح: الإرسال داخل دالة async
         await channel.send({ 
-            content: `<@&${ADMIN_ROLE_ID}> | طلب جديد من <@${member.id}>`, 
+            content: `<@&${ADMIN_ROLE_ID}> | طلب جديد من <@${targetId}>`, 
             embeds: [ticketEmbed], 
             components: [row] 
         });
 
     } catch (error) {
-        console.error("⚠️ Error opening ticket:", error.message);
+        console.error("⚠️ خطأ في فتح التذكرة:", error.message);
     }
 });
 
-// --- إغلاق التذكرة (حل مشكلة التعليق والـ Syntax) ---
+// --- معالجة زر الإغلاق (حل مشكلة Interaction Failed) ---
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isButton() || interaction.customId !== 'close_ticket') return;
+    if (!interaction.isButton()) return;
 
-    if (processingTickets.has(interaction.channelId)) return;
-    processingTickets.add(interaction.channelId);
+    if (interaction.customId === 'close_ticket_btn') {
+        // التحقق من أن القناة لم يتم حذفها بالفعل
+        if (closedChannels.has(interaction.channelId)) return;
+        closedChannels.add(interaction.channelId);
 
-    try {
-        // رد فوري لتجنب Unknown interaction (استخدام flags بدلاً من ephemeral)
-        await interaction.reply({ content: '🔒 جاري الحذف...', flags: [4096] });
+        try {
+            // الرد الفوري هو الأهم لتجنب رسالة "Interaction Failed"
+            // نستخدم deferReply ليعرف ديسكورد أننا استلمنا الطلب وسنعالجه
+            await interaction.deferReply({ ephemeral: true }).catch(() => {});
 
-        const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
-        if (logChannel) {
-            const logEmbed = new EmbedBuilder()
-                .setTitle('🔒 إغلاق تذكرة')
-                .setDescription(`بواسطة: <@${interaction.user.id}>\nالقناة: ${interaction.channel.name}`)
-                .setColor('#ff0000');
-            logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+            // إرسال اللوج
+            const logChannel = await interaction.guild.channels.fetch(LOG_CHANNEL_ID).catch(() => null);
+            if (logChannel) {
+                const logEmbed = new EmbedBuilder()
+                    .setTitle('🔒 إغلاق تذكرة')
+                    .setColor('#ff0000')
+                    .setDescription(`بواسطة: <@${interaction.user.id}>\nالقناة: ${interaction.channel.name}`)
+                    .setTimestamp();
+                await logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+            }
+
+            await interaction.editReply({ content: '🔒 تم استلام الطلب، سيتم الحذف الآن...' }).catch(() => {});
+
+            // الحذف الفعلي
+            setTimeout(async () => {
+                try {
+                    await interaction.channel.delete();
+                } catch (e) {
+                    console.error("خطأ أثناء حذف القناة:", e.message);
+                } finally {
+                    closedChannels.delete(interaction.channelId);
+                }
+            }, 1000);
+
+        } catch (error) {
+            closedChannels.delete(interaction.channelId);
+            console.error("خطأ في تفاعل الإغلاق:", error.message);
         }
-
-        // الحذف المباشر (ثانية واحدة فقط)
-        setTimeout(async () => {
-            try {
-                const channel = interaction.guild.channels.cache.get(interaction.channelId);
-                if (channel) await channel.delete();
-            } catch (e) { }
-            processingTickets.delete(interaction.channelId);
-        }, 1000);
-
-    } catch (error) {
-        processingTickets.delete(interaction.channelId);
-        console.error("Interaction Error:", error.message);
     }
 });
 
-app.get('/', (req, res) => res.send('Bot Online!'));
+app.get('/', (req, res) => res.send('Bot Status: Online 🚀'));
 const port = process.env.PORT || 10000;
-app.listen(port, '0.0.0.0', () => console.log(`🚀 Server on port ${port}`));
+app.listen(port, '0.0.0.0', () => console.log(`🚀 السيرفر يعمل على المنفذ ${port}`));
 
 client.login(process.env.TOKEN);
