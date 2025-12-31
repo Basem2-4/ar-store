@@ -15,7 +15,6 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ متصل بقاعدة بيانات MongoDB بنجاح!"))
     .catch(err => console.error("❌ فشل الاتصال بقاعدة البيانات:", err));
 
-// تعريف "الموديل" لحفظ بيانات المتجر
 const StoreSchema = new mongoose.Schema({
     configId: { type: String, default: "main" },
     products: Array,
@@ -23,33 +22,27 @@ const StoreSchema = new mongoose.Schema({
 });
 const Store = mongoose.model('Store', StoreSchema);
 
-// --- مسارات جلب وحفظ البيانات ---
+// --- مسارات البيانات ---
 app.get('/get-store-data', async (req, res) => {
     try {
         let data = await Store.findOne({ configId: "main" });
         if (!data) data = { products: [], customBgs: {} };
         res.json(data);
-    } catch (err) {
-        res.status(500).json({ error: "خطأ في جلب البيانات" });
-    }
+    } catch (err) { res.status(500).json({ error: "خطأ في جلب البيانات" }); }
 });
 
 app.post('/save-products', async (req, res) => {
     try {
         await Store.findOneAndUpdate({ configId: "main" }, { products: req.body.products }, { upsert: true });
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+    } catch (err) { res.status(500).json({ success: false }); }
 });
 
 app.post('/save-bgs', async (req, res) => {
     try {
         await Store.findOneAndUpdate({ configId: "main" }, { customBgs: req.body.customBgs }, { upsert: true });
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+    } catch (err) { res.status(500).json({ success: false }); }
 });
 
 app.get('/', (req, res) => res.send('Server is Online 🚀'));
@@ -63,12 +56,12 @@ const client = new Client({
     ]
 });
 
-const TOKEN = process.env.TOKEN; 
 const GUILD_ID = process.env.GUILD_ID; 
 const CATEGORY_ID = process.env.CATEGORY_ID; 
 const LOG_CHANNEL_ID = "1433835949405503591"; 
 const ADMIN_ROLE_ID = "1433835499918983218"; 
 
+// --- حل مشكلة تأخير فتح التذكرة ---
 app.post('/open-ticket', async (req, res) => {
     try {
         const { productName, buyerId, qty, total, usage } = req.body;
@@ -104,52 +97,56 @@ app.post('/open-ticket', async (req, res) => {
             )
             .setTimestamp();
 
-        const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق').setStyle(ButtonStyle.Danger).setEmoji('🔒');
+        const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق التذكرة').setStyle(ButtonStyle.Danger).setEmoji('🔒');
         const row = new ActionRowBuilder().addComponents(closeBtn);
 
         await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | طلب جديد من <@${member.id}>`, embeds: [ticketEmbed], components: [row] });
 
         res.json({ success: true });
     } catch (error) {
+        console.error("Ticket Opening Error:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// --- تعديل لوق إغلاق التذكرة لحل مشكلة Unknown Interaction ---
-client.on('interactionCreate', async (i) => {
-    if (!i.isButton()) return;
+// --- حل مشكلة Unknown Interaction عند إغلاق التذكرة ---
+client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isButton()) return;
 
-    if (i.customId === 'close_ticket') {
+    if (interaction.customId === 'close_ticket') {
         try {
-            // نستخدم deferReply لضمان عدم انتهاء صلاحية التفاعل
-            await i.deferReply();
+            // 1. الرد الفوري لإخبار ديسكورد أننا استلمنا الأمر (يحل خطأ Unknown Interaction)
+            await interaction.deferReply({ ephemeral: true });
 
-            const logChannel = i.guild.channels.cache.get(LOG_CHANNEL_ID);
+            const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
             
-            // إنشاء إمبيد اللوج
             const closeLogEmbed = new EmbedBuilder()
                 .setTitle('🔒 تم إغلاق تذكرة')
                 .setColor('#ff0000')
                 .addFields(
-                    { name: '📝 اسم القناة', value: i.channel.name, inline: true },
-                    { name: '👤 أغلق بواسطة', value: `<@${i.user.id}>`, inline: true }
+                    { name: '📝 اسم القناة', value: interaction.channel.name, inline: true },
+                    { name: '👤 أغلق بواسطة', value: `<@${interaction.user.id}>`, inline: true }
                 )
                 .setTimestamp();
 
-            // إرسال اللوج قبل حذف القناة
             if (logChannel) {
                 await logChannel.send({ embeds: [closeLogEmbed] }).catch(() => {});
             }
 
-            // تعديل الرد الأصلي لإعلام المستخدم بالحذف
-            await i.editReply('⚠️ سيتم حذف القناة خلال 5 ثوانٍ...');
-            
-            setTimeout(() => {
-                i.channel.delete().catch(() => {});
+            // 2. تحديث الرد للمستخدم
+            await interaction.editReply({ content: '⚠️ سيتم حذف القناة خلال 5 ثوانٍ...' });
+
+            // 3. الحذف بعد وقت محدد
+            setTimeout(async () => {
+                try {
+                    await interaction.channel.delete();
+                } catch (err) {
+                    console.error("Failed to delete channel:", err);
+                }
             }, 5000);
 
         } catch (error) {
-            console.error("Error handling close button:", error);
+            console.error("Interaction Handling Error:", error);
         }
     }
 });
