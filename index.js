@@ -61,18 +61,19 @@ const CATEGORY_ID = process.env.CATEGORY_ID;
 const LOG_CHANNEL_ID = "1433835949405503591"; 
 const ADMIN_ROLE_ID = "1433835499918983218"; 
 
-// --- حل مشكلة تأخير فتح التذكرة ---
+// مصفوفة لمنع تكرار الضغط (Cooldown)
+const processingTickets = new Set();
+
+// --- مسار فتح التذكرة (محسن للسرعة القصوى) ---
 app.post('/open-ticket', async (req, res) => {
     try {
         const { productName, buyerId, qty, total, usage } = req.body;
         const guild = await client.guilds.fetch(GUILD_ID);
-        
-        // تحسين: لا ننتظر fetch للعضو كامل، نستخدم الأيدي مباشرة للسرعة
         const userId = buyerId.toString().trim();
 
-        // إنشاء القناة فوراً
+        // إنشاء القناة
         const channel = await guild.channels.create({
-            name: `ticket-${userId.slice(-4)}`, // اسم سريع مؤقت
+            name: `ticket-${userId.slice(-4)}`, 
             type: ChannelType.GuildText,
             parent: CATEGORY_ID,
             permissionOverwrites: [
@@ -103,72 +104,43 @@ app.post('/open-ticket', async (req, res) => {
 
         const closeBtn = new ButtonBuilder()
             .setCustomId('close_ticket')
-            .setLabel('إغلاق')
+            .setLabel('إغلاق التذكرة')
             .setStyle(ButtonStyle.Danger)
             .setEmoji('🔒');
             
         const row = new ActionRowBuilder().addComponents(closeBtn);
 
-        // إرسال الرسالة بدون await لكي نرد على الموقع فوراً
-        channel.send({ 
+        // إرسال الرسالة
+        await channel.send({ 
             content: `<@&${ADMIN_ROLE_ID}> | طلب جديد من <@${userId}>`, 
             embeds: [ticketEmbed], 
             components: [row] 
-        }).catch(err => console.error("Error sending msg:", err));
+        });
 
-        // الرد على الموقع فوراً لإنهاء حالة الـ Loading
+        // الرد على الموقع فوراً
         res.json({ success: true });
 
-    } catch (error) {
-        console.error("Fast Ticket Error:", error);
-        res.status(500).json({ success: false, error: "حدث تأخير في الاستجابة" });
-    }
-});
-
-        const ticketEmbed = new EmbedBuilder()
-            .setTitle('🛒 طلب شراء جديد')
-            .setColor('#D4AF37')
-            .addFields(
-                { name: '👤 المشتري', value: `<@${member.id}>`, inline: true },
-                { name: '📦 المنتج', value: productName, inline: true },
-                { name: '🔢 الكمية', value: qty.toString(), inline: true },
-                { name: '💰 الإجمالي', value: `${total} SR`, inline: true },
-                { name: '📝 الاستخدام', value: usage || 'غير محدد', inline: true }
-            )
-            .setTimestamp();
-
-        const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق التذكرة').setStyle(ButtonStyle.Danger).setEmoji('🔒');
-        const row = new ActionRowBuilder().addComponents(closeBtn);
-
-        await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | طلب جديد من <@${member.id}>`, embeds: [ticketEmbed], components: [row] });
-
-        res.json({ success: true });
     } catch (error) {
         console.error("Ticket Opening Error:", error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: "حدث خطأ أثناء فتح التذكرة" });
     }
 });
 
-// --- حل مشكلة Unknown Interaction عند إغلاق التذكرة ---
-// مصفوفة بسيطة لمنع تكرار الضغط (Cooldown)
-const processingTickets = new Set();
-
+// --- معالجة إغلاق التذكرة ---
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return;
 
     if (interaction.customId === 'close_ticket') {
-        // منع معالجة نفس التذكرة إذا كان البوت يعمل عليها حالياً
         if (processingTickets.has(interaction.channel.id)) return;
         processingTickets.add(interaction.channel.id);
 
         try {
-            // 1. الرد الفوري بأسرع طريقة ممكنة (استخدام flags بدلاً من الـ deprecated ephemeral)
+            // الرد الفوري لتجنب Unknown Interaction
             await interaction.reply({ 
                 content: '🔒 جاري الحذف فوراً...', 
-                flags: [4096] // هذه هي الطريقة الجديدة للرد المخفي (MessageFlags.Ephemeral)
+                flags: [4096] 
             });
 
-            // 2. إرسال اللوج "في الخلفية" بدون انتظار (بدون await) لضمان سرعة الحذف
             const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
             if (logChannel) {
                 const closeLogEmbed = new EmbedBuilder()
@@ -183,23 +155,23 @@ client.on('interactionCreate', async (interaction) => {
                 logChannel.send({ embeds: [closeLogEmbed] }).catch(() => {});
             }
 
-            // 3. الحذف المباشر (تأخير ثانية واحدة فقط كفاصل تقني بسيط)
+            // الحذف بعد ثانية واحدة
             setTimeout(async () => {
                 try {
                     await interaction.channel.delete();
-                    processingTickets.delete(interaction.channel.id); // تنظيف الذاكرة
                 } catch (err) {
+                    console.error("Delete Error:", err.message);
+                } finally {
                     processingTickets.delete(interaction.channel.id);
                 }
             }, 1000);
 
         } catch (error) {
             processingTickets.delete(interaction.channel.id);
-            console.error("Interaction Handling Error:", error.message);
+            console.error("Interaction Error:", error.message);
         }
     }
 });
-
 
 const port = process.env.PORT || 10000;
 app.listen(port, '0.0.0.0', () => {
@@ -207,6 +179,3 @@ app.listen(port, '0.0.0.0', () => {
 });
 
 client.login(process.env.TOKEN);
-
-
-
