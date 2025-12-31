@@ -67,23 +67,63 @@ app.post('/open-ticket', async (req, res) => {
         const { productName, buyerId, qty, total, usage } = req.body;
         const guild = await client.guilds.fetch(GUILD_ID);
         
-        let member;
-        try {
-            member = await guild.members.fetch(buyerId.toString().trim());
-        } catch (e) {
-            return res.status(400).json({ success: false, error: "الايدي غير صحيح أو الشخص غير موجود بالسيرفر" });
-        }
+        // تحسين: لا ننتظر fetch للعضو كامل، نستخدم الأيدي مباشرة للسرعة
+        const userId = buyerId.toString().trim();
 
+        // إنشاء القناة فوراً
         const channel = await guild.channels.create({
-            name: `طلب-${member.user.username}`,
+            name: `ticket-${userId.slice(-4)}`, // اسم سريع مؤقت
             type: ChannelType.GuildText,
             parent: CATEGORY_ID,
             permissionOverwrites: [
                 { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-                { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
+                { 
+                    id: userId, 
+                    allow: [
+                        PermissionFlagsBits.ViewChannel, 
+                        PermissionFlagsBits.SendMessages, 
+                        PermissionFlagsBits.ReadMessageHistory
+                    ] 
+                },
                 { id: ADMIN_ROLE_ID, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
             ],
         });
+
+        const ticketEmbed = new EmbedBuilder()
+            .setTitle('🛒 طلب شراء جديد')
+            .setColor('#D4AF37')
+            .addFields(
+                { name: '👤 المشتري', value: `<@${userId}>`, inline: true },
+                { name: '📦 المنتج', value: productName, inline: true },
+                { name: '🔢 الكمية', value: qty.toString(), inline: true },
+                { name: '💰 الإجمالي', value: `${total} SR`, inline: true },
+                { name: '📝 الاستخدام', value: usage || 'غير محدد', inline: true }
+            )
+            .setTimestamp();
+
+        const closeBtn = new ButtonBuilder()
+            .setCustomId('close_ticket')
+            .setLabel('إغلاق')
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji('🔒');
+            
+        const row = new ActionRowBuilder().addComponents(closeBtn);
+
+        // إرسال الرسالة بدون await لكي نرد على الموقع فوراً
+        channel.send({ 
+            content: `<@&${ADMIN_ROLE_ID}> | طلب جديد من <@${userId}>`, 
+            embeds: [ticketEmbed], 
+            components: [row] 
+        }).catch(err => console.error("Error sending msg:", err));
+
+        // الرد على الموقع فوراً لإنهاء حالة الـ Loading
+        res.json({ success: true });
+
+    } catch (error) {
+        console.error("Fast Ticket Error:", error);
+        res.status(500).json({ success: false, error: "حدث تأخير في الاستجابة" });
+    }
+});
 
         const ticketEmbed = new EmbedBuilder()
             .setTitle('🛒 طلب شراء جديد')
@@ -167,5 +207,6 @@ app.listen(port, '0.0.0.0', () => {
 });
 
 client.login(process.env.TOKEN);
+
 
 
