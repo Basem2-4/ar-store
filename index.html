@@ -45,7 +45,6 @@
             opacity: 0.6;
         }
 
-        /* --- القائمة العلوية --- */
         nav { 
             position: fixed; 
             top: 20px; 
@@ -78,7 +77,6 @@
             flex-direction: row;
         }
 
-        /* --- تعديل السلكت منيو الجمالي في اليمين --- */
         .brand-select-wrapper {
             background: rgba(0,0,0,0.6);
             border: 1px solid var(--gold);
@@ -133,11 +131,28 @@
             z-index: 8999;
         }
 
+        /* فاصل ذهبي بأطراف سوداء */
+        .brand-divider {
+            width: 100%;
+            height: 2px;
+            margin: 40px 0;
+            background: linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
         .section-header { 
             width: 100%; 
             display: flex; 
             justify-content: flex-start; 
             padding: 0 40px; 
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-logo-small {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
         }
 
         h2 {
@@ -177,6 +192,7 @@
             gap: 25px; 
             width: 100%;
             justify-content: flex-start;
+            margin-bottom: 30px;
         }
 
         .card { background: rgba(21, 21, 21, 0.8); backdrop-filter: blur(5px); border-radius: 12px; border: 1px solid #222; overflow: hidden; position: relative; transition: 0.3s; }
@@ -296,7 +312,7 @@
                 <select id="pCategory" class="admin-input">
                     <option value="الـسيارات🚗">سيارات</option>
                     <option value="الـعـقارات🏘️">عقارات</option>
-                    <option value="الـم-تاج-ر🏪">متاجر</option>
+                    <option value="الـمـتاجـر🏪">متاجر</option>
                 </select>
                 <select id="pBrandAttr" class="admin-input">
                     <option value="none">بدون ماركة</option>
@@ -330,11 +346,12 @@
 
             <div class="admin-box" style="border-top: 4px solid var(--discount-red);">
                 <h4>نظام الخصم المطور</h4>
-                <select id="discScope" class="admin-input">
+                <select id="discScope" class="admin-input" onchange="toggleDiscountFields()">
                     <option value="single">منتج معين</option>
-                    <option value="الـسيارات🚗">قسم السيارات</option>
+                    <option value="الـسيارات🚗">قسم السيارات (الكل)</option>
+                    <option value="brand_cars">قسم السيارات (شركة معينة)</option>
                     <option value="الـعـقارات🏘️">قسم العقارات</option>
-                    <option value="الـم-تاج-ر🏪">قسم المتاجر</option>
+                    <option value="الـمـتاجـر🏪">قسم المتاجر</option>
                     <option value="all">جميع المنتجات (المتجر)</option>
                     <option value="coupon">إضافة كود خصم جديد</option>
                 </select>
@@ -343,6 +360,24 @@
                 </div>
                 <div id="productField">
                     <select id="discProduct" class="admin-input"></select>
+                </div>
+                <div id="brandDiscField" style="display:none;">
+                    <select id="discBrandSelect" class="admin-input">
+                        <option value="nissan">Nissan</option>
+                        <option value="lexus">Lexus</option>
+                        <option value="mercedes">Mercedes</option>
+                        <option value="hyundai">Hyundai</option>
+                        <option value="honda">Honda</option>
+                        <option value="rolls_royce">Rolls Royce</option>
+                        <option value="dodge">Dodge</option>
+                        <option value="toyota">Toyota</option>
+                        <option value="kia">Kia</option>
+                        <option value="ford">Ford</option>
+                        <option value="chevrolet">Chevrolet</option>
+                        <option value="bmw">BMW</option>
+                        <option value="geely">Geely</option>
+                        <option value="mazda">Mazda</option>
+                    </select>
                 </div>
                 <input type="number" id="discPercent" class="admin-input" placeholder="نسبة الخصم %">
                 <input type="number" id="discHours" class="admin-input" placeholder="المدة بالساعات">
@@ -357,8 +392,13 @@
         <div class="grid" id="bestSellerGrid"></div>
     </div>
     <div id="categorySection" style="display:none; width: 100%;">
-        <div class="section-header"><h2 id="categoryTitle"></h2></div>
-        <div class="grid" id="categoryGrid"></div>
+        <div class="section-header">
+            <h2 id="categoryTitle"></h2>
+            <img id="categoryLogo" src="" class="header-logo-small" style="display:none;">
+        </div>
+        <div id="categoryGridContainer">
+             <div class="grid" id="categoryGrid"></div>
+        </div>
     </div>
 </div>
 
@@ -394,7 +434,30 @@
     let products = [];
     let customSectionImages = {};
     let coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
-    let currentBrandFilter = 'all'; // متغير فلتر الشركات الجديد
+    let currentBrandFilter = 'all';
+
+    const brandLogos = {
+        'nissan': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Nissan_logo.svg/2560px-Nissan_logo.svg.png',
+        'lexus': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Lexus_logo.svg/2560px-Lexus_logo.svg.png',
+        'mercedes': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Benz_Logo_2010.svg/2048px-Mercedes-Benz_Logo_2010.svg.png',
+        'hyundai': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Hyundai_Motor_Company_logo.svg/2560px-Hyundai_Motor_Company_logo.svg.png',
+        'honda': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Honda_Logo.svg/2560px-Honda_Logo.svg.png',
+        'rolls_royce': 'https://upload.wikimedia.org/wikipedia/ar/thumb/1/11/Rolls-Royce_Motor_Cars_logo.svg/1200px-Rolls-Royce_Motor_Cars_logo.svg.png',
+        'dodge': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Dodge_logo.svg/2560px-Dodge_logo.svg.png',
+        'toyota': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Toyota_EU.svg/2560px-Toyota_EU.svg.png',
+        'kia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Kia_logo_2021.svg/2560px-Kia_logo_2021.svg.png',
+        'ford': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Ford_logo_flat.svg/2560px-Ford_logo_flat.svg.png',
+        'chevrolet': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Chevrolet-logo.png/1200px-Chevrolet-logo.png',
+        'bmw': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/2048px-BMW.svg.png',
+        'geely': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Geely_logo.svg/1200px-Geely_logo.svg.png',
+        'mazda': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Mazda_logo.svg/2560px-Mazda_logo.svg.png'
+    };
+
+    const brandNames = {
+        'nissan': 'Nissan', 'lexus': 'Lexus', 'mercedes': 'Mercedes', 'hyundai': 'Hyundai', 
+        'honda': 'Honda', 'rolls_royce': 'Rolls Royce', 'dodge': 'Dodge', 'toyota': 'Toyota', 
+        'kia': 'Kia', 'ford': 'Ford', 'chevrolet': 'Chevrolet', 'bmw': 'BMW', 'geely': 'Geely', 'mazda': 'Mazda'
+    };
 
     async function loadFromDatabase() {
         try {
@@ -403,8 +466,6 @@
             products = data.products || [];
             customSectionImages = data.customBgs || {};
             render();
-            const bg = customSectionImages[currentView] || sectionImages[currentView];
-            document.getElementById('section-bg').style.backgroundImage = `url('${bg}')`;
         } catch (e) { console.log("خطأ في الاتصال بقاعدة البيانات"); }
     }
 
@@ -413,14 +474,6 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ products })
-        });
-    }
-
-    async function saveBgsToDB() {
-        await fetch(`${API_BASE}/save-bgs`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ customBgs: customSectionImages })
         });
     }
 
@@ -443,67 +496,114 @@
         cursor.style.top = e.clientY + 'px'; 
     });
 
-    // وظيفة فلتر الشركات الجديد
     function filterByBrand() {
         currentBrandFilter = document.getElementById('brandFilter').value;
-        // إذا كان في الرئيسية واختار شركة، ننقله لقسم السيارات تلقائياً
-        if (currentBrandFilter !== 'all' && currentView === 'home') {
+        if (currentBrandFilter !== 'all') {
             showSection('الـسيارات🚗');
         } else {
             render();
         }
     }
 
-    function render() {
+    function toggleDiscountFields() {
+        const scope = document.getElementById('discScope').value;
+        document.getElementById('productField').style.display = (scope === 'single') ? 'block' : 'none';
+        document.getElementById('couponField').style.display = (scope === 'coupon') ? 'block' : 'none';
+        document.getElementById('brandDiscField').style.display = (scope === 'brand_cars') ? 'block' : 'none';
+    }
+
+    function generateCardHtml(p, i, isAdminOpen) {
         const now = new Date().getTime();
+        let price = p.price;
+        let hasDisc = (p.discount && p.discount.expiry > now);
+        let timeText = hasDisc ? getRemainingTime(p.discount.expiry) : null;
+        if (hasDisc) price = p.price - (p.price * (p.discount.percent / 100));
+
+        const convPrice = (price * rates[currentCurr]).toFixed(2);
+        const convOld = (p.price * rates[currentCurr]).toFixed(2);
+        const isOut = p.stock <= 0;
+
+        return `
+            <div class="card ${isOut ? 'out-of-stock' : ''}">
+                ${hasDisc ? `<div class="discount-badge">خصم ${p.discount.percent}%</div>` : ''}
+                <img src="${p.img || 'https://via.placeholder.com/160'}">
+                <div class="card-content">
+                    <h3>${p.name}</h3>
+                    <div>
+                        ${hasDisc ? `<span class="old-price">${convOld} ${currentCurr}</span>` : ''}
+                        <span class="price">${convPrice} ${currentCurr}</span>
+                    </div>
+                    <p style="font-size:10px; color:gray; margin: 5px 0;">المخزون: ${p.stock}</p>
+                    ${hasDisc && timeText ? `<div class="timer-display">${timeText}</div>` : ''}
+                    <button class="buy-btn" onclick="openOrder(${i})">${isOut ? 'نفذت الكمية' : 'اطلب الآن'}</button>
+                    ${isAdminOpen ? `
+                        <div style="display:flex; gap:5px; margin-top:10px;">
+                            <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; font-weight:bold;">تعديل</button>
+                            <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; font-weight:bold;">حذف</button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>`;
+    }
+
+    function render() {
         const bestGrid = document.getElementById('bestSellerGrid');
         const catGrid = document.getElementById('categoryGrid');
-        if(!bestGrid || !catGrid) return;
-        
-        bestGrid.innerHTML = ''; catGrid.innerHTML = '';
-        document.getElementById('discProduct').innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
-
+        const gridContainer = document.getElementById('categoryGridContainer');
+        const catLogo = document.getElementById('categoryLogo');
         const isAdminOpen = document.getElementById('adminSection').style.display === 'block';
 
-        products.forEach((p, i) => {
-            // منطق الفلتر
-            if (currentView === 'الـسيارات🚗' && currentBrandFilter !== 'all') {
-                if (p.brand !== currentBrandFilter) return;
-            }
+        bestGrid.innerHTML = ''; 
+        catGrid.innerHTML = '';
+        gridContainer.innerHTML = '';
+        catLogo.style.display = 'none';
 
-            let price = p.price;
-            let hasDisc = (p.discount && p.discount.expiry > now);
-            let timeText = hasDisc ? getRemainingTime(p.discount.expiry) : null;
-            if (hasDisc) price = p.price - (p.price * (p.discount.percent / 100));
+        document.getElementById('discProduct').innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
 
-            const convPrice = (price * rates[currentCurr]).toFixed(2);
-            const convOld = (p.price * rates[currentCurr]).toFixed(2);
-            const isOut = p.stock <= 0;
-
-            const cardHtml = `
-                <div class="card ${isOut ? 'out-of-stock' : ''}">
-                    ${hasDisc ? `<div class="discount-badge">خصم ${p.discount.percent}%</div>` : ''}
-                    <img src="${p.img || 'https://via.placeholder.com/160'}">
-                    <div class="card-content">
-                        <h3>${p.name}</h3>
-                        <div>
-                            ${hasDisc ? `<span class="old-price">${convOld} ${currentCurr}</span>` : ''}
-                            <span class="price">${convPrice} ${currentCurr}</span>
+        if (currentView === 'الـسيارات🚗') {
+            if (currentBrandFilter === 'all') {
+                // عرض مقسم حسب الشركات
+                const brandsPresent = [...new Set(products.filter(p => p.category === 'الـسيارات🚗' && p.brand !== 'none').map(p => p.brand))];
+                brandsPresent.forEach(brandKey => {
+                    const brandSection = document.createElement('div');
+                    brandSection.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:15px; margin-top:20px;">
+                            <img src="${brandLogos[brandKey]}" style="width:40px; height:40px; object-fit:contain;">
+                            <h3 style="color:var(--gold); margin:0;">${brandNames[brandKey]}</h3>
                         </div>
-                        <p style="font-size:10px; color:gray; margin: 5px 0;">المخزون: ${p.stock}</p>
-                        ${hasDisc && timeText ? `<div class="timer-display">${timeText}</div>` : ''}
-                        <button class="buy-btn" onclick="openOrder(${i})">${isOut ? 'نفذت الكمية' : 'اطلب الآن'}</button>
-                        ${isAdminOpen ? `
-                            <div style="display:flex; gap:5px; margin-top:10px;">
-                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; font-weight:bold;">تعديل</button>
-                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; font-weight:bold;">حذف</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>`;
+                        <div class="grid" style="margin-top:15px;">
+                            ${products.map((p, i) => (p.category === 'الـسيارات🚗' && p.brand === brandKey) ? generateCardHtml(p, i, isAdminOpen) : '').join('')}
+                        </div>
+                        <div class="brand-divider"></div>
+                    `;
+                    gridContainer.appendChild(brandSection);
+                });
+            } else {
+                // شركة واحدة فقط
+                catLogo.src = brandLogos[currentBrandFilter];
+                catLogo.style.display = 'block';
+                document.getElementById('categoryTitle').innerText = `قسم ${brandNames[currentBrandFilter]}`;
+                
+                const singleGrid = document.createElement('div');
+                singleGrid.className = 'grid';
+                singleGrid.innerHTML = products.map((p, i) => (p.category === 'الـسيارات🚗' && p.brand === currentBrandFilter) ? generateCardHtml(p, i, isAdminOpen) : '').join('');
+                gridContainer.appendChild(singleGrid);
+            }
+        } else {
+            // الأقسام الأخرى (عقارات / متاجر)
+            const otherGrid = document.createElement('div');
+            otherGrid.className = 'grid';
+            otherGrid.innerHTML = products.map((p, i) => (p.category === currentView) ? generateCardHtml(p, i, isAdminOpen) : '').join('');
+            gridContainer.appendChild(otherGrid);
+        }
 
-            if (currentView === 'home' && (p.sales > 0 || hasDisc)) bestGrid.innerHTML += cardHtml;
-            if (p.category === currentView) catGrid.innerHTML += cardHtml;
+        // الرئيسية - الأكثر مبيعاً
+        products.forEach((p, i) => {
+            const now = new Date().getTime();
+            let hasDisc = (p.discount && p.discount.expiry > now);
+            if (currentView === 'home' && (p.sales > 0 || hasDisc)) {
+                bestGrid.innerHTML += generateCardHtml(p, i, isAdminOpen);
+            }
         });
     }
 
@@ -516,6 +616,37 @@
         return `${h}h:${m}m:${s}s`;
     }
 
+    async function applyAdvancedDiscount() {
+        const scope = document.getElementById('discScope').value;
+        const percent = parseFloat(document.getElementById('discPercent').value);
+        const hours = parseFloat(document.getElementById('discHours').value);
+        const expiry = new Date().getTime() + (hours * 3600000);
+
+        if(isNaN(percent) || isNaN(hours)) return alert("يرجى إدخال أرقام صحيحة");
+
+        if (scope === 'brand_cars') {
+            const targetBrand = document.getElementById('discBrandSelect').value;
+            products.forEach(p => {
+                if(p.category === 'الـسيارات🚗' && p.brand === targetBrand) p.discount = { percent, expiry };
+            });
+        } else if (scope === 'single') {
+            const idx = document.getElementById('discProduct').value;
+            products[idx].discount = { percent, expiry };
+        } else if (scope === 'coupon') {
+            const code = document.getElementById('couponCode').value;
+            if(!code) return alert("ادخل الكود");
+            coupons.push({ code, percent, expiry });
+            localStorage.setItem('ar_coupons_v12', JSON.stringify(coupons));
+        } else {
+            products.forEach(p => {
+                if(scope === 'all' || p.category === scope) p.discount = { percent, expiry };
+            });
+        }
+        await saveProductsToDB();
+        render();
+        alert("تم تفعيل الخصم!");
+    }
+
     async function saveProduct() {
         const idx = document.getElementById('editIndex').value;
         const name = document.getElementById('pName').value;
@@ -523,54 +654,19 @@
         const category = document.getElementById('pCategory').value;
         const stock = parseInt(document.getElementById('pStock').value);
         const img = document.getElementById('pImg').value;
-        const brand = document.getElementById('pBrandAttr').value; // جلب الماركة
+        const brand = document.getElementById('pBrandAttr').value;
         if (!name || isNaN(price)) return alert("أكمل البيانات");
 
         const p = { name, price, category, stock, img, brand, sales: 0, discount: null };
         if(idx === "") products.push(p);
         else { 
-            const oldSales = products[idx].sales;
-            const oldDisc = products[idx].discount;
-            products[idx] = p; 
-            products[idx].sales = oldSales;
-            products[idx].discount = oldDisc;
+            const old = products[idx];
+            products[idx] = {...p, sales: old.sales, discount: old.discount};
             document.getElementById('editIndex').value = ""; 
         }
-        
         await saveProductsToDB();
         render();
-        alert("تم حفظ المنتج بنجاح!");
-    }
-
-    // --- بقية وظائف الكود كما هي تماماً دون تغيير ---
-    async function finishOrder() {
-        const btn = document.getElementById('finalBtn');
-        btn.disabled = true; btn.innerText = "جاري الاتصال...";
-        const p = products[currentIndex];
-        const qty = document.getElementById('orderQty').value;
-        const disc = document.getElementById('orderDiscord').value;
-        const usage = document.getElementById('usageType').value;
-
-        try {
-            const response = await fetch(BOT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    productName: p.name, buyerId: disc.trim(), qty: qty, total: finalOrderPrice, usage: usage
-                })
-            });
-            const result = await response.json();
-            if (result.success) {
-                alert("✅ تم فتح التذكرة بنجاح!");
-                location.reload();
-            } else {
-                alert("❌ خطأ: " + result.error);
-                btn.disabled = false; btn.innerText = "فتح تذكرة الآن ✅";
-            }
-        } catch (err) {
-            alert("❌ فشل الاتصال بالبوت.");
-            btn.disabled = false;
-        }
+        alert("تم الحفظ!");
     }
 
     function showSection(s) {
@@ -580,13 +676,14 @@
         document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
         document.getElementById('homeSection').style.display = (s === 'home') ? 'block' : 'none';
         document.getElementById('categorySection').style.display = (s === 'home') ? 'none' : 'block';
+        
         if(s === 'home') {
             document.getElementById('nav-home').classList.add('active');
         } else {
             document.querySelectorAll('nav a').forEach(a => {
                 if(a.innerText.includes(s.replace(/🚗|🏘️|🏪/g, ''))) a.classList.add('active');
             });
-            document.getElementById('categoryTitle').innerHTML = `قسم ${s.replace(/🚗|🏘️|🏪/g, '')}`;
+            document.getElementById('categoryTitle').innerText = `قسم ${s.replace(/🚗|🏘️|🏪/g, '')}`;
         }
         render();
     }
@@ -613,6 +710,49 @@
         document.getElementById('pImg').value = p.img;
         document.getElementById('pBrandAttr').value = p.brand || 'none';
         window.scrollTo(0,0);
+    }
+
+    // وظائف الدفع المتبقية
+    function goToPayment() {
+        const p = products[currentIndex];
+        const qty = document.getElementById('orderQty').value;
+        const coupCode = document.getElementById('orderCoupon').value.trim();
+        let price = p.price;
+        const now = new Date().getTime();
+        if (p.discount && p.discount.expiry > now) price -= (price * (p.discount.percent / 100));
+        
+        const cp = coupons.find(c => c.code === coupCode && c.expiry > now);
+        if (cp) price -= (price * (cp.percent / 100));
+
+        finalOrderPrice = (price * qty).toFixed(2);
+        document.getElementById('paymentSummary').innerHTML = `المنتج: ${p.name} <br> الكمية: ${qty} <br> الإجمالي: ${finalOrderPrice} SR`;
+        document.getElementById('modalMain').style.display = 'none';
+        document.getElementById('paymentScreen').style.display = 'flex';
+    }
+
+    async function finishOrder() {
+        const btn = document.getElementById('finalBtn');
+        btn.disabled = true; btn.innerText = "جاري الاتصال...";
+        const p = products[currentIndex];
+        const qty = document.getElementById('orderQty').value;
+        const disc = document.getElementById('orderDiscord').value;
+        const usage = document.getElementById('usageType').value;
+
+        try {
+            const response = await fetch(BOT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productName: p.name, buyerId: disc.trim(), qty: qty, total: finalOrderPrice, usage: usage })
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert("✅ تم فتح التذكرة بنجاح!");
+                location.reload();
+            } else {
+                alert("❌ خطأ: " + result.error);
+                btn.disabled = false; btn.innerText = "فتح تذكرة الآن ✅";
+            }
+        } catch (err) { alert("❌ فشل الاتصال بالبوت."); btn.disabled = false; }
     }
 
     window.addEventListener('load', () => {
