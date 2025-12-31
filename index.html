@@ -114,8 +114,23 @@
         .section-header { 
             width: 100%; 
             display: flex; 
-            justify-content: flex-start; 
+            justify-content: space-between; 
+            align-items: center;
             padding: 0 40px; 
+            box-sizing: border-box;
+        }
+
+        .brand-group-title {
+            width: 100%;
+            color: var(--gold);
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         h2 {
@@ -128,6 +143,26 @@
             padding: 10px 0;
             text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
         }
+
+        /* --- ستايل قائمة الشركات الجديد --- */
+        .brand-filter-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            padding: 2px 10px;
+            display: none;
+        }
+        #brandFilter {
+            background: none;
+            color: var(--gold);
+            border: none;
+            font-family: 'Cairo';
+            font-weight: 700;
+            font-size: 0.85rem;
+            outline: none;
+            padding: 5px;
+        }
+        #brandFilter option { background: #111; color: white; }
 
         .currency-container {
             display: flex; align-items: center; gap: 10px;
@@ -155,6 +190,7 @@
             gap: 25px; 
             width: 100%;
             justify-content: flex-start;
+            margin-bottom: 40px;
         }
 
         .card { background: rgba(21, 21, 21, 0.8); backdrop-filter: blur(5px); border-radius: 12px; border: 1px solid #222; overflow: hidden; position: relative; transition: 0.3s; }
@@ -213,6 +249,7 @@
             nav { padding: 0 15px; flex-direction: column; gap: 10px; top: 10px; }
             .brand-logo { border: none; padding: 0; }
             .nav-wrapper { padding: 5px 10px; font-size: 0.8rem; }
+            .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
         }
     </style>
 </head>
@@ -251,6 +288,20 @@
                 <h4>إدارة المنتجات</h4>
                 <input type="hidden" id="editIndex" value="">
                 <input type="text" id="pName" class="admin-input" placeholder="اسم المنتج">
+                <select id="pBrand" class="admin-input">
+                    <option value="">اختر الشركة (اختياري)</option>
+                    <option value="Toyota">Toyota</option>
+                    <option value="Ford">Ford</option>
+                    <option value="Chevrolet">Chevrolet</option>
+                    <option value="Nissan">Nissan</option>
+                    <option value="Lexus">Lexus</option>
+                    <option value="Mercedes">Mercedes</option>
+                    <option value="BMW">BMW</option>
+                    <option value="Mazda">Mazda</option>
+                    <option value="GMC">GMC</option>
+                    <option value="Dodge">Dodge</option>
+                    <option value="Honda">Honda</option>
+                </select>
                 <input type="number" id="pPrice" class="admin-input" placeholder="السعر (SR)">
                 <select id="pCategory" class="admin-input">
                     <option value="الـسيارات🚗">سيارات</option>
@@ -272,14 +323,21 @@
 
             <div class="admin-box" style="border-top: 4px solid var(--discount-red);">
                 <h4>نظام الخصم المطور</h4>
-                <select id="discScope" class="admin-input">
+                <select id="discScope" class="admin-input" onchange="toggleDiscountFields()">
                     <option value="single">منتج معين</option>
-                    <option value="الـسيارات🚗">قسم السيارات</option>
+                    <option value="الـسيارات🚗">قسم السيارات (تحديد شركة)</option>
                     <option value="الـعـقارات🏘️">قسم العقارات</option>
                     <option value="الـمـتاجـر🏪">قسم المتاجر</option>
                     <option value="all">جميع المنتجات (المتجر)</option>
                     <option value="coupon">إضافة كود خصم جديد</option>
                 </select>
+                
+                <div id="carBrandDiscountField" style="display:none;">
+                    <select id="discCarBrand" class="admin-input">
+                        <option value="all">كل الشركات</option>
+                    </select>
+                </div>
+
                 <div id="couponField" style="display:none;">
                     <input type="text" id="couponCode" class="admin-input" placeholder="أدخل الكود (مثال: AR50)">
                 </div>
@@ -298,9 +356,19 @@
         <div class="section-header"><h2>الأكثر مبيعاً 🔥</h2></div>
         <div class="grid" id="bestSellerGrid"></div>
     </div>
+    
     <div id="categorySection" style="display:none; width: 100%;">
-        <div class="section-header"><h2 id="categoryTitle"></h2></div>
-        <div class="grid" id="categoryGrid"></div>
+        <div class="section-header">
+            <h2 id="categoryTitle"></h2>
+            <div id="brandFilterWrapper" class="brand-filter-container">
+                <select id="brandFilter" onchange="render()">
+                    <option value="all">كل الشركات</option>
+                </select>
+            </div>
+        </div>
+        <div id="categoryGridContainer">
+            <div class="grid" id="categoryGrid"></div>
+        </div>
     </div>
 </div>
 
@@ -330,7 +398,6 @@
 </div>
 
 <script>
-    // --- الربط بـ MongoDB وسيرفر Render ---
     const API_BASE = "https://ar-store-i6tw.onrender.com";
     const BOT_URL = `${API_BASE}/open-ticket`;
 
@@ -338,21 +405,19 @@
     let customSectionImages = {};
     let coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
     
-    // جلب البيانات من MongoDB عند التشغيل
     async function loadFromDatabase() {
         try {
             const res = await fetch(`${API_BASE}/get-store-data`);
             const data = await res.json();
             products = data.products || [];
             customSectionImages = data.customBgs || {};
+            updateBrandList(); 
             render();
-            // تحديث الخلفية للقسم الحالي بعد التحميل
             const bg = customSectionImages[currentView] || sectionImages[currentView];
             document.getElementById('section-bg').style.backgroundImage = `url('${bg}')`;
         } catch (e) { console.log("خطأ في الاتصال بقاعدة البيانات"); }
     }
 
-    // حفظ البيانات في MongoDB
     async function saveProductsToDB() {
         await fetch(`${API_BASE}/save-products`, {
             method: 'POST',
@@ -369,7 +434,6 @@
         });
     }
 
-    // --- بقية المتغيرات الأساسية ---
     const rates = { "SR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.082 };
     const sectionImages = {
         'home': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=2070',
@@ -389,10 +453,12 @@
         cursor.style.top = e.clientY + 'px'; 
     });
 
-    document.getElementById('discScope').addEventListener('change', function() {
-        document.getElementById('productField').style.display = (this.value === 'single') ? 'block' : 'none';
-        document.getElementById('couponField').style.display = (this.value === 'coupon') ? 'block' : 'none';
-    });
+    function toggleDiscountFields() {
+        const scope = document.getElementById('discScope').value;
+        document.getElementById('productField').style.display = (scope === 'single') ? 'block' : 'none';
+        document.getElementById('couponField').style.display = (scope === 'coupon') ? 'block' : 'none';
+        document.getElementById('carBrandDiscountField').style.display = (scope === 'الـسيارات🚗') ? 'block' : 'none';
+    }
 
     function getRemainingTime(expiry) {
         const diff = expiry - new Date().getTime();
@@ -403,18 +469,31 @@
         return `${h}h:${m}m:${s}s`;
     }
 
+    function updateBrandList() {
+        const filter = document.getElementById('brandFilter');
+        const discCarBrand = document.getElementById('discCarBrand');
+        const brands = [...new Set(products.filter(p => p.category === 'الـسيارات🚗' && p.brand).map(p => p.brand))];
+        
+        const filterHtml = '<option value="all">كل الشركات</option>' + brands.map(b => `<option value="${b}">${b}</option>`).join('');
+        filter.innerHTML = filterHtml;
+        discCarBrand.innerHTML = filterHtml;
+    }
+
     function render() {
         const now = new Date().getTime();
         const bestGrid = document.getElementById('bestSellerGrid');
-        const catGrid = document.getElementById('categoryGrid');
-        if(!bestGrid || !catGrid) return;
-        
-        bestGrid.innerHTML = ''; catGrid.innerHTML = '';
-        document.getElementById('discProduct').innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
-
+        const catContainer = document.getElementById('categoryGridContainer');
+        const brandFilterVal = document.getElementById('brandFilter').value;
         const isAdminOpen = document.getElementById('adminSection').style.display === 'block';
 
-        products.forEach((p, i) => {
+        if(!bestGrid || !catContainer) return;
+        
+        bestGrid.innerHTML = '';
+        catContainer.innerHTML = '';
+        document.getElementById('discProduct').innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+
+        // وظيفة لإنشاء كارت المنتج
+        const createCard = (p, i) => {
             let price = p.price;
             let hasDisc = (p.discount && p.discount.expiry > now);
             let timeText = hasDisc ? getRemainingTime(p.discount.expiry) : null;
@@ -424,7 +503,7 @@
             const convOld = (p.price * rates[currentCurr]).toFixed(2);
             const isOut = p.stock <= 0;
 
-            const cardHtml = `
+            return `
                 <div class="card ${isOut ? 'out-of-stock' : ''}">
                     ${hasDisc ? `<div class="discount-badge">خصم ${p.discount.percent}%</div>` : ''}
                     <img src="${p.img || 'https://via.placeholder.com/160'}">
@@ -445,10 +524,47 @@
                         ` : ''}
                     </div>
                 </div>`;
+        };
 
-            if (currentView === 'home' && (p.sales > 0 || hasDisc)) bestGrid.innerHTML += cardHtml;
-            if (p.category === currentView) catGrid.innerHTML += cardHtml;
+        // عرض الأكثر مبيعا في الرئيسية
+        products.forEach((p, i) => {
+            if (currentView === 'home' && (p.sales > 0 || (p.discount && p.discount.expiry > now))) {
+                bestSellerGrid.innerHTML += createCard(p, i);
+            }
         });
+
+        // عرض الأقسام مع ترتيب الشركات
+        if (currentView !== 'home') {
+            if (currentView === 'الـسيارات🚗') {
+                const brandsInView = brandFilterVal === 'all' 
+                    ? [...new Set(products.filter(p => p.category === currentView).map(p => p.brand || 'أخرى'))]
+                    : [brandFilterVal];
+
+                brandsInView.forEach(brand => {
+                    const brandProducts = products.filter(p => p.category === currentView && (p.brand || 'أخرى') === brand);
+                    if (brandProducts.length > 0) {
+                        const brandDiv = document.createElement('div');
+                        brandDiv.innerHTML = `<div class="brand-group-title"><span>🚗</span> ${brand}</div>`;
+                        const gridDiv = document.createElement('div');
+                        gridDiv.className = 'grid';
+                        brandProducts.forEach(p => {
+                            const originalIdx = products.indexOf(p);
+                            gridDiv.innerHTML += createCard(p, originalIdx);
+                        });
+                        catContainer.appendChild(brandDiv);
+                        catContainer.appendChild(gridDiv);
+                    }
+                });
+            } else {
+                // للأقسام الأخرى (عقارات، متاجر)
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'grid';
+                products.forEach((p, i) => {
+                    if (p.category === currentView) gridDiv.innerHTML += createCard(p, i);
+                });
+                catContainer.appendChild(gridDiv);
+            }
+        }
     }
 
     async function finishOrder() {
@@ -485,7 +601,7 @@
         const url = document.getElementById('bgUrlInput').value;
         if(url) {
             customSectionImages[currentView] = url;
-            await saveBgsToDB(); // حفظ في MongoDB
+            await saveBgsToDB(); 
             document.getElementById('section-bg').style.backgroundImage = `url('${url}')`;
             alert("تم حفظ خلفية قسم " + currentView + " للجميع!");
             document.getElementById('bgUrlInput').value = "";
@@ -495,7 +611,7 @@
     async function resetBackgrounds() {
         if(confirm("هل تريد العودة للخلفيات الأصلية لجميع الأقسام؟")) {
             customSectionImages = {};
-            await saveBgsToDB(); // تصفير في MongoDB
+            await saveBgsToDB(); 
             showSection(currentView);
         }
     }
@@ -504,6 +620,7 @@
         const scope = document.getElementById('discScope').value;
         const percent = parseInt(document.getElementById('discPercent').value);
         const hours = parseFloat(document.getElementById('discHours').value);
+        const carBrand = document.getElementById('discCarBrand').value;
         const now = new Date().getTime();
         const expiry = now + (hours * 3600000);
 
@@ -517,13 +634,23 @@
             alert("تمت إضافة كود الخصم!");
         } else {
             products.forEach((p, i) => {
-                if(scope === 'all' || p.category === scope || (scope === 'single' && i == document.getElementById('discProduct').value)) {
-                    p.discount = { percent, expiry };
+                let match = false;
+                if (scope === 'all') match = true;
+                else if (scope === 'single' && i == document.getElementById('discProduct').value) match = true;
+                else if (p.category === scope) {
+                    if (scope === 'الـسيارات🚗') {
+                        if (carBrand === 'all' || p.brand === carBrand) match = true;
+                    } else {
+                        match = true;
+                    }
                 }
+
+                if(match) p.discount = { percent, expiry };
             });
-            saveProductsToDB(); // حفظ التغييرات في MongoDB
+            saveProductsToDB(); 
         }
         render();
+        alert("تم تطبيق الخصم بنجاح!");
     }
 
     function goToPayment() {
@@ -548,17 +675,19 @@
     async function saveProduct() {
         const idx = document.getElementById('editIndex').value;
         const name = document.getElementById('pName').value;
+        const brand = document.getElementById('pBrand').value;
         const price = parseFloat(document.getElementById('pPrice').value);
         const category = document.getElementById('pCategory').value;
         const stock = parseInt(document.getElementById('pStock').value);
         const img = document.getElementById('pImg').value;
         if (!name || isNaN(price)) return alert("أكمل البيانات");
 
-        const p = { name, price, category, stock, img, sales: 0, discount: null };
+        const p = { name, brand, price, category, stock, img, sales: products[idx]?.sales || 0, discount: products[idx]?.discount || null };
         if(idx === "") products.push(p);
         else { products[idx] = p; document.getElementById('editIndex').value = ""; }
         
-        await saveProductsToDB(); // حفظ في MongoDB
+        await saveProductsToDB(); 
+        updateBrandList();
         render();
         alert("تم حفظ المنتج في قاعدة البيانات للجميع!");
     }
@@ -567,6 +696,7 @@
         if(confirm("حذف المنتج؟")) { 
             products.splice(i, 1); 
             await saveProductsToDB(); 
+            updateBrandList();
             render(); 
         } 
     }
@@ -575,6 +705,7 @@
         const p = products[i];
         document.getElementById('editIndex').value = i;
         document.getElementById('pName').value = p.name;
+        document.getElementById('pBrand').value = p.brand || "";
         document.getElementById('pPrice').value = p.price;
         document.getElementById('pCategory').value = p.category;
         document.getElementById('pStock').value = p.stock;
@@ -593,6 +724,8 @@
         document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
         document.getElementById('homeSection').style.display = (s === 'home') ? 'block' : 'none';
         document.getElementById('categorySection').style.display = (s === 'home') ? 'none' : 'block';
+        document.getElementById('brandFilterWrapper').style.display = (s === 'الـسيارات🚗') ? 'block' : 'none';
+
         if(s === 'home') {
             document.getElementById('nav-home').classList.add('active');
         } else {
@@ -614,10 +747,9 @@
     function closeModal() { document.getElementById('orderModal').style.display = 'none'; }
 
     window.addEventListener('load', () => {
-        loadFromDatabase(); // تحميل البيانات عند فتح الصفحة
+        loadFromDatabase(); 
         showSection('home');
         setInterval(render, 1000);
-        // تحديث البيانات تلقائياً كل 30 ثانية لمزامنة المتغيرات بين المستخدمين
         setInterval(loadFromDatabase, 30000);
     });
 </script>
