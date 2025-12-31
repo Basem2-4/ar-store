@@ -115,28 +115,42 @@ app.post('/open-ticket', async (req, res) => {
     }
 });
 
-// --- تعديل لوق إغلاق التذكرة ---
+// --- تعديل لوق إغلاق التذكرة لحل مشكلة Unknown Interaction ---
 client.on('interactionCreate', async (i) => {
-    if (i.isButton() && i.customId === 'close_ticket') {
-        const logChannel = i.guild.channels.cache.get(LOG_CHANNEL_ID);
-        
-        // إنشاء إمبيد اللوج
-        const closeLogEmbed = new EmbedBuilder()
-            .setTitle('🔒 تم إغلاق تذكرة')
-            .setColor('#ff0000')
-            .addFields(
-                { name: '📝 اسم القناة', value: i.channel.name, inline: true },
-                { name: '👤 أغلق بواسطة', value: `<@${i.user.id}>`, inline: true }
-            )
-            .setTimestamp();
+    if (!i.isButton()) return;
 
-        // إرسال اللوج قبل حذف القناة
-        if (logChannel) {
-            await logChannel.send({ embeds: [closeLogEmbed] });
+    if (i.customId === 'close_ticket') {
+        try {
+            // نستخدم deferReply لضمان عدم انتهاء صلاحية التفاعل
+            await i.deferReply();
+
+            const logChannel = i.guild.channels.cache.get(LOG_CHANNEL_ID);
+            
+            // إنشاء إمبيد اللوج
+            const closeLogEmbed = new EmbedBuilder()
+                .setTitle('🔒 تم إغلاق تذكرة')
+                .setColor('#ff0000')
+                .addFields(
+                    { name: '📝 اسم القناة', value: i.channel.name, inline: true },
+                    { name: '👤 أغلق بواسطة', value: `<@${i.user.id}>`, inline: true }
+                )
+                .setTimestamp();
+
+            // إرسال اللوج قبل حذف القناة
+            if (logChannel) {
+                await logChannel.send({ embeds: [closeLogEmbed] }).catch(() => {});
+            }
+
+            // تعديل الرد الأصلي لإعلام المستخدم بالحذف
+            await i.editReply('⚠️ سيتم حذف القناة خلال 5 ثوانٍ...');
+            
+            setTimeout(() => {
+                i.channel.delete().catch(() => {});
+            }, 5000);
+
+        } catch (error) {
+            console.error("Error handling close button:", error);
         }
-
-        await i.reply('⚠️ سيتم حذف القناة خلال 5 ثوانٍ...');
-        setTimeout(() => i.channel.delete().catch(() => {}), 5000);
     }
 });
 
