@@ -115,8 +115,9 @@ client.on('interactionCreate', async (interaction) => {
 
     if (interaction.customId === 'close_ticket') {
         try {
-            // 1. الرد الفوري لإخبار ديسكورد أننا استلمنا الأمر (يحل خطأ Unknown Interaction)
-            await interaction.deferReply({ ephemeral: true });
+            // 1. الرد الفوري "مخفي" للمستخدم لتجنب الـ Unknown Interaction
+            // الرد بـ ephemeral يضمن سرعة الاستجابة القصوى
+            await interaction.reply({ content: '🔒 جاري إغلاق التذكرة وحذف القناة فوراً...', ephemeral: true });
 
             const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
             
@@ -129,24 +130,25 @@ client.on('interactionCreate', async (interaction) => {
                 )
                 .setTimestamp();
 
+            // 2. إرسال اللوج (لا نستخدم await هنا لكي لا نعطل عملية الحذف)
             if (logChannel) {
-                await logChannel.send({ embeds: [closeLogEmbed] }).catch(() => {});
+                logChannel.send({ embeds: [closeLogEmbed] }).catch(() => {});
             }
 
-            // 2. تحديث الرد للمستخدم
-            await interaction.editReply({ content: '⚠️ سيتم حذف القناة خلال 5 ثوانٍ...' });
-
-            // 3. الحذف بعد وقت محدد
+            // 3. الحذف المباشر بدون setTimeout طويل
+            // حذف القناة فوراً ينهي التذكرة ولا يعتمد على مؤقت السيرفر
             setTimeout(async () => {
                 try {
-                    await interaction.channel.delete();
+                    if (interaction.channel) {
+                        await interaction.channel.delete();
+                    }
                 } catch (err) {
-                    console.error("Failed to delete channel:", err);
+                    console.error("خطأ أثناء حذف القناة:", err.message);
                 }
-            }, 5000);
+            }, 1000); // ثانية واحدة فقط كفاصل تقني
 
         } catch (error) {
-            console.error("Interaction Handling Error:", error);
+            console.error("حدث خطأ في التفاعل:", error.message);
         }
     }
 });
@@ -157,3 +159,4 @@ app.listen(port, '0.0.0.0', () => {
 });
 
 client.login(process.env.TOKEN);
+
