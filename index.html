@@ -111,6 +111,52 @@
             z-index: 8999;
         }
 
+        /* --- مربع اختيار شركات السيارات الجديد --- */
+        #carBrandsSelector {
+            display: none;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--gold);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: var(--gold-glow);
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            animation: fadeIn 0.5s;
+        }
+
+        .brand-btn {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #444;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-family: 'Cairo';
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+
+        .brand-btn img { width: 20px; height: 20px; object-fit: contain; }
+        .brand-btn:hover, .brand-btn.active { border-color: var(--gold); background: var(--gold); color: black; font-weight: bold; }
+
+        .brand-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0 10px 0;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            padding-bottom: 5px;
+        }
+        .brand-header img { width: 35px; height: 35px; object-fit: contain; }
+
         .section-header { 
             width: 100%; 
             display: flex; 
@@ -252,11 +298,12 @@
                 <input type="hidden" id="editIndex" value="">
                 <input type="text" id="pName" class="admin-input" placeholder="اسم المنتج">
                 <input type="number" id="pPrice" class="admin-input" placeholder="السعر (SR)">
-                <select id="pCategory" class="admin-input">
+                <select id="pCategory" class="admin-input" onchange="toggleCarAdminBrand()">
                     <option value="الـسيارات🚗">سيارات</option>
                     <option value="الـعـقارات🏘️">عقارات</option>
                     <option value="الـمـتاجـر🏪">متاجر</option>
                 </select>
+                <select id="pCarBrand" class="admin-input" style="display:none;"></select>
                 <input type="number" id="pStock" class="admin-input" placeholder="المخزون">
                 <input type="text" id="pImg" class="admin-input" placeholder="رابط الصورة">
                 <button onclick="saveProduct()" class="buy-btn">حفظ المنتج ✅</button>
@@ -272,9 +319,10 @@
 
             <div class="admin-box" style="border-top: 4px solid var(--discount-red);">
                 <h4>نظام الخصم المطور</h4>
-                <select id="discScope" class="admin-input">
+                <select id="discScope" class="admin-input" onchange="toggleDiscFields()">
                     <option value="single">منتج معين</option>
                     <option value="الـسيارات🚗">قسم السيارات</option>
+                    <option value="car_brand">شركة سيارات معينة</option>
                     <option value="الـعـقارات🏘️">قسم العقارات</option>
                     <option value="الـمـتاجـر🏪">قسم المتاجر</option>
                     <option value="all">جميع المنتجات (المتجر)</option>
@@ -286,6 +334,9 @@
                 <div id="productField">
                     <select id="discProduct" class="admin-input"></select>
                 </div>
+                <div id="brandDiscField" style="display:none;">
+                    <select id="discBrand" class="admin-input"></select>
+                </div>
                 <input type="number" id="discPercent" class="admin-input" placeholder="نسبة الخصم %">
                 <input type="number" id="discHours" class="admin-input" placeholder="المدة بالساعات">
                 <button onclick="applyAdvancedDiscount()" class="buy-btn" style="background: var(--discount-red); color:white;">تفعيل الخصم 🔥</button>
@@ -294,13 +345,15 @@
         <button onclick="closeAdmin()" class="buy-btn" style="background:#222; color:white; margin-top:15px;">إغلاق لوحة التحكم</button>
     </div>
 
+    <div id="carBrandsSelector"></div>
+
     <div id="homeSection" style="width: 100%;">
         <div class="section-header"><h2>الأكثر مبيعاً 🔥</h2></div>
         <div class="grid" id="bestSellerGrid"></div>
     </div>
     <div id="categorySection" style="display:none; width: 100%;">
         <div class="section-header"><h2 id="categoryTitle"></h2></div>
-        <div class="grid" id="categoryGrid"></div>
+        <div id="brandsDisplay"></div> <div class="grid" id="categoryGrid"></div>
     </div>
 </div>
 
@@ -330,15 +383,32 @@
 </div>
 
 <script>
-    // --- الربط بـ MongoDB وسيرفر Render ---
     const API_BASE = "https://ar-store-i6tw.onrender.com";
     const BOT_URL = `${API_BASE}/open-ticket`;
+
+    // بيانات شركات السيارات
+    const carBrands = [
+        { id: "Chevrolet", name: "Chevrolet", logo: "https://www.carlogos.org/car-logos/chevrolet-logo-2013-640.png" },
+        { id: "Ford", name: "Ford", logo: "https://www.carlogos.org/car-logos/ford-logo-2017-640.png" },
+        { id: "Kia", name: "Kia", logo: "https://www.carlogos.org/car-logos/kia-logo-2021-640.png" },
+        { id: "Toyota", name: "Toyota", logo: "https://www.carlogos.org/car-logos/toyota-logo-2020-640.png" },
+        { id: "Doge", name: "Dodge", logo: "https://www.carlogos.org/car-logos/dodge-logo-640.png" },
+        { id: "Rose_Roes", name: "Rolls Royce", logo: "https://www.carlogos.org/car-logos/rolls-royce-logo-640.png" },
+        { id: "Honda", name: "Honda", logo: "https://www.carlogos.org/car-logos/honda-logo-640.png" },
+        { id: "Hyundai", name: "Hyundai", logo: "https://www.carlogos.org/car-logos/hyundai-logo-640.png" },
+        { id: "Mercedes", name: "Mercedes", logo: "https://www.carlogos.org/car-logos/mercedes-benz-logo-640.png" },
+        { id: "Lexus", name: "Lexus", logo: "https://www.carlogos.org/car-logos/lexus-logo-640.png" },
+        { id: "Nissan", name: "Nissan", logo: "https://www.carlogos.org/car-logos/nissan-logo-640.png" },
+        { id: "Mazda", name: "Mazda", logo: "https://www.carlogos.org/car-logos/mazda-logo-640.png" },
+        { id: "Geely", name: "Geely", logo: "https://www.carlogos.org/car-logos/geely-logo-640.png" },
+        { id: "Bmw", name: "BMW", logo: "https://www.carlogos.org/car-logos/bmw-logo-640.png" }
+    ];
 
     let products = [];
     let customSectionImages = {};
     let coupons = JSON.parse(localStorage.getItem('ar_coupons_v12')) || [];
-    
-    // جلب البيانات من MongoDB عند التشغيل
+    let selectedBrand = 'all'; 
+
     async function loadFromDatabase() {
         try {
             const res = await fetch(`${API_BASE}/get-store-data`);
@@ -346,13 +416,11 @@
             products = data.products || [];
             customSectionImages = data.customBgs || {};
             render();
-            // تحديث الخلفية للقسم الحالي بعد التحميل
             const bg = customSectionImages[currentView] || sectionImages[currentView];
             document.getElementById('section-bg').style.backgroundImage = `url('${bg}')`;
         } catch (e) { console.log("خطأ في الاتصال بقاعدة البيانات"); }
     }
 
-    // حفظ البيانات في MongoDB
     async function saveProductsToDB() {
         await fetch(`${API_BASE}/save-products`, {
             method: 'POST',
@@ -369,7 +437,6 @@
         });
     }
 
-    // --- بقية المتغيرات الأساسية ---
     const rates = { "SR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.082 };
     const sectionImages = {
         'home': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=2070',
@@ -389,10 +456,17 @@
         cursor.style.top = e.clientY + 'px'; 
     });
 
-    document.getElementById('discScope').addEventListener('change', function() {
-        document.getElementById('productField').style.display = (this.value === 'single') ? 'block' : 'none';
-        document.getElementById('couponField').style.display = (this.value === 'coupon') ? 'block' : 'none';
-    });
+    function toggleDiscFields() {
+        const val = document.getElementById('discScope').value;
+        document.getElementById('productField').style.display = (val === 'single') ? 'block' : 'none';
+        document.getElementById('couponField').style.display = (val === 'coupon') ? 'block' : 'none';
+        document.getElementById('brandDiscField').style.display = (val === 'car_brand') ? 'block' : 'none';
+    }
+
+    function toggleCarAdminBrand() {
+        const cat = document.getElementById('pCategory').value;
+        document.getElementById('pCarBrand').style.display = (cat === 'الـسيارات🚗') ? 'block' : 'none';
+    }
 
     function getRemainingTime(expiry) {
         const diff = expiry - new Date().getTime();
@@ -407,48 +481,104 @@
         const now = new Date().getTime();
         const bestGrid = document.getElementById('bestSellerGrid');
         const catGrid = document.getElementById('categoryGrid');
+        const brandsDisplay = document.getElementById('brandsDisplay');
+        const brandSelector = document.getElementById('carBrandsSelector');
+        
         if(!bestGrid || !catGrid) return;
         
-        bestGrid.innerHTML = ''; catGrid.innerHTML = '';
+        bestGrid.innerHTML = ''; catGrid.innerHTML = ''; brandsDisplay.innerHTML = '';
+        
+        // تحديث القوائم المنسدلة في الإدارة
         document.getElementById('discProduct').innerHTML = products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+        document.getElementById('discBrand').innerHTML = carBrands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+        document.getElementById('pCarBrand').innerHTML = carBrands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
 
         const isAdminOpen = document.getElementById('adminSection').style.display === 'block';
 
-        products.forEach((p, i) => {
-            let price = p.price;
-            let hasDisc = (p.discount && p.discount.expiry > now);
-            let timeText = hasDisc ? getRemainingTime(p.discount.expiry) : null;
-            if (hasDisc) price = p.price - (p.price * (p.discount.percent / 100));
+        // عرض شريط اختيار الشركات إذا كنا في قسم السيارات
+        if (currentView === 'الـسيارات🚗') {
+            brandSelector.style.display = 'flex';
+            brandSelector.innerHTML = `<button class="brand-btn ${selectedBrand === 'all' ? 'active' : ''}" onclick="filterByBrand('all')">الكل</button>` + 
+                carBrands.map(b => `<button class="brand-btn ${selectedBrand === b.id ? 'active' : ''}" onclick="filterByBrand('${b.id}')"><img src="${b.logo}">${b.name}</button>`).join('');
+        } else {
+            brandSelector.style.display = 'none';
+        }
 
-            const convPrice = (price * rates[currentCurr]).toFixed(2);
-            const convOld = (p.price * rates[currentCurr]).toFixed(2);
-            const isOut = p.stock <= 0;
+        // تجميع المنتجات حسب الشركة إذا كان الاختيار "الكل"
+        const groupedProducts = {};
+        if (currentView === 'الـسيارات🚗' && selectedBrand === 'all') {
+            carBrands.forEach(b => groupedProducts[b.id] = []);
+            products.forEach((p, i) => {
+                if (p.category === currentView && p.brand) {
+                    if (!groupedProducts[p.brand]) groupedProducts[p.brand] = [];
+                    groupedProducts[p.brand].push({...p, originalIndex: i});
+                }
+            });
+        }
 
-            const cardHtml = `
-                <div class="card ${isOut ? 'out-of-stock' : ''}">
-                    ${hasDisc ? `<div class="discount-badge">خصم ${p.discount.percent}%</div>` : ''}
-                    <img src="${p.img || 'https://via.placeholder.com/160'}">
-                    <div class="card-content">
-                        <h3>${p.name}</h3>
-                        <div>
-                            ${hasDisc ? `<span class="old-price">${convOld} ${currentCurr}</span>` : ''}
-                            <span class="price">${convPrice} ${currentCurr}</span>
-                        </div>
-                        <p style="font-size:10px; color:gray; margin: 5px 0;">المخزون: ${p.stock}</p>
-                        ${hasDisc && timeText ? `<div class="timer-display">${timeText}</div>` : ''}
-                        <button class="buy-btn" onclick="openOrder(${i})">${isOut ? 'نفذت الكمية' : 'اطلب الآن'}</button>
-                        ${isAdminOpen ? `
-                            <div style="display:flex; gap:5px; margin-top:10px;">
-                                <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; font-weight:bold;">تعديل</button>
-                                <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; font-weight:bold;">حذف</button>
-                            </div>
-                        ` : ''}
+        if (currentView === 'الـسيارات🚗' && selectedBrand === 'all') {
+            catGrid.style.display = 'none';
+            for (const brandId in groupedProducts) {
+                if (groupedProducts[brandId].length > 0) {
+                    const brandInfo = carBrands.find(b => b.id === brandId);
+                    const brandSection = document.createElement('div');
+                    brandSection.innerHTML = `<div class="brand-header"><img src="${brandInfo.logo}"> <h3>${brandInfo.name}</h3></div><div class="grid"></div>`;
+                    const grid = brandSection.querySelector('.grid');
+                    groupedProducts[brandId].forEach(p => grid.innerHTML += createCardHtml(p, p.originalIndex, now, isAdminOpen));
+                    brandsDisplay.appendChild(brandSection);
+                }
+            }
+        } else {
+            catGrid.style.display = 'grid';
+            products.forEach((p, i) => {
+                const cardHtml = createCardHtml(p, i, now, isAdminOpen);
+                if (currentView === 'home' && (p.sales > 0 || (p.discount && p.discount.expiry > now))) bestGrid.innerHTML += cardHtml;
+                if (p.category === currentView) {
+                    if (currentView !== 'الـسيارات🚗' || selectedBrand === 'all' || p.brand === selectedBrand) {
+                        catGrid.innerHTML += cardHtml;
+                    }
+                }
+            });
+        }
+    }
+
+    function createCardHtml(p, i, now, isAdminOpen) {
+        let price = p.price;
+        let hasDisc = (p.discount && p.discount.expiry > now);
+        let timeText = hasDisc ? getRemainingTime(p.discount.expiry) : null;
+        if (hasDisc) price = p.price - (p.price * (p.discount.percent / 100));
+
+        const convPrice = (price * rates[currentCurr]).toFixed(2);
+        const convOld = (p.price * rates[currentCurr]).toFixed(2);
+        const isOut = p.stock <= 0;
+
+        return `
+            <div class="card ${isOut ? 'out-of-stock' : ''}">
+                ${hasDisc ? `<div class="discount-badge">خصم ${p.discount.percent}%</div>` : ''}
+                <img src="${p.img || 'https://via.placeholder.com/160'}">
+                <div class="card-content">
+                    <h3>${p.name}</h3>
+                    ${p.brand ? `<p style="color:var(--gold); font-size:12px; margin: -10px 0 10px 0;">${p.brand}</p>` : ''}
+                    <div>
+                        ${hasDisc ? `<span class="old-price">${convOld} ${currentCurr}</span>` : ''}
+                        <span class="price">${convPrice} ${currentCurr}</span>
                     </div>
-                </div>`;
+                    <p style="font-size:10px; color:gray; margin: 5px 0;">المخزون: ${p.stock}</p>
+                    ${hasDisc && timeText ? `<div class="timer-display">${timeText}</div>` : ''}
+                    <button class="buy-btn" onclick="openOrder(${i})">${isOut ? 'نفذت الكمية' : 'اطلب الآن'}</button>
+                    ${isAdminOpen ? `
+                        <div style="display:flex; gap:5px; margin-top:10px;">
+                            <button onclick="editP(${i})" style="flex:1; background:#333; color:gold; border:none; padding:8px; border-radius:5px; font-weight:bold;">تعديل</button>
+                            <button onclick="deleteP(${i})" style="flex:1; background:#333; color:red; border:none; padding:8px; border-radius:5px; font-weight:bold;">حذف</button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>`;
+    }
 
-            if (currentView === 'home' && (p.sales > 0 || hasDisc)) bestGrid.innerHTML += cardHtml;
-            if (p.category === currentView) catGrid.innerHTML += cardHtml;
-        });
+    function filterByBrand(b) {
+        selectedBrand = b;
+        render();
     }
 
     async function finishOrder() {
@@ -485,7 +615,7 @@
         const url = document.getElementById('bgUrlInput').value;
         if(url) {
             customSectionImages[currentView] = url;
-            await saveBgsToDB(); // حفظ في MongoDB
+            await saveBgsToDB();
             document.getElementById('section-bg').style.backgroundImage = `url('${url}')`;
             alert("تم حفظ خلفية قسم " + currentView + " للجميع!");
             document.getElementById('bgUrlInput').value = "";
@@ -495,7 +625,7 @@
     async function resetBackgrounds() {
         if(confirm("هل تريد العودة للخلفيات الأصلية لجميع الأقسام؟")) {
             customSectionImages = {};
-            await saveBgsToDB(); // تصفير في MongoDB
+            await saveBgsToDB();
             showSection(currentView);
         }
     }
@@ -515,13 +645,19 @@
             coupons.push({ code, percent, expiry });
             localStorage.setItem('ar_coupons_v12', JSON.stringify(coupons));
             alert("تمت إضافة كود الخصم!");
+        } else if (scope === 'car_brand') {
+            const bId = document.getElementById('discBrand').value;
+            products.forEach(p => {
+                if(p.category === 'الـسيارات🚗' && p.brand === bId) p.discount = { percent, expiry };
+            });
+            saveProductsToDB();
         } else {
             products.forEach((p, i) => {
                 if(scope === 'all' || p.category === scope || (scope === 'single' && i == document.getElementById('discProduct').value)) {
                     p.discount = { percent, expiry };
                 }
             });
-            saveProductsToDB(); // حفظ التغييرات في MongoDB
+            saveProductsToDB();
         }
         render();
     }
@@ -550,17 +686,19 @@
         const name = document.getElementById('pName').value;
         const price = parseFloat(document.getElementById('pPrice').value);
         const category = document.getElementById('pCategory').value;
+        const brand = (category === 'الـسيارات🚗') ? document.getElementById('pCarBrand').value : null;
         const stock = parseInt(document.getElementById('pStock').value);
         const img = document.getElementById('pImg').value;
+        
         if (!name || isNaN(price)) return alert("أكمل البيانات");
 
-        const p = { name, price, category, stock, img, sales: 0, discount: null };
+        const p = { name, price, category, brand, stock, img, sales: 0, discount: null };
         if(idx === "") products.push(p);
         else { products[idx] = p; document.getElementById('editIndex').value = ""; }
         
-        await saveProductsToDB(); // حفظ في MongoDB
+        await saveProductsToDB();
         render();
-        alert("تم حفظ المنتج في قاعدة البيانات للجميع!");
+        alert("تم حفظ المنتج بنجاح!");
     }
 
     async function deleteP(i) { 
@@ -577,6 +715,8 @@
         document.getElementById('pName').value = p.name;
         document.getElementById('pPrice').value = p.price;
         document.getElementById('pCategory').value = p.category;
+        toggleCarAdminBrand();
+        if(p.brand) document.getElementById('pCarBrand').value = p.brand;
         document.getElementById('pStock').value = p.stock;
         document.getElementById('pImg').value = p.img;
         window.scrollTo(0,0);
@@ -588,6 +728,7 @@
 
     function showSection(s) {
         currentView = s;
+        selectedBrand = 'all'; 
         const bg = customSectionImages[s] || sectionImages[s];
         document.getElementById('section-bg').style.backgroundImage = `url('${bg}')`;
         document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
@@ -614,10 +755,9 @@
     function closeModal() { document.getElementById('orderModal').style.display = 'none'; }
 
     window.addEventListener('load', () => {
-        loadFromDatabase(); // تحميل البيانات عند فتح الصفحة
+        loadFromDatabase();
         showSection('home');
         setInterval(render, 1000);
-        // تحديث البيانات تلقائياً كل 30 ثانية لمزامنة المتغيرات بين المستخدمين
         setInterval(loadFromDatabase, 30000);
     });
 </script>
