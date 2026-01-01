@@ -72,7 +72,7 @@ app.post('/api/create-ticket', async (req, res) => {
                 { name: 'رقم الطلب', value: `#${orderId}`, inline: true },
                 { name: 'قسم الطلب', value: `${finalCategory}`, inline: true },
                 // تم تغيير "المنتج المطلوب" إلى "التفاصيل" بناءً على طلبك
-                { name: 'التفاصيل', value: `${finalProduct} النسخ ${finalQty}`, inline: false },
+               { name: 'تفاصيل إضافية', value: orderDetails || 'لا توجد تفاصيل' }
                 { name: 'الإجمالي', value: `${finalPrice}`, inline: false }
             )
             .setTimestamp()
@@ -102,3 +102,4 @@ const port = process.env.PORT || 10000;
 app.listen(port, '0.0.0.0', () => {
     console.log(`🚀 Server on port ${port}`);
 });
+
