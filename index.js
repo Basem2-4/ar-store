@@ -22,46 +22,41 @@ const client = new Client({
 
 const GUILD_ID = process.env.GUILD_ID;
 const CATEGORY_ID = process.env.CATEGORY_ID; 
-const ADMIN_ROLE_ID = "1433835499918983218"; 
+const ADMIN_ROLE_ID = "1069269164667179109"; 
 
 // 3. مسار إنشاء التذكرة
 app.post('/api/create-ticket', async (req, res) => {
-    // طباعة البيانات في الكونسول لمعرفة المسميات الصحيحة من موقعك
-    console.log('--- بيانات قادمة من المتجر ---');
-    console.log(JSON.stringify(req.body, null, 2));
-    
     const data = req.body;
 
-    // محاولة استخراج اسم المنتج من عدة احتمالات (بما فيها الأنظمة المعقدة)
-    let productName = data.productName || data.item || data.product || data.title || data.itemName || "غير معروف";
+    // معالجة البيانات
+    let productName = data.productName || data.item || data.product || data.title || "غير معروف";
     let quantity = data.quantity || data.qty || 1;
-
-    // إذا كانت البيانات داخل مصفوفة (مثل سلة أو زد)
     if (data.items && Array.isArray(data.items) && data.items.length > 0) {
-        productName = data.items.map(i => i.name || i.product_name || i.title || "منتج").join(', ');
+        productName = data.items.map(i => i.name || i.product_name || i.title).join(', ');
         quantity = data.items[0].quantity || data.items[0].qty || quantity;
-    } else if (data.products && Array.isArray(data.products)) {
-        productName = data.products.map(p => p.name || p.title).join(', ');
     }
 
-    const discordId = data.discordId || data.userId || data.user_id || data.customer_id;
-    const totalPrice = data.totalPrice || data.price || data.total || '0';
+    const discordId = data.discordId || data.userId || data.user_id;
+    const totalPrice = data.totalPrice || data.price || '0';
     const categoryName = data.categoryName || data.category || 'عام';
 
-    if (!discordId) return res.status(400).json({ success: false, error: 'Discord ID missing' });
+    if (!discordId) return res.status(400).json({ success: false });
 
+    // الرد على المتجر فوراً (أهم خطوة لعدم التأخير في المرة الثانية)
+    res.status(200).json({ success: true, message: "Processing started" });
+
+    // تنفيذ باقي العمليات في الخلفية دون جعل المستخدم ينتظر
     try {
         const guild = client.guilds.cache.get(GUILD_ID) || await client.guilds.fetch(GUILD_ID);
         
-        // تنفيذ العداد وجلب العضو بالتوازي للسرعة
-        const [orderId, member] = await Promise.all([
-            Counter.findOneAndUpdate({ id: "orderId" }, { $inc: { seq: 1 } }, { new: true, upsert: true }).then(d => d.seq),
-            guild.members.fetch(discordId.trim()).catch(() => null)
-        ]);
+        // استخدام الذاكرة المؤقتة للعضو أولاً لتجنب البطء
+        let member = guild.members.cache.get(discordId.trim());
+        if (!member) member = await guild.members.fetch(discordId.trim()).catch(() => null);
 
-        if (!member) return res.status(404).json({ success: false, error: 'User not found' });
+        if (!member) return console.log(`❌ Member ${discordId} not found`);
 
-        // إنشاء القناة
+        const orderId = await Counter.findOneAndUpdate({ id: "orderId" }, { $inc: { seq: 1 } }, { new: true, upsert: true }).then(d => d.seq);
+
         const channel = await guild.channels.create({
             name: `ticket-${orderId}`,
             type: 0,
@@ -73,10 +68,6 @@ app.post('/api/create-ticket', async (req, res) => {
             ],
         });
 
-        // الرد الفوري للموقع ليكون أسرع شيء
-        res.status(200).json({ success: true, channelId: channel.id });
-
-        // إرسال الإمبد في الخلفية
         const embed = new EmbedBuilder()
             .setTitle('📦 طلب جديد - تم تأكيد الدفع')
             .setColor('#FFD700') 
@@ -87,14 +78,12 @@ app.post('/api/create-ticket', async (req, res) => {
                 { name: 'التفاصيل', value: `${productName} النسخ ${quantity}`, inline: false },
                 { name: 'الإجمالي', value: `${totalPrice}`, inline: false }
             )
-            .setTimestamp()
-            .setFooter({ text: 'Al-Amariyah RP System' });
+            .setTimestamp();
 
         await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | <@${member.id}>`, embeds: [embed] });
 
     } catch (error) {
-        console.error('❌ Error:', error.message);
-        if (!res.headersSent) res.status(500).json({ success: false });
+        console.error('❌ Background Error:', error.message);
     }
 });
 
