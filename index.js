@@ -1,100 +1,90 @@
-const { 
-    Client, GatewayIntentBits, EmbedBuilder, ChannelType, 
-    PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder 
-} = require('discord.js');
+client.login(process.env.TOKEN);
+const { Client, GatewayIntentBits, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const express = require('express');
-const cors = require('cors');
 const mongoose = require('mongoose');
+require('dotenv').config();
 
 const app = express();
-app.use(cors()); 
 app.use(express.json());
 
-// الاتصال بقاعدة البيانات
-mongoose.connect(process.env.MONGO_URI).catch(err => console.log("MongoDB Error:", err));
+// 1. الاتصال بقاعدة بيانات MongoDB
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('Connected to MongoDB ✅'))
+    .catch(err => console.error('MongoDB Connection Error ❌', err));
 
-const StoreSchema = new mongoose.Schema({ configId: String, products: Array, customBgs: Object });
-const Store = mongoose.model('Store', StoreSchema);
-
+// 2. إعداد إعدادات البوت
 const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages]
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
 });
 
-// المسارات لجلب البيانات (للمتجر)
-app.get('/get-store-data', async (req, res) => {
-    try {
-        const data = await Store.findOne({ configId: "main" }) || { products: [], customBgs: {} };
-        res.json(data);
-    } catch (e) { res.status(500).json(e); }
-});
+// متغيرات البيئة (يجب ضبطها في Render)
+const GUILD_ID = process.env.GUILD_ID;
+const CATEGORY_ID = process.env.CATEGORY_ID; // ايدي الكاتيجوري اللي بتفتح فيه التذاكر
+const ADMIN_ROLE_ID = process.env.ADMIN_ROLE_ID; // ايدي رتبة الإدارة للمنشن
 
-app.post('/save-products', async (req, res) => {
-    await Store.findOneAndUpdate({ configId: "main" }, { products: req.body.products }, { upsert: true });
-    res.json({ success: true });
-});
-
-app.post('/save-bgs', async (req, res) => {
-    await Store.findOneAndUpdate({ configId: "main" }, { customBgs: req.body.customBgs }, { upsert: true });
-    res.json({ success: true });
-});
-
-const GUILD_ID = process.env.GUILD_ID; 
-const CATEGORY_ID = process.env.CATEGORY_ID; 
-const ADMIN_ROLE_ID = "1433835499918983218"; 
-
-app.post('/open-ticket', async (req, res) => {
-    const { productName, buyerId, qty, total, usage } = req.body;
+// 3. API لاستقبال طلبات الشراء من الموقع
+app.post('/api/create-ticket', async (req, res) => {
+    const { discordId, orderDetails, totalPrice, orderId } = req.body;
 
     try {
-        const guild = client.guilds.cache.get(GUILD_ID) || await client.guilds.fetch(GUILD_ID);
-        if (!guild) return res.status(400).json({ success: false, error: "السيرفر غير موجود" });
-
-        // التحقق من صحة الايدي
-        const member = await guild.members.fetch(buyerId.trim()).catch(() => null);
-        if (!member) return res.status(400).json({ success: false, error: "الايدي غير صحيح أو الشخص ليس بالسيرفر" });
-
-        // إنشاء القناة
+        const guild = await client.guilds.fetch(GUILD_ID);
+        
+        // إنشاء التذكرة (Channel)
         const channel = await guild.channels.create({
-            name: `ticket-${member.user.username}`,
-            type: ChannelType.GuildText,
+            name: `ticket-${orderId}`,
+            type: 0, // Text Channel
             parent: CATEGORY_ID,
             permissionOverwrites: [
-                { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-                { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
-                { id: ADMIN_ROLE_ID, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
+                {
+                    id: guild.id, // منع الجميع من الرؤية
+                    deny: [PermissionsBitField.Flags.ViewChannel],
+                },
+                {
+                    id: discordId, // السماح للمشتري بالرؤية
+                    allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages],
+                },
+                {
+                    id: ADMIN_ROLE_ID, // السماح للإدارة بالرؤية
+                    allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages],
+                },
             ],
         });
 
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق').setStyle(ButtonStyle.Danger)
-        );
-
+        // إنشاء رسالة الترحيب (الذهبية)
         const embed = new EmbedBuilder()
-            .setTitle('🛒 طلب جديد')
-            .setDescription(`**المنتج:** ${productName}\n**الكمية:** ${qty}\n**الإجمالي:** ${total} SR\n**الاستخدام:** ${usage}`)
-            .setColor('#D4AF37')
-            .setTimestamp();
+            .setTitle('📦 طلب جديد - تم تأكيد الدفع')
+            .setColor('#FFD700') // اللون الذهبي
+            .setDescription(`أهلاً بك <@${discordId}>\nتم فتح هذه التذكرة لمتابعة طلبك.`)
+            .addFields(
+                { name: 'رقم الطلب', value: `#${orderId}`, inline: true },
+                { name: 'الإجمالي', value: `${totalPrice} SR`, inline: true },
+                { name: 'التفاصيل', value: orderDetails }
+            )
+            .setTimestamp()
+            .setFooter({ text: 'Al-Amariyah RP System' });
 
-        await channel.send({ 
-            content: `طلب جديد من: <@${member.id}> | <@&${ADMIN_ROLE_ID}>`,
-            embeds: [embed], 
-            components: [row] 
-        });
+        await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | <@${discordId}>`, embeds: [embed] });
 
-        res.json({ success: true });
-    } catch (e) { 
-        console.error(e);
-        res.status(500).json({ success: false, error: "حدث خطأ داخلي" });
+        res.status(200).json({ success: true, channelId: channel.id });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: 'Failed to create ticket' });
     }
 });
 
-client.on('interactionCreate', async (i) => {
-    if (!i.isButton() || i.customId !== 'close_ticket') return;
-    try {
-        await i.deferUpdate().catch(() => {}); 
-        await i.channel.delete().catch(() => {});
-    } catch (e) {}
+// تشغيل البوت
+client.once('ready', () => {
+    console.log(`Logged in as ${client.user.tag} 🤖`);
 });
 
-client.login(process.env.TOKEN);
-app.listen(process.env.PORT || 10000);
+client.login(process.env.BOT_TOKEN);
+
+// تشغيل سيرفر الـ Express (للرابط مع Render)
+const port = process.env.PORT || 10000;
+app.listen(port, '0.0.0.0', () => {
+    console.log(`🚀 السيرفر يعمل على المنفذ ${port}`);
+});
