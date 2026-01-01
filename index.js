@@ -10,42 +10,57 @@ const app = express();
 app.use(cors()); 
 app.use(express.json());
 
-// الاتصال السريع بقاعدة البيانات
-mongoose.connect(process.env.MONGO_URI).catch(() => {});
+// الاتصال بقاعدة البيانات
+mongoose.connect(process.env.MONGO_URI).catch(err => console.log("MongoDB Error:", err));
 
 const StoreSchema = new mongoose.Schema({ configId: String, products: Array, customBgs: Object });
 const Store = mongoose.model('Store', StoreSchema);
 
 const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages]
+});
+
+// المسارات لجلب البيانات (للمتجر)
+app.get('/get-store-data', async (req, res) => {
+    try {
+        const data = await Store.findOne({ configId: "main" }) || { products: [], customBgs: {} };
+        res.json(data);
+    } catch (e) { res.status(500).json(e); }
+});
+
+app.post('/save-products', async (req, res) => {
+    await Store.findOneAndUpdate({ configId: "main" }, { products: req.body.products }, { upsert: true });
+    res.json({ success: true });
+});
+
+app.post('/save-bgs', async (req, res) => {
+    await Store.findOneAndUpdate({ configId: "main" }, { customBgs: req.body.customBgs }, { upsert: true });
+    res.json({ success: true });
 });
 
 const GUILD_ID = process.env.GUILD_ID; 
 const CATEGORY_ID = process.env.CATEGORY_ID; 
 const ADMIN_ROLE_ID = "1433835499918983218"; 
 
-// --- فتح التذكرة بسرعة البرق ---
 app.post('/open-ticket', async (req, res) => {
-    // 1. رد فوراً على الموقع
-    res.send({ success: true });
+    const { productName, buyerId, qty, total, usage } = req.body;
 
-    // 2. معالجة ديسكورد في الخلفية
     try {
-        const { productName, buyerId, qty, total } = req.body;
-        const guild = client.guilds.cache.get(GUILD_ID);
-        if (!guild) return;
+        const guild = client.guilds.cache.get(GUILD_ID) || await client.guilds.fetch(GUILD_ID);
+        if (!guild) return res.status(400).json({ success: false, error: "السيرفر غير موجود" });
 
-        // جلب العضو من الكاش أو السيرفر بأسرع طريقة
+        // التحقق من صحة الايدي
         const member = await guild.members.fetch(buyerId.trim()).catch(() => null);
-        if (!member) return;
+        if (!member) return res.status(400).json({ success: false, error: "الايدي غير صحيح أو الشخص ليس بالسيرفر" });
 
-        // إنشاء القناة (أولوية قصوى)
+        // إنشاء القناة
         const channel = await guild.channels.create({
             name: `ticket-${member.user.username}`,
+            type: ChannelType.GuildText,
             parent: CATEGORY_ID,
             permissionOverwrites: [
                 { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-                { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+                { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
                 { id: ADMIN_ROLE_ID, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
             ],
         });
@@ -54,29 +69,31 @@ app.post('/open-ticket', async (req, res) => {
             new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق').setStyle(ButtonStyle.Danger)
         );
 
+        const embed = new EmbedBuilder()
+            .setTitle('🛒 طلب جديد')
+            .setDescription(`**المنتج:** ${productName}\n**الكمية:** ${qty}\n**الإجمالي:** ${total} SR\n**الاستخدام:** ${usage}`)
+            .setColor('#D4AF37')
+            .setTimestamp();
+
         await channel.send({ 
-            content: `طلب جديد: <@${member.id}> | <@&${ADMIN_ROLE_ID}>`,
-            embeds: [new EmbedBuilder().setTitle('🛒 تفاصيل الطلب').setDescription(`**المنتج:** ${productName}\n**الكمية:** ${qty}\n**الإجمالي:** ${total}`).setColor('#D4AF37')],
-            components: [row]
+            content: `طلب جديد من: <@${member.id}> | <@&${ADMIN_ROLE_ID}>`,
+            embeds: [embed], 
+            components: [row] 
         });
-    } catch (e) { console.error("Create Error:", e); }
+
+        res.json({ success: true });
+    } catch (e) { 
+        console.error(e);
+        res.status(500).json({ success: false, error: "حدث خطأ داخلي" });
+    }
 });
 
-// --- حل نهائي لمشكلة زر الإغلاق ---
 client.on('interactionCreate', async (i) => {
-    if (!i.isButton()) return;
-
-    if (i.customId === 'close_ticket') {
-        try {
-            // "deferUpdate" ينهي انتظار ديسكورد فوراً ويمنع خطأ الـ Interaction
-            await i.deferUpdate().catch(() => {}); 
-            
-            // حذف القناة فوراً
-            await i.channel.delete().catch(() => {});
-        } catch (error) {
-            console.error("Close Error:", error);
-        }
-    }
+    if (!i.isButton() || i.customId !== 'close_ticket') return;
+    try {
+        await i.deferUpdate().catch(() => {}); 
+        await i.channel.delete().catch(() => {});
+    } catch (e) {}
 });
 
 client.login(process.env.TOKEN);
