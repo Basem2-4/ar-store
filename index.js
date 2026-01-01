@@ -22,29 +22,30 @@ const client = new Client({
 
 const GUILD_ID = process.env.GUILD_ID;
 const CATEGORY_ID = process.env.CATEGORY_ID; 
-const ADMIN_ROLE_ID = "1069269164667179109"; 
+const ADMIN_ROLE_ID = "1433835499918983218"; 
 
 // 3. مسار إنشاء التذكرة
 app.post('/api/create-ticket', async (req, res) => {
+    // طباعة البيانات في الكونسول لمعرفة المسميات الصحيحة من موقعك
+    console.log('--- بيانات قادمة من المتجر ---');
+    console.log(JSON.stringify(req.body, null, 2));
+    
     const data = req.body;
 
-    // --- معالجة ذكية لجلب اسم المنتج ---
-    let productName = "غير محدد";
+    // محاولة استخراج اسم المنتج من عدة احتمالات (بما فيها الأنظمة المعقدة)
+    let productName = data.productName || data.item || data.product || data.title || data.itemName || "غير معروف";
     let quantity = data.quantity || data.qty || 1;
 
-    // 1. إذا كان المنتج داخل مصفوفة (الاحتمال الأكبر في المواقع)
-    const items = data.items || data.products || data.cart;
-    if (Array.isArray(items) && items.length > 0) {
-        productName = items.map(i => `${i.name || i.productName || i.title || 'منتج'}`).join(', ');
-        quantity = items[0].quantity || items[0].qty || quantity;
-    } 
-    // 2. إذا كان المنتج مرسل كاسم مباشر
-    else {
-        productName = data.productName || data.item || data.product || data.title || "منتج غير معروف";
+    // إذا كانت البيانات داخل مصفوفة (مثل سلة أو زد)
+    if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+        productName = data.items.map(i => i.name || i.product_name || i.title || "منتج").join(', ');
+        quantity = data.items[0].quantity || data.items[0].qty || quantity;
+    } else if (data.products && Array.isArray(data.products)) {
+        productName = data.products.map(p => p.name || p.title).join(', ');
     }
 
-    const discordId = data.discordId || data.userId || data.user_id;
-    const totalPrice = data.totalPrice || data.price || '0';
+    const discordId = data.discordId || data.userId || data.user_id || data.customer_id;
+    const totalPrice = data.totalPrice || data.price || data.total || '0';
     const categoryName = data.categoryName || data.category || 'عام';
 
     if (!discordId) return res.status(400).json({ success: false, error: 'Discord ID missing' });
@@ -52,7 +53,7 @@ app.post('/api/create-ticket', async (req, res) => {
     try {
         const guild = client.guilds.cache.get(GUILD_ID) || await client.guilds.fetch(GUILD_ID);
         
-        // تنفيذ العداد وجلب العضو بالتوازي
+        // تنفيذ العداد وجلب العضو بالتوازي للسرعة
         const [orderId, member] = await Promise.all([
             Counter.findOneAndUpdate({ id: "orderId" }, { $inc: { seq: 1 } }, { new: true, upsert: true }).then(d => d.seq),
             guild.members.fetch(discordId.trim()).catch(() => null)
@@ -60,6 +61,7 @@ app.post('/api/create-ticket', async (req, res) => {
 
         if (!member) return res.status(404).json({ success: false, error: 'User not found' });
 
+        // إنشاء القناة
         const channel = await guild.channels.create({
             name: `ticket-${orderId}`,
             type: 0,
@@ -71,7 +73,7 @@ app.post('/api/create-ticket', async (req, res) => {
             ],
         });
 
-        // الرد الفوري للموقع
+        // الرد الفوري للموقع ليكون أسرع شيء
         res.status(200).json({ success: true, channelId: channel.id });
 
         // إرسال الإمبد في الخلفية
