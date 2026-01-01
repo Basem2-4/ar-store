@@ -1,4 +1,3 @@
-client.login(process.env.TOKEN);
 const { Client, GatewayIntentBits, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const express = require('express');
 const mongoose = require('mongoose');
@@ -12,7 +11,7 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('Connected to MongoDB ✅'))
     .catch(err => console.error('MongoDB Connection Error ❌', err));
 
-// 2. إعداد إعدادات البوت
+// 2. إعداد إعدادات البوت (Initialization)
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -21,43 +20,41 @@ const client = new Client({
     ]
 });
 
-// متغيرات البيئة (يجب ضبطها في Render)
+// متغيرات البيئة
 const GUILD_ID = process.env.GUILD_ID;
-const CATEGORY_ID = process.env.CATEGORY_ID; // ايدي الكاتيجوري اللي بتفتح فيه التذاكر
-const ADMIN_ROLE_ID = process.env.ADMIN_ROLE_ID; // ايدي رتبة الإدارة للمنشن
+const CATEGORY_ID = process.env.CATEGORY_ID; 
+const ADMIN_ROLE_ID = process.env.ADMIN_ROLE_ID; 
 
-// 3. API لاستقبال طلبات الشراء من الموقع
+// 3. API لاستقبال طلبات الشراء
 app.post('/api/create-ticket', async (req, res) => {
     const { discordId, orderDetails, totalPrice, orderId } = req.body;
 
     try {
         const guild = await client.guilds.fetch(GUILD_ID);
         
-        // إنشاء التذكرة (Channel)
         const channel = await guild.channels.create({
             name: `ticket-${orderId}`,
-            type: 0, // Text Channel
+            type: 0, 
             parent: CATEGORY_ID,
             permissionOverwrites: [
                 {
-                    id: guild.id, // منع الجميع من الرؤية
+                    id: guild.id, 
                     deny: [PermissionsBitField.Flags.ViewChannel],
                 },
                 {
-                    id: discordId, // السماح للمشتري بالرؤية
+                    id: discordId, 
                     allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages],
                 },
                 {
-                    id: ADMIN_ROLE_ID, // السماح للإدارة بالرؤية
+                    id: ADMIN_ROLE_ID, 
                     allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages],
                 },
             ],
         });
 
-        // إنشاء رسالة الترحيب (الذهبية)
         const embed = new EmbedBuilder()
             .setTitle('📦 طلب جديد - تم تأكيد الدفع')
-            .setColor('#FFD700') // اللون الذهبي
+            .setColor('#FFD700') 
             .setDescription(`أهلاً بك <@${discordId}>\nتم فتح هذه التذكرة لمتابعة طلبك.`)
             .addFields(
                 { name: 'رقم الطلب', value: `#${orderId}`, inline: true },
@@ -76,14 +73,15 @@ app.post('/api/create-ticket', async (req, res) => {
     }
 });
 
-// تشغيل البوت
+// 4. تشغيل البوت وفعاليات الجاهزية
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag} 🤖`);
 });
 
-client.login(process.env.BOT_TOKEN);
+// ملاحظة: استخدم المتغير الصحيح الموجود في ملف الـ .env (يفضل توحيدها إلى BOT_TOKEN)
+client.login(process.env.BOT_TOKEN || process.env.TOKEN);
 
-// تشغيل سيرفر الـ Express (للرابط مع Render)
+// 5. تشغيل سيرفر الـ Express
 const port = process.env.PORT || 10000;
 app.listen(port, '0.0.0.0', () => {
     console.log(`🚀 السيرفر يعمل على المنفذ ${port}`);
