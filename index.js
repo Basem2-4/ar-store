@@ -27,8 +27,8 @@ const client = new Client({
 
 const GUILD_ID = process.env.GUILD_ID;
 const CATEGORY_ID = process.env.CATEGORY_ID; 
-const LOG_CHANNEL_ID = "1433835949405503591"; 
-const ADMIN_ROLE_ID = "1433835499918983218"; 
+const LOG_CHANNEL_ID = "1324422204557004860"; 
+const ADMIN_ROLE_ID = "1069269164667179109"; 
 
 // 3. مسار إنشاء التذكرة (محسن للسرعة ومعالجة البيانات)
 app.post('/api/create-ticket', async (req, res) => {
