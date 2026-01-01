@@ -127,7 +127,11 @@ client.on('interactionCreate', async (i) => {
     }
 });
 
-app.listen(process.env.PORT || 10000, '0.0.0.0', () => {
-    console.log(`🚀 السيرفر يعمل على المنفذ ${process.env.PORT || 10000}`);
+// ابحث عن السطر الذي يبدأ بـ app.listen واستبدله بهذا:
+const port = process.env.PORT || 10000;
+app.listen(port, '0.0.0.0', () => {
+    console.log(`🚀 السيرفر يعمل على المنفذ ${port}`);
 });
-client.login(TOKEN);
+
+// تأكد أن سطر تسجيل دخول البوت موجود في نهاية الملف:
+client.login(process.env.TOKEN);
