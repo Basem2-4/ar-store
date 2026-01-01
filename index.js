@@ -27,13 +27,13 @@ const client = new Client({
 
 const GUILD_ID = process.env.GUILD_ID;
 const CATEGORY_ID = process.env.CATEGORY_ID; 
-const ADMIN_ROLE_ID = "1433835499918983218"; 
+const ADMIN_ROLE_ID = "1069269164667179109"; 
 
-// 3. مسار إنشاء التذكرة (أقصى سرعة وأدق تفاصيل)
+// 3. مسار إنشاء التذكرة
 app.post('/api/create-ticket', async (req, res) => {
     const data = req.body;
 
-    // جلب البيانات مع احتمالية اختلاف المسميات من الموقع
+    // جلب البيانات مع فحص المسميات لضمان عدم ظهور "غير محدد"
     const finalDiscordId = data.discordId || data.userId || data.user_id;
     const finalPrice = data.totalPrice || data.price || '0';
     const finalProduct = data.productName || data.item || data.product || 'غير محدد';
@@ -43,13 +43,13 @@ app.post('/api/create-ticket', async (req, res) => {
     if (!finalDiscordId) return res.status(400).json({ success: false, error: 'Discord ID missing' });
 
     try {
-        // تنفيذ العمليات بالتوازي لضمان أسرع فتح للتذكرة
+        // تنفيذ العمليات بالتوازي لسرعة الاستجابة
         const [guild, orderId] = await Promise.all([
             client.guilds.cache.get(GUILD_ID) || client.guilds.fetch(GUILD_ID),
             Counter.findOneAndUpdate({ id: "orderId" }, { $inc: { seq: 1 } }, { new: true, upsert: true }).then(d => d.seq)
         ]);
 
-        // جلب العضو والتأكد من وجوده لتجنب خطأ PermissionOverwrites
+        // جلب العضو للتأكد من صلاحيات الروم
         const member = await guild.members.fetch(finalDiscordId.trim()).catch(() => null);
         if (!member) return res.status(404).json({ success: false, error: 'Member not found in server' });
 
@@ -71,13 +71,14 @@ app.post('/api/create-ticket', async (req, res) => {
             .addFields(
                 { name: 'رقم الطلب', value: `#${orderId}`, inline: true },
                 { name: 'قسم الطلب', value: `${finalCategory}`, inline: true },
-                { name: 'المنتج المطلوب', value: `${finalProduct} النسخ ${finalQty}`, inline: false },
+                // تم تغيير "المنتج المطلوب" إلى "التفاصيل" بناءً على طلبك
+                { name: 'التفاصيل', value: `${finalProduct} النسخ ${finalQty}`, inline: false },
                 { name: 'الإجمالي', value: `${finalPrice}`, inline: false }
             )
             .setTimestamp()
             .setFooter({ text: 'Al-Amariyah RP System' });
 
-        // إرسال الرسالة بدون أزرار (يتم الحذف يدوياً)
+        // إرسال الرسالة بدون أزرار (يتم حذف القناة يدوياً)
         await channel.send({ 
             content: `<@&${ADMIN_ROLE_ID}> | <@${member.id}>`, 
             embeds: [embed] 
@@ -86,18 +87,18 @@ app.post('/api/create-ticket', async (req, res) => {
         res.status(200).json({ success: true, channelId: channel.id });
 
     } catch (error) {
-        console.error('❌ خطأ أثناء إنشاء التذكرة:', error.message);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        console.error('❌ Error:', error.message);
+        res.status(500).json({ success: false });
     }
 });
 
 client.once('ready', () => {
-    console.log(`Logged in as ${client.user.tag} 🤖 ✅`);
+    console.log(`Logged in as ${client.user.tag} ✅`);
 });
 
 client.login(process.env.TOKEN);
 
 const port = process.env.PORT || 10000;
 app.listen(port, '0.0.0.0', () => {
-    console.log(`🚀 السيرفر يعمل على المنفذ ${port}`);
+    console.log(`🚀 Server on port ${port}`);
 });
