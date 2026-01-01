@@ -10,10 +10,9 @@ const app = express();
 app.use(cors()); 
 app.use(express.json());
 
-// --- إعداد الاتصال بقاعدة بيانات MongoDB ---
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("✅ متصل بقاعدة بيانات MongoDB بنجاح!"))
-    .catch(err => console.error("❌ فشل الاتصال بقاعدة البيانات:", err));
+    .then(() => console.log("✅ متصل ببقاعدة البيانات"))
+    .catch(err => console.error("❌ فشل الاتصال:", err));
 
 const StoreSchema = new mongoose.Schema({
     configId: { type: String, default: "main" },
@@ -22,61 +21,51 @@ const StoreSchema = new mongoose.Schema({
 });
 const Store = mongoose.model('Store', StoreSchema);
 
+// --- مسارات البيانات ---
 app.get('/get-store-data', async (req, res) => {
     try {
-        let data = await Store.findOne({ configId: "main" });
-        if (!data) data = { products: [], customBgs: {} };
+        const data = await Store.findOne({ configId: "main" }) || { products: [], customBgs: {} };
         res.json(data);
-    } catch (err) {
-        res.status(500).json({ error: "خطأ في جلب البيانات" });
-    }
+    } catch (err) { res.status(500).send(err); }
 });
 
 app.post('/save-products', async (req, res) => {
-    try {
-        await Store.findOneAndUpdate({ configId: "main" }, { products: req.body.products }, { upsert: true });
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+    await Store.findOneAndUpdate({ configId: "main" }, { products: req.body.products }, { upsert: true });
+    res.json({ success: true });
 });
 
 app.post('/save-bgs', async (req, res) => {
-    try {
-        await Store.findOneAndUpdate({ configId: "main" }, { customBgs: req.body.customBgs }, { upsert: true });
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+    await Store.findOneAndUpdate({ configId: "main" }, { customBgs: req.body.customBgs }, { upsert: true });
+    res.json({ success: true });
 });
 
-app.get('/', (req, res) => res.send('Server is Online 🚀'));
+app.get('/', (req, res) => res.send('Server Online'));
 
 const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildMembers, 
-        GatewayIntentBits.MessageContent
-    ]
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers]
 });
 
 const GUILD_ID = process.env.GUILD_ID; 
 const CATEGORY_ID = process.env.CATEGORY_ID; 
 const ADMIN_ROLE_ID = "1433835499918983218"; 
 
+// --- تحسين سرعة فتح التذكرة ---
 app.post('/open-ticket', async (req, res) => {
+    res.json({ success: true }); // الرد فوراً على الموقع لإنهاء حالة الانتظار هناك
+
     try {
         const { productName, buyerId, qty, total, usage } = req.body;
-        const guild = await client.guilds.fetch(GUILD_ID);
+        const guild = client.guilds.cache.get(GUILD_ID) || await client.guilds.fetch(GUILD_ID);
         
-        let member;
-        try {
-            member = await guild.members.fetch(buyerId.toString().trim());
-        } catch (e) {
-            return res.status(400).json({ success: false, error: "الايدي غير صحيح أو الشخص غير موجود بالسيرفر" });
+        // محاولة جلب العضو من الكاش أولاً لتوفير الوقت
+        let member = guild.members.cache.get(buyerId.toString().trim());
+        if (!member) {
+            member = await guild.members.fetch(buyerId.toString().trim()).catch(() => null);
         }
 
+        if (!member) return;
+
+        // إنشاء القناة
         const channel = await guild.channels.create({
             name: `طلب-${member.user.username}`,
             type: ChannelType.GuildText,
@@ -97,41 +86,32 @@ app.post('/open-ticket', async (req, res) => {
                 { name: '🔢 الكمية', value: qty.toString(), inline: true },
                 { name: '💰 الإجمالي', value: `${total} SR`, inline: true },
                 { name: '📝 الاستخدام', value: usage || 'غير محدد', inline: true }
-            )
-            .setTimestamp();
+            );
 
-        const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق التذكرة').setStyle(ButtonStyle.Danger).setEmoji('🔒');
-        const row = new ActionRowBuilder().addComponents(closeBtn);
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق').setStyle(ButtonStyle.Danger).setEmoji('🔒')
+        );
 
-        await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | طلب جديد من <@${member.id}>`, embeds: [ticketEmbed], components: [row] });
+        await channel.send({ 
+            content: `<@&${ADMIN_ROLE_ID}> | طلب جديد من <@${member.id}>`, 
+            embeds: [ticketEmbed], 
+            components: [row] 
+        });
 
-        res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error("Ticket Error:", error);
     }
 });
 
-// التعديل هنا لضمان عمل زر الإغلاق
-client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isButton()) return;
-
-    if (interaction.customId === 'close_ticket') {
-        try {
-            // الرد الفوري لتجنب خطأ التفاعل
-            await interaction.reply({ content: '⚠️ سيتم إغلاق التذكرة وحذف القناة خلال 5 ثوانٍ...' });
-            
-            setTimeout(async () => {
-                await interaction.channel.delete().catch(err => console.log("خطأ في حذف القناة:", err));
-            }, 5000);
-        } catch (error) {
-            console.error("حدث خطأ أثناء محاولة الإغلاق:", error);
-        }
-    }
+// زر الإغلاق السريع
+client.on('interactionCreate', async (i) => {
+    if (!i.isButton() || i.customId !== 'close_ticket') return;
+    
+    await i.reply('🔒 سيتم حذف التذكرة...');
+    setTimeout(() => i.channel.delete().catch(() => {}), 3000);
 });
 
 const port = process.env.PORT || 10000;
-app.listen(port, '0.0.0.0', () => {
-    console.log(`🚀 السيرفر يعمل على المنفذ ${port}`);
-});
+app.listen(port, '0.0.0.0', () => console.log(`Server on ${port}`));
 
 client.login(process.env.TOKEN);
