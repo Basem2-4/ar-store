@@ -8,6 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// الاتصال بقاعدة البيانات
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('Connected to MongoDB ✅'))
     .catch(err => console.error('MongoDB Connection Error ❌', err));
@@ -17,10 +18,11 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMembers // إضافة هذه الصلاحية مهمة جداً
+        GatewayIntentBits.GuildMembers 
     ]
 });
 
+// إعدادات الثوابت
 const GUILD_ID = process.env.GUILD_ID;
 const CATEGORY_ID = process.env.CATEGORY_ID; 
 const ADMIN_ROLE_ID = "1069269164667179109"; 
@@ -28,20 +30,26 @@ const ADMIN_ROLE_ID = "1069269164667179109";
 app.post('/api/create-ticket', async (req, res) => {
     const { discordId, orderDetails, totalPrice, orderId } = req.body;
 
-    if (!discordId) return res.status(400).json({ success: false, error: 'Discord ID missing' });
+    // سجل لمراقبة البيانات القادمة من الموقع في Render Logs
+    console.log(`📩 طلب جديد مستلم | ID: ${discordId} | Order: ${orderId}`);
+
+    if (!discordId || discordId.trim() === "") {
+        return res.status(400).json({ success: false, error: 'Discord ID is missing or empty' });
+    }
 
     try {
         const guild = await client.guilds.fetch(GUILD_ID);
         
-        // محاولة جلب المستخدم للتأكد من وجوده في السيرفر
+        // محاولة جلب العضو من السيرفر
         let member;
         try {
             member = await guild.members.fetch(discordId.trim());
         } catch (e) {
-            console.error("❌ المستخدم غير موجود في السيرفر");
-            return res.status(404).json({ success: false, error: 'User not found in server' });
+            console.error(`❌ المستخدم ${discordId} غير موجود في السيرفر`);
+            return res.status(404).json({ success: false, error: 'User not found in the Discord server' });
         }
 
+        // إنشاء قناة التذكرة
         const channel = await guild.channels.create({
             name: `ticket-${orderId || 'order'}`,
             type: 0, 
@@ -56,24 +64,35 @@ app.post('/api/create-ticket', async (req, res) => {
         const embed = new EmbedBuilder()
             .setTitle('📦 طلب جديد - تم تأكيد الدفع')
             .setColor('#FFD700') 
-            .setDescription(`أهلاً بك <@${member.id}>\nتم فتح تذكرة لمتابعة طلبك.`)
+            .setDescription(`أهلاً بك <@${member.id}>\nتم فتح تذكرة لمتابعة طلبك مع الإدارة.`)
             .addFields(
                 { name: 'رقم الطلب', value: `#${orderId || 'N/A'}`, inline: true },
                 { name: 'الإجمالي', value: `${totalPrice || '0'}`, inline: true },
-                { name: 'التفاصيل', value: orderDetails || 'لا توجد تفاصيل' }
+                { name: 'التفاصيل', value: orderDetails || 'لا توجد تفاصيل إضافية' }
             )
-            .setTimestamp();
+            .setTimestamp()
+            .setFooter({ text: 'Al-Amariyah RP' });
 
-        await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | <@${member.id}>`, embeds: [embed] });
+        await channel.send({ 
+            content: `<@&${ADMIN_ROLE_ID}> | <@${member.id}>`, 
+            embeds: [embed] 
+        });
+
         res.status(200).json({ success: true, channelId: channel.id });
+
     } catch (error) {
-        console.error('❌ تفاصيل الخطأ:', error.message);
-        res.status(500).json({ success: false, error: error.message });
+        console.error('❌ خطأ أثناء إنشاء التذكرة:', error.message);
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 });
 
-client.once('ready', () => console.log(`Logged in as ${client.user.tag} 🤖`));
+client.once('ready', () => {
+    console.log(`Logged in as ${client.user.tag} 🤖`);
+});
+
 client.login(process.env.TOKEN);
 
 const port = process.env.PORT || 10000;
-app.listen(port, '0.0.0.0', () => console.log(`🚀 Server on port ${port}`));
+app.listen(port, '0.0.0.0', () => {
+    console.log(`🚀 API Server is running on port ${port}`);
+});
