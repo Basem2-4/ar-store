@@ -4,7 +4,7 @@ const {
 } = require('discord.js');
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose'); // إضافة مكتبة قاعدة البيانات
+const mongoose = require('mongoose');
 
 const app = express();
 app.use(cors()); 
@@ -15,7 +15,6 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ متصل بقاعدة بيانات MongoDB بنجاح!"))
     .catch(err => console.error("❌ فشل الاتصال بقاعدة البيانات:", err));
 
-// تعريف "الموديل" لحفظ بيانات المتجر
 const StoreSchema = new mongoose.Schema({
     configId: { type: String, default: "main" },
     products: Array,
@@ -23,9 +22,6 @@ const StoreSchema = new mongoose.Schema({
 });
 const Store = mongoose.model('Store', StoreSchema);
 
-// --- مسارات جلب وحفظ البيانات (للمتجر) ---
-
-// جلب المنتجات والخلفيات
 app.get('/get-store-data', async (req, res) => {
     try {
         let data = await Store.findOne({ configId: "main" });
@@ -36,7 +32,6 @@ app.get('/get-store-data', async (req, res) => {
     }
 });
 
-// حفظ المنتجات
 app.post('/save-products', async (req, res) => {
     try {
         await Store.findOneAndUpdate({ configId: "main" }, { products: req.body.products }, { upsert: true });
@@ -46,7 +41,6 @@ app.post('/save-products', async (req, res) => {
     }
 });
 
-// حفظ الخلفيات
 app.post('/save-bgs', async (req, res) => {
     try {
         await Store.findOneAndUpdate({ configId: "main" }, { customBgs: req.body.customBgs }, { upsert: true });
@@ -56,7 +50,6 @@ app.post('/save-bgs', async (req, res) => {
     }
 });
 
-// مسار فحص الحالة
 app.get('/', (req, res) => res.send('Server is Online 🚀'));
 
 const client = new Client({
@@ -68,10 +61,8 @@ const client = new Client({
     ]
 });
 
-const TOKEN = process.env.TOKEN; 
 const GUILD_ID = process.env.GUILD_ID; 
 const CATEGORY_ID = process.env.CATEGORY_ID; 
-const LOG_CHANNEL_ID = "1433835949405503591"; 
 const ADMIN_ROLE_ID = "1433835499918983218"; 
 
 app.post('/open-ticket', async (req, res) => {
@@ -109,7 +100,7 @@ app.post('/open-ticket', async (req, res) => {
             )
             .setTimestamp();
 
-        const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق').setStyle(ButtonStyle.Danger).setEmoji('🔒');
+        const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق التذكرة').setStyle(ButtonStyle.Danger).setEmoji('🔒');
         const row = new ActionRowBuilder().addComponents(closeBtn);
 
         await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | طلب جديد من <@${member.id}>`, embeds: [ticketEmbed], components: [row] });
@@ -120,18 +111,27 @@ app.post('/open-ticket', async (req, res) => {
     }
 });
 
-client.on('interactionCreate', async (i) => {
-    if (i.isButton() && i.customId === 'close_ticket') {
-        await i.reply('⚠️ سيتم حذف القناة خلال 5 ثوانٍ...');
-        setTimeout(() => i.channel.delete().catch(() => {}), 5000);
+// التعديل هنا لضمان عمل زر الإغلاق
+client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isButton()) return;
+
+    if (interaction.customId === 'close_ticket') {
+        try {
+            // الرد الفوري لتجنب خطأ التفاعل
+            await interaction.reply({ content: '⚠️ سيتم إغلاق التذكرة وحذف القناة خلال 5 ثوانٍ...' });
+            
+            setTimeout(async () => {
+                await interaction.channel.delete().catch(err => console.log("خطأ في حذف القناة:", err));
+            }, 5000);
+        } catch (error) {
+            console.error("حدث خطأ أثناء محاولة الإغلاق:", error);
+        }
     }
 });
 
-// ابحث عن السطر الذي يبدأ بـ app.listen واستبدله بهذا:
 const port = process.env.PORT || 10000;
 app.listen(port, '0.0.0.0', () => {
     console.log(`🚀 السيرفر يعمل على المنفذ ${port}`);
 });
 
-// تأكد أن سطر تسجيل دخول البوت موجود في نهاية الملف:
 client.login(process.env.TOKEN);
