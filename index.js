@@ -8,22 +8,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// 1. الاتصال بقاعدة البيانات وإعداد نظام عداد الطلبات
+// 1. الاتصال بقاعدة البيانات
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('Connected to MongoDB ✅'))
     .catch(err => console.error('MongoDB Connection Error ❌', err));
 
-const counterSchema = new mongoose.Schema({ id: String, seq: Number });
-const Counter = mongoose.model('Counter', counterSchema);
-
-const getNextSequenceValue = async (sequenceName) => {
-    const sequenceDocument = await Counter.findOneAndUpdate(
-        { id: sequenceName },
-        { $inc: { seq: 1 } },
-        { new: true, upsert: true }
-    );
-    return sequenceDocument.seq;
-};
+const Counter = mongoose.model('Counter', new mongoose.Schema({ id: String, seq: Number }));
 
 // 2. إعداد البوت
 const client = new Client({
@@ -40,21 +30,20 @@ const CATEGORY_ID = process.env.CATEGORY_ID;
 const LOG_CHANNEL_ID = "1324422204557004860"; 
 const ADMIN_ROLE_ID = "1069269164667179109"; 
 
-// 3. مسار إنشاء التذكرة
+// 3. مسار إنشاء التذكرة (محسن للسرعة)
 app.post('/api/create-ticket', async (req, res) => {
-    // استلام البيانات من الموقع (تأكد من إرسال quantity من المتجر)
     const { discordId, totalPrice, categoryName, productName, quantity } = req.body;
 
-    if (!discordId || discordId === 'undefined') {
-        return res.status(400).json({ success: false, error: 'Discord ID is missing' });
-    }
+    if (!discordId) return res.status(400).json({ success: false });
 
     try {
-        const guild = await client.guilds.fetch(GUILD_ID);
+        // تنفيذ العمليات بالتوازي لتسريع الوقت
+        const [guild, orderId] = await Promise.all([
+            client.guilds.cache.get(GUILD_ID) || client.guilds.fetch(GUILD_ID),
+            Counter.findOneAndUpdate({ id: "orderId" }, { $inc: { seq: 1 } }, { new: true, upsert: true }).then(d => d.seq)
+        ]);
+
         const member = await guild.members.fetch(discordId.trim());
-        
-        // الحصول على رقم الطلب المتتالي
-        const orderId = await getNextSequenceValue("orderId");
 
         const channel = await guild.channels.create({
             name: `ticket-${orderId}`,
@@ -66,13 +55,6 @@ app.post('/api/create-ticket', async (req, res) => {
                 { id: member.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.AttachFiles] },
             ],
         });
-
-        const closeButton = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId('close_ticket')
-                .setLabel('إغلاق التذكرة')
-                .setStyle(ButtonStyle.Danger)
-        );
 
         const embed = new EmbedBuilder()
             .setTitle('📦 طلب جديد - تم تأكيد الدفع')
@@ -87,50 +69,50 @@ app.post('/api/create-ticket', async (req, res) => {
             .setTimestamp()
             .setFooter({ text: 'Al-Amariyah RP System' });
 
-        await channel.send({ 
-            content: `<@&${ADMIN_ROLE_ID}> | <@${member.id}>`, 
-            embeds: [embed],
-            components: [closeButton]
-        });
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق التذكرة').setStyle(ButtonStyle.Danger)
+        );
 
+        await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | <@${member.id}>`, embeds: [embed], components: [row] });
         res.status(200).json({ success: true, channelId: channel.id });
 
     } catch (error) {
-        console.error('❌ خطأ أثناء إنشاء التذكرة:', error.message);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        console.error('❌ Error:', error.message);
+        res.status(500).json({ success: false });
     }
 });
 
-// 4. نظام التعامل مع الأزرار (إغلاق التذكرة)
+// 4. نظام إغلاق التذكرة (تم إصلاح خطأ التفاعل وبطء الاستجابة)
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isButton()) return;
+    if (!interaction.isButton() || interaction.customId !== 'close_ticket') return;
 
-    if (interaction.customId === 'close_ticket') {
-        const logChannel = client.channels.cache.get(LOG_CHANNEL_ID);
+    try {
+        // الرد الفوري لإخبار ديسكورد أن البوت استلم الأمر (يحل مشكلة Unknown interaction)
+        await interaction.reply({ content: '🔒 جاري معالجة الإغلاق والارشفة...', ephemeral: true });
+
+        const logChannel = client.channels.cache.get(LOG_CHANNEL_ID) || await client.channels.fetch(LOG_CHANNEL_ID).catch(() => null);
         
         const logEmbed = new EmbedBuilder()
             .setTitle('🔒 تذكرة مغلقة')
             .setColor('#ff0000')
             .addFields(
                 { name: 'اسم التذكرة', value: `${interaction.channel.name}`, inline: true },
-                { name: 'بواسطة', value: `<@${interaction.user.id}>`, inline: true }
+                { name: 'أغلقت بواسطة', value: `<@${interaction.user.id}>`, inline: true }
             )
             .setTimestamp();
 
         if (logChannel) await logChannel.send({ embeds: [logEmbed] });
 
-        await interaction.reply('سيتم إغلاق التذكرة خلال 5 ثوانٍ...');
-        setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
+        // التذكرة تُحذف بعد الرد مباشرة لضمان السرعة
+        setTimeout(() => interaction.channel.delete().catch(() => {}), 2000);
+
+    } catch (err) {
+        console.error('Interaction Error:', err.message);
     }
 });
 
-client.once('ready', () => {
-    console.log(`Logged in as ${client.user.tag} 🤖`);
-});
-
+client.once('ready', () => console.log(`Logged in as ${client.user.tag} ✅`));
 client.login(process.env.TOKEN);
 
 const port = process.env.PORT || 10000;
-app.listen(port, '0.0.0.0', () => {
-    console.log(`🚀 السيرفر يعمل على المنفذ ${port}`);
-});
+app.listen(port, '0.0.0.0', () => console.log(`🚀 Port ${port}`));
