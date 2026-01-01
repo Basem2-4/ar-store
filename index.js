@@ -1,6 +1,7 @@
 const { 
     Client, GatewayIntentBits, EmbedBuilder, ChannelType, 
-    PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder 
+    PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder,
+    MessageFlags // أضفنا هذه هنا لحل مشكلة التحذير
 } = require('discord.js');
 const express = require('express');
 const cors = require('cors');
@@ -38,22 +39,20 @@ const ADMIN_ROLE_ID = "1433835499918983218";
 // لتجنب تكرار حذف القناة
 const closedChannels = new Set();
 
-// --- مسار فتح التذكرة (معدل لضمان الفتح) ---
+// --- مسار فتح التذكرة ---
 app.post('/open-ticket', async (req, res) => {
     try {
         const { productName, buyerId, qty, total, usage } = req.body;
         
-        // 1. رد فوري للموقع لإنهاء التحميل
+        // رد فوري للموقع
         res.json({ success: true });
 
-        // 2. معالجة فتح التذكرة في الخلفية
         const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
         if (!guild) return console.error("❌ لم يتم العثور على السيرفر");
 
         const userId = buyerId.toString().trim();
         let member = await guild.members.fetch(userId).catch(() => null);
 
-        // إذا لم يجد العضو، سنستخدم الأيدي مباشرة كحل احتياطي
         const targetId = member ? member.id : userId;
         const channelName = member ? `طلب-${member.user.username}` : `ticket-${userId.slice(-4)}`;
 
@@ -96,19 +95,19 @@ app.post('/open-ticket', async (req, res) => {
     }
 });
 
-// --- معالجة زر الإغلاق (حل مشكلة Interaction Failed) ---
+// --- معالجة زر الإغلاق (تم تحديثها لحل مشكلة التحذير) ---
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return;
 
     if (interaction.customId === 'close_ticket_btn') {
-        // التحقق من أن القناة لم يتم حذفها بالفعل
         if (closedChannels.has(interaction.channelId)) return;
         closedChannels.add(interaction.channelId);
 
         try {
-            // الرد الفوري هو الأهم لتجنب رسالة "Interaction Failed"
-            // نستخدم deferReply ليعرف ديسكورد أننا استلمنا الطلب وسنعالجه
-            await interaction.deferReply({ ephemeral: true }).catch(() => {});
+            // حل مشكلة التحذير هنا: استخدمنا MessageFlags.Ephemeral بدلاً من ephemeral: true
+            await interaction.deferReply({ 
+                flags: [MessageFlags.Ephemeral] 
+            }).catch(() => {});
 
             // إرسال اللوج
             const logChannel = await interaction.guild.channels.fetch(LOG_CHANNEL_ID).catch(() => null);
@@ -121,9 +120,9 @@ client.on('interactionCreate', async (interaction) => {
                 await logChannel.send({ embeds: [logEmbed] }).catch(() => {});
             }
 
-            await interaction.editReply({ content: '🔒 تم استلام الطلب، سيتم الحذف الآن...' }).catch(() => {});
+            await interaction.editReply({ content: '🔒 تم استلام الطلب، سيتم حذف القناة الآن...' }).catch(() => {});
 
-            // الحذف الفعلي
+            // الحذف بعد ثانية واحدة
             setTimeout(async () => {
                 try {
                     await interaction.channel.delete();
