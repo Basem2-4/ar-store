@@ -37,13 +37,13 @@ const client = new Client({
 
 const GUILD_ID = process.env.GUILD_ID;
 const CATEGORY_ID = process.env.CATEGORY_ID; 
-const LOG_CHANNEL_ID = "1433835949405503591"; // تأكد من وضع ايدي روم اللوق الصحيح هنا
-const ADMIN_ROLE_ID = "1433835499918983218"; 
+const LOG_CHANNEL_ID = "1324422204557004860"; 
+const ADMIN_ROLE_ID = "1069269164667179109"; 
 
 // 3. مسار إنشاء التذكرة
 app.post('/api/create-ticket', async (req, res) => {
-    // تم إضافة categoryName و productName لاستلامها من الموقع
-    const { discordId, orderDetails, totalPrice, categoryName, productName } = req.body;
+    // استلام البيانات من الموقع (تأكد من إرسال quantity من المتجر)
+    const { discordId, totalPrice, categoryName, productName, quantity } = req.body;
 
     if (!discordId || discordId === 'undefined') {
         return res.status(400).json({ success: false, error: 'Discord ID is missing' });
@@ -80,10 +80,9 @@ app.post('/api/create-ticket', async (req, res) => {
             .setDescription(`أهلاً بك <@${member.id}>\nتم فتح هذه التذكرة لمتابعة طلبك مع الإدارة.`)
             .addFields(
                 { name: 'رقم الطلب', value: `#${orderId}`, inline: true },
-                { name: 'القسم', value: `${categoryName || 'غير محدد'}`, inline: true },
-                { name: 'المنتج', value: `${productName || 'غير محدد'}`, inline: true },
-                { name: 'الإجمالي', value: `${totalPrice || '0'}`, inline: false },
-                { name: 'تفاصيل إضافية', value: orderDetails || 'لا توجد تفاصيل' }
+                { name: 'قسم الطلب', value: `${categoryName || 'غير محدد'}`, inline: true },
+                { name: 'المنتج المطلوب', value: `${productName || 'غير محدد'} (x${quantity || 1})`, inline: true },
+                { name: 'الإجمالي', value: `${totalPrice || '0'}`, inline: false }
             )
             .setTimestamp()
             .setFooter({ text: 'Al-Amariyah RP System' });
