@@ -12,304 +12,435 @@
         body { background-color: #050505; color: white; font-family: 'Cairo', sans-serif; overflow-x: hidden; margin: 0; }
         .gold-gradient-text { background: linear-gradient(to bottom, #f9d976, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .gold-border { border: 1px solid var(--gold); }
-        nav { background: rgba(0, 0, 0, 0.3) !important; backdrop-filter: blur(10px); border: 2px solid var(--gold) !important; margin: 15px 25px; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.5), 0 0 10px var(--gold-glow); }
-        .section-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-size: cover; background-position: center; background-repeat: no-repeat; z-index: -1; opacity: 0; transition: opacity 0.8s ease-in-out; display: block !important; pointer-events: none; }
-        .active-bg { opacity: 1; z-index: -1; }
-        .content-section { display: none; padding-top: 20px; min-height: 100vh; }
-        .admin-modal, .checkout-modal, .payment-modal { background: rgba(15, 15, 15, 0.98); border: 1px solid var(--gold); transition: 0.4s; z-index: 3000; border-radius: 15px; }
-        .btn-gold { background: linear-gradient(45deg, #aa8418, #d4af37); color: black; font-weight: bold; border-radius: 5px; transition: 0.3s; cursor: pointer; }
-        .btn-gold:hover { transform: scale(1.02); box-shadow: 0 0 15px var(--gold-glow); }
-        input, select { background: rgba(0,0,0,0.7) !important; border: 1px solid #444 !important; color: white !important; padding: 12px; border-radius: 8px; }
-        #cart-sidebar { position: fixed; left: 0; top: 0; width: 320px; height: 100%; background: rgba(10, 10, 10, 0.95); border-right: 2px solid var(--gold); transform: translateX(-100%); transition: 0.3s; z-index: 2000; padding: 20px; }
-        .company-divider { border-bottom: 1px solid rgba(212, 175, 55, 0.2); margin: 15px 0; width: 100%; }
-        .section-title { text-align: right; margin-right: 5%; margin-bottom: 30px; margin-top: 50px; font-size: 1.8rem; font-weight: 900; }
-        .discount-badge { background: #ff3e3e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .old-price { text-decoration: line-through; color: #888; font-size: 0.9em; margin-left: 5px; }
+        nav { background: rgba(0, 0, 0, 0.3) !important; backdrop-filter: blur(10px); border: 2px solid var(--gold) !important; margin: 15px 25px; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        
+        /* تحسينات القائمة العلوية */
+        .nav-link { font-size: 1.1rem; transition: 0.3s; position: relative; }
+        .nav-link.active { color: var(--gold); font-weight: 900; text-shadow: 0 0 10px var(--gold-glow); }
 
-        #notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; pointer-events: none; }
-        .toast-notify { 
-            background: rgba(10, 10, 10, 0.9); border: 1px solid var(--gold); color: white;
-            padding: 15px 25px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center;
-            gap: 12px; box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); animation: slideIn 0.5s ease forwards;
-        }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
-        .toast-notify.fade-out { animation: fadeOut 0.5s ease forwards; }
-        @keyframes fadeOut { to { opacity: 0; transform: translateX(100%); } }
+        .admin-trigger { position: fixed; bottom: 10px; right: 10px; z-index: 9999; opacity: 0; transition: 0.5s; cursor: pointer; padding: 10px; }
+        .admin-trigger:hover { opacity: 0.5; transform: rotate(90deg); color: var(--gold); }
+
+        .section-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-size: cover; background-position: center; z-index: -1; opacity: 0; transition: opacity 0.8s ease-in-out; }
+        .active-bg { opacity: 1; }
+        .content-section { display: none; padding-top: 20px; min-height: 100vh; }
+        .admin-modal { background: rgba(10, 10, 10, 0.98); border: 1px solid var(--gold); border-radius: 15px; z-index: 6000; transition: 0.4s; }
+        .btn-gold { background: linear-gradient(45deg, #aa8418, #d4af37); color: black; font-weight: bold; border-radius: 5px; transition: 0.3s; }
+        .btn-gold:hover { transform: scale(1.02); box-shadow: 0 0 15px var(--gold-glow); }
+        input, select { background: rgba(20,20,20,0.9) !important; border: 1px solid #444 !important; color: white !important; padding: 8px; border-radius: 8px; width: 100%; font-size: 12px; }
+        
+        #cart-sidebar { position: fixed; left: 0; top: 0; width: 320px; height: 100%; background: rgba(5, 5, 5, 0.98); border-right: 2px solid var(--gold); transform: translateX(-100%); transition: 0.3s; z-index: 2000; padding: 20px; display: flex; flex-direction: column; }
+        .discount-badge { background: #ff3e3e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+        .old-price { text-decoration: line-through; color: #777; font-size: 0.8em; margin-left: 5px; }
+        .timer-box { font-size: 10px; background: rgba(255, 62, 62, 0.2); color: #ff3e3e; padding: 2px 6px; border-radius: 4px; border: 1px solid #ff3e3e; margin-top: 5px; display: inline-block; }
+
+        #notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast-notify { background: #111; border: 1px solid var(--gold); color: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 10px; animation: slideIn 0.4s forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .product-img { width: 100%; height: 160px; object-fit: cover; border-radius: 10px; margin-bottom: 15px; border: 1px solid #333; }
+        .qty-btn { background: #1a1a1a; border: 1px solid #444; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; border-radius: 5px; font-weight: bold; font-size: 14px; }
+        
+        .currency-btn { background: #111; border: 1px solid #333; padding: 4px 8px; border-radius: 5px; font-size: 10px; transition: 0.3s; }
+        .currency-btn.active { border-color: var(--gold); color: var(--gold); }
     </style>
 </head>
 <body>
 
     <div id="notification-container"></div>
+    <div class="admin-trigger" onclick="accessAdmin()"><i class="fas fa-cog fa-2x"></i></div>
 
-    <div id="bg-main" class="section-bg" style="background-image: url('https://via.placeholder.com/1920x1080');"></div>
-    <div id="bg-cars" class="section-bg" style="background-image: url('https://via.placeholder.com/1920x1080');"></div>
-    <div id="bg-real" class="section-bg" style="background-image: url('https://via.placeholder.com/1920x1080');"></div>
-    <div id="bg-shops" class="section-bg" style="background-image: url('https://via.placeholder.com/1920x1080');"></div>
+    <div id="bg-main" class="section-bg active-bg"></div>
+    <div id="bg-cars" class="section-bg"></div>
+    <div id="bg-real" class="section-bg"></div>
+    <div id="bg-shops" class="section-bg"></div>
 
-    <div id="checkout-panel" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[4000]">
-        <div class="checkout-modal w-full max-w-md p-8 text-center">
-            <h2 class="text-2xl gold-gradient-text font-bold mb-6">تأكيد الطلب</h2>
-            <div class="space-y-4">
-                <input type="text" id="discord-id" placeholder="ايدي ديسكوردك" class="w-full">
-                <div class="text-right text-sm text-gray-400">
-                    <p>إجمالي القطع: <span id="checkout-count">0</span></p>
-                    <p>الإجمالي النهائي: <span id="checkout-total" class="text-white font-bold">0 SR</span></p>
+    <div id="admin-panel" class="fixed left-0 top-0 h-full w-full md:w-[450px] admin-modal translate-x-[-100%] overflow-y-auto p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-6 border-b border-gold pb-2">
+            <h2 class="text-xl gold-gradient-text font-black">⚙️ الإدارة</h2>
+            <button onclick="closeAdmin()" class="text-red-500 text-2xl">&times;</button>
+        </div>
+
+        <div class="mb-6 p-4 bg-zinc-900 rounded-lg border border-gold/20">
+            <h3 class="text-gold text-sm mb-3 font-bold">🏢 إدارة شركات السيارات</h3>
+            <div class="flex gap-2 mb-2">
+                <input type="text" id="new-company-name" placeholder="اسم الشركة (مثلاً: لكزس)">
+                <button onclick="addCompany()" class="bg-green-700 px-4 rounded text-xs">إضافة</button>
+            </div>
+            <select id="delete-company-select" class="mb-2"></select>
+            <button onclick="deleteCompany()" class="w-full bg-red-900/50 text-red-500 py-1 rounded text-[10px]">حذف الشركة المختارة</button>
+        </div>
+
+        <div class="mb-6 p-4 bg-zinc-900 rounded-lg">
+            <h3 class="text-gold text-sm mb-3 font-bold">📦 إضافة منتج جديد</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="new-p-name" placeholder="الاسم">
+                <input type="number" id="new-p-price" placeholder="السعر">
+                <input type="number" id="new-p-stock" placeholder="المخزون">
+                <input type="text" id="new-p-img" placeholder="رابط الصورة">
+                <select id="new-p-cat" onchange="toggleAdminCompanySelect()" class="col-span-2">
+                    <option value="main">قسم الرئيسية</option>
+                    <option value="cars">قسم السيارات</option>
+                    <option value="real">قسم العقارات</option>
+                    <option value="shops">قسم المتاجر</option>
+                </select>
+                <div id="admin-company-div" class="hidden col-span-2">
+                    <select id="new-p-company-select"></select>
                 </div>
-                <button onclick="showPaymentModal()" class="w-full btn-gold py-3">متابعة للدفع</button>
-                <button onclick="closeCheckout()" class="text-gray-400 text-sm">إلغاء</button>
+            </div>
+            <button onclick="addProduct()" class="w-full btn-gold py-2 text-xs mt-3">حفظ المنتج ✅</button>
+        </div>
+
+        <div class="mb-6 p-4 bg-zinc-800 rounded-lg">
+            <h3 class="text-blue-400 text-sm mb-3 font-bold">📝 تعديل منتج</h3>
+            <select id="edit-cat-select" onchange="loadProductsToEdit()" class="mb-2">
+                <option value="">اختر القسم لتعديله</option>
+                <option value="main">الرئيسية</option>
+                <option value="cars">السيارات</option>
+                <option value="real">العقارات</option>
+                <option value="shops">المتاجر</option>
+            </select>
+            <select id="edit-prod-select" class="hidden mb-2" onchange="fillEditData()"></select>
+            <div id="edit-fields" class="hidden space-y-2 mt-2">
+                <input type="text" id="edit-p-name" placeholder="الاسم">
+                <input type="number" id="edit-p-price" placeholder="السعر">
+                <input type="number" id="edit-p-stock" placeholder="المخزون">
+                <input type="text" id="edit-p-img" placeholder="رابط الصورة">
+                <button onclick="saveProductEdits()" class="w-full bg-blue-600 py-2 rounded text-xs">تحديث</button>
+                <button onclick="deleteProduct()" class="w-full bg-red-800 py-2 rounded text-xs">حذف</button>
             </div>
         </div>
-    </div>
 
-    <div id="payment-panel" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center z-[5000]">
-        <div class="payment-modal w-full max-w-md p-8 text-center">
-            <h2 class="text-2xl gold-gradient-text font-bold mb-2">تأكيد الدفع</h2>
-            <p id="pay-amount-label" class="text-white mb-6">المبلغ المطلوب: 0.00 SR</p>
-            <div class="bg-white p-4 rounded-lg inline-block mb-6">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ALAMARIYAH_PAYMENT" alt="QR Code" class="w-40 h-40">
+        <div class="mb-6 p-4 bg-red-900/10 border border-red-900/30 rounded-lg">
+            <h3 class="text-red-500 text-sm mb-3 font-bold">🔥 نظام الخصومات والمؤقت</h3>
+            <select id="disc-type" onchange="toggleDiscOptions()" class="mb-2">
+                <option value="all">كل المتجر</option>
+                <option value="cat">قسم معين</option>
+                <option value="prod">منتج محدد</option>
+                <option value="coupon">كود خصم</option>
+            </select>
+            <div id="disc-cat-div" class="hidden mb-2"><select id="disc-cat-val"><option value="main">الرئيسية</option><option value="cars">السيارات</option><option value="real">العقارات</option><option value="shops">المتاجر</option></select></div>
+            <div id="disc-prod-div" class="hidden mb-2"><select id="disc-prod-val"></select></div>
+            <div id="disc-coupon-div" class="hidden mb-2"><input type="text" id="disc-coupon-code" placeholder="كود الخصم"></div>
+            <div class="flex gap-2">
+                <input type="number" id="disc-percent" placeholder="النسبة %">
+                <input type="number" id="disc-hours" placeholder="المدة/ساعة">
             </div>
-            <p class="text-red-500 text-sm mb-6 font-bold">يجب التحويل قبل فتح التذكرة</p>
-            <button id="btn-open-ticket" onclick="handleOpenTicket()" class="w-full btn-gold py-3 flex items-center justify-center gap-2">
-                <span id="ticket-btn-text">✅ فتح تذكرة الآن</span>
-            </button>
+            <button onclick="setDiscount()" class="w-full bg-red-700 text-white py-2 rounded text-xs mt-2">تفعيل الخصم</button>
+        </div>
+
+        <div class="p-4 bg-zinc-900 rounded-lg">
+            <h3 class="text-gold text-sm mb-3">🖼️ روابط الخلفيات</h3>
+            <input type="text" id="bg-main-input" placeholder="رابط خلفية الرئيسية" class="mb-1">
+            <input type="text" id="bg-cars-input" placeholder="رابط خلفية السيارات" class="mb-1">
+            <input type="text" id="bg-real-input" placeholder="رابط خلفية العقارات" class="mb-1">
+            <input type="text" id="bg-shops-input" placeholder="رابط خلفية المتاجر" class="mb-1">
+            <button onclick="updateBgs()" class="w-full btn-gold py-2 text-xs mt-2">تحديث الصور</button>
         </div>
     </div>
 
     <div id="cart-sidebar">
-        <div class="flex justify-between items-center mb-6 border-b border-yellow-900 pb-2">
-            <h2 class="text-xl gold-gradient-text font-bold">🛒 سلة المشتريات</h2>
-            <button onclick="toggleCart()" class="text-red-500 text-2xl">&times;</button>
+        <div class="flex justify-between items-center mb-6 border-b border-gold pb-2">
+            <button onclick="toggleCart()" class="text-red-500 hover:text-red-400 transition"><i class="fas fa-times-circle fa-lg"></i></button>
+            <h2 class="text-xl gold-gradient-text font-bold text-right">🛒 سلتك</h2>
         </div>
-        <div id="cart-items-list" class="space-y-4 overflow-y-auto h-[50%]"></div>
-        <div class="absolute bottom-0 left-0 w-full p-6 bg-zinc-900 border-t border-yellow-900">
-            <div class="mb-4">
-                <div class="flex gap-2">
-                    <input type="text" id="coupon-input" placeholder="كود الخصم" class="w-full text-xs py-2">
-                    <button onclick="applyCoupon()" class="btn-gold px-3 text-xs">تطبيق</button>
-                </div>
-                <p id="coupon-msg" class="text-[10px] mt-1"></p>
+        
+        <div id="cart-items-list" class="space-y-3 overflow-y-auto flex-1 mb-4"></div>
+        
+        <div class="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 mb-4">
+            <p class="text-[11px] text-gold mb-2 font-bold">كود الخصم</p>
+            <div class="flex gap-2">
+                <input type="text" id="coupon-input" placeholder="ادخل الكود..." class="flex-1 !bg-black">
+                <button onclick="applyCoupon()" class="bg-gold text-black px-4 rounded-lg text-xs font-bold">تفعيل</button>
             </div>
+            <p id="coupon-msg" class="text-[10px] mt-2 text-center"></p>
+        </div>
+
+        <div class="w-full p-6 bg-black border-t border-gold">
             <div class="flex justify-between mb-4">
-                <span>الإجمالي:</span>
-                <span id="cart-total" class="gold-gradient-text font-bold text-xl">0.00 SR</span>
+                <span class="text-sm text-gray-400">الإجمالي النهائي:</span>
+                <span id="cart-total" class="gold-gradient-text font-bold text-lg">0.00 SR</span>
             </div>
-            <button onclick="openCheckout()" class="w-full btn-gold py-3 rounded">✅ إتمام الطلب</button>
-        </div>
-    </div>
-
-    <div id="admin-panel" class="fixed left-0 top-0 h-full w-full md:w-96 admin-modal translate-x-[-100%] overflow-y-auto p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl gold-gradient-text font-bold">لوحة التحكم</h2>
-            <button onclick="closeAdmin()" class="text-red-500 text-3xl">&times;</button>
-        </div>
-
-        <div class="mb-6 p-4 bg-zinc-900 rounded-lg border border-red-900/30">
-            <h3 class="text-red-500 mb-3 border-b border-red-800 pb-2 text-sm font-bold">نظام الخصومات</h3>
-            <div class="space-y-2">
-                <select id="disc-type" onchange="toggleDiscOptions()" class="w-full text-xs">
-                    <option value="all">كل المتجر</option>
-                    <option value="cat">قسم معين</option>
-                    <option value="prod">منتج معين</option>
-                    <option value="coupon">كود خصم يدوي</option>
-                </select>
-                <div id="disc-cat-div" class="hidden">
-                    <select id="disc-cat-val" class="w-full text-xs">
-                        <option value="main">الرئيسية</option>
-                        <option value="cars">السيارات</option>
-                        <option value="real">العقارات</option>
-                        <option value="shops">المتاجر</option>
-                    </select>
-                </div>
-                <div id="disc-prod-div" class="hidden">
-                    <select id="disc-prod-val" class="w-full text-xs"></select>
-                </div>
-                <div id="disc-coupon-div" class="hidden">
-                    <input type="text" id="disc-coupon-code" placeholder="اكتب الكود (مثلاً: SAVE10)" class="w-full text-xs">
-                </div>
-                <div class="flex gap-2">
-                    <input type="number" id="disc-percent" placeholder="النسبة %" class="w-1/2 text-xs">
-                    <input type="number" id="disc-hours" placeholder="المدة (ساعة)" class="w-1/2 text-xs">
-                </div>
-                <button onclick="setDiscount()" class="w-full bg-red-700 text-white py-2 rounded text-xs">تفعيل الخصم 🚀</button>
-            </div>
-        </div>
-
-        <div class="mb-6 p-4 bg-zinc-800 rounded-lg border border-blue-900/30">
-            <h3 class="text-blue-400 mb-3 border-b border-blue-800 pb-2 text-sm font-bold">تعديل منتج موجود</h3>
-            <div class="space-y-2">
-                <select id="edit-cat-select" onchange="loadProductsToEdit()" class="w-full text-xs">
-                    <option value="">اختر القسم لتعديل منتجاته</option>
-                    <option value="main">الرئيسية</option>
-                    <option value="cars">السيارات</option>
-                    <option value="real">العقارات</option>
-                    <option value="shops">المتاجر</option>
-                </select>
-                <select id="edit-prod-select" onchange="fillEditData()" class="w-full text-xs hidden"></select>
-                <div id="edit-fields" class="hidden space-y-2">
-                    <input type="text" id="edit-p-name" placeholder="الاسم الجديد" class="w-full text-xs">
-                    <input type="number" id="edit-p-price" placeholder="السعر الجديد" class="w-full text-xs">
-                    <input type="number" id="edit-p-stock" placeholder="المخزون الجديد" class="w-full text-xs">
-                    <button onclick="saveProductEdits()" class="w-full bg-blue-700 text-white py-2 rounded text-xs">حفظ التعديلات 💾</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="mb-6 p-4 bg-zinc-900 rounded-lg border border-yellow-900/30">
-            <h3 class="text-yellow-500 mb-3 border-b border-yellow-800 pb-2 text-sm">إدارة شركات السيارات</h3>
-            <div class="space-y-3">
-                <div class="flex gap-2">
-                    <input type="text" id="company-name-input" placeholder="اسم شركة جديدة" class="w-full text-xs">
-                    <button onclick="addNewCompany()" class="btn-gold px-4 text-xs shrink-0">إضافة</button>
-                </div>
-                <div class="company-divider"></div>
-                <select id="admin-company-manage-select" class="w-full text-xs" onchange="fillCompanyEditData()">
-                    <option value="">اختر شركة للتعديل/الحذف</option>
-                </select>
-                <div id="company-edit-fields" class="hidden space-y-2">
-                    <input type="text" id="edit-company-name-input" placeholder="الاسم الجديد" class="w-full text-xs">
-                    <div class="flex gap-2">
-                        <button onclick="updateCompanyName()" class="w-1/2 bg-blue-700 text-white py-2 rounded text-xs">تعديل الاسم</button>
-                        <button onclick="deleteCompany()" class="w-1/2 bg-red-700 text-white py-2 rounded text-xs">حذف الشركة</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="mb-6 p-4 bg-zinc-900 rounded-lg">
-            <h3 class="text-yellow-500 mb-3 border-b border-yellow-800 pb-2 text-sm">إضافة منتج</h3>
-            <div class="space-y-2">
-                <input type="text" id="new-p-name" placeholder="اسم المنتج" class="w-full text-sm">
-                <input type="number" id="new-p-price" placeholder="السعر" class="w-full text-sm">
-                <input type="number" id="new-p-stock" placeholder="المخزون" class="w-full text-sm">
-                <select id="new-p-cat" onchange="toggleAdminCompanySelect()" class="w-full text-sm">
-                    <option value="main">الرئيسية</option>
-                    <option value="cars">السيارات</option>
-                    <option value="real">العقارات</option>
-                    <option value="shops">المتاجر</option>
-                </select>
-                <div id="admin-company-div" class="hidden">
-                    <select id="new-p-company-select" class="w-full text-sm"></select>
-                </div>
-                <button onclick="addProduct()" class="w-full bg-green-700 text-white py-2 rounded mt-2 text-sm">إضافة المنتج ✅</button>
-            </div>
-        </div>
-
-        <div class="p-4 bg-zinc-900 rounded-lg">
-            <h3 class="text-yellow-500 mb-3 border-b border-yellow-800 pb-2 text-sm">تغيير الخلفيات</h3>
-            <div class="space-y-2">
-                <input type="text" id="bg-main-input" placeholder="رابط خلفية الرئيسية" class="w-full text-xs">
-                <input type="text" id="bg-cars-input" placeholder="رابط خلفية السيارات" class="w-full text-xs">
-                <input type="text" id="bg-real-input" placeholder="رابط خلفية العقارات" class="w-full text-xs">
-                <input type="text" id="bg-shops-input" placeholder="رابط خلفية المتاجر" class="w-full text-xs">
-                <button onclick="updateBgs()" class="w-full btn-gold py-2 text-xs">حفظ الخلفيات</button>
-            </div>
+            <button onclick="openCheckout()" class="w-full btn-gold py-3 rounded">تأكيد الطلب ✅</button>
         </div>
     </div>
 
     <nav class="flex justify-between items-center p-6 sticky top-0 z-40">
-        <span class="text-2xl font-black gold-gradient-text">ALAMARIYAH RP</span>
-        <div class="hidden md:flex gap-8 text-sm font-bold">
-            <button onclick="showSection('main')">الرئيسية</button>
-            <button onclick="showSection('cars')">السيارات</button>
-            <button onclick="showSection('real')">العقارات</button>
-            <button onclick="showSection('shops')">المتاجر</button>
+        <div class="flex flex-col">
+            <span class="text-2xl font-black gold-gradient-text">ALAMARIYAH STORE</span>
+            <div class="flex gap-1 mt-1">
+                <button onclick="setCurrency('SAR')" class="currency-btn active" id="curr-SAR">SR</button>
+                <button onclick="setCurrency('USD')" class="currency-btn" id="curr-USD">$</button>
+                <button onclick="setCurrency('EUR')" class="currency-btn" id="curr-EUR">€</button>
+                <button onclick="setCurrency('KWD')" class="currency-btn" id="curr-KWD">KWD</button>
+                <button onclick="setCurrency('AED')" class="currency-btn" id="curr-AED">AED</button>
+            </div>
         </div>
-        <button onclick="toggleCart()" class="gold-border px-4 py-2 rounded-lg text-sm bg-black/50">🛒 السلة (<span id="cart-count">0</span>)</button>
+        <div class="hidden md:flex gap-8 text-sm font-bold">
+            <button onclick="showSection('main')" class="nav-link" id="nav-main">الرئيسية</button>
+            <button onclick="showSection('cars')" class="nav-link" id="nav-cars">السيارات</button>
+            <button onclick="showSection('real')" class="nav-link" id="nav-real">العقارات</button>
+            <button onclick="showSection('shops')" class="nav-link" id="nav-shops">المتاجر</button>
+        </div>
+        <button onclick="toggleCart()" class="gold-border px-5 py-2 rounded-full text-sm bg-black/60">
+            🛒 السلة (<span id="cart-count">0</span>)
+        </button>
     </nav>
 
-    <div id="sec-main" class="content-section p-10">
-        <h2 class="section-title gold-gradient-text">الأكثر مبيعاً 🔥</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto" id="main-list"></div>
-    </div>
-
+    <div id="sec-main" class="content-section p-10"><div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto" id="main-list"></div></div>
     <div id="sec-cars" class="content-section p-10">
-        <div class="max-w-6xl mx-auto mt-10">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-10 gap-4 pr-[5%]">
-                <h2 class="section-title gold-gradient-text !m-0">قسم السيارات 🏎️</h2>
-                <select id="car-filter" onchange="renderProducts()" class="w-full md:w-64 bg-zinc-900 border border-gold text-white px-4 py-2 rounded">
-                    <option value="all">كل الشركات</option>
-                </select>
-            </div>
+        <div class="max-w-6xl mx-auto">
+            <select id="car-filter" onchange="renderProducts()" class="w-full md:w-64 bg-zinc-900 border-gold mb-10"></select>
             <div id="cars-container"></div>
         </div>
     </div>
+    <div id="sec-real" class="content-section p-10"><div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto" id="real-list"></div></div>
+    <div id="sec-shops" class="content-section p-10"><div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto" id="shops-list"></div></div>
 
-    <div id="sec-real" class="content-section p-10">
-        <h2 class="section-title gold-gradient-text">قسم العقارات 🏡</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto" id="real-list"></div>
+    <div id="checkout-panel" class="fixed inset-0 bg-black/95 hidden flex items-center justify-center z-[5000]">
+        <div class="admin-modal p-8 max-w-sm w-full text-center border-2 border-gold">
+            <h2 class="text-2xl gold-gradient-text font-black mb-4">تأكيد البيانات</h2>
+            
+            <div class="mb-4 p-3 bg-zinc-900 rounded-lg border border-zinc-800">
+                <p class="text-xs text-gray-400 mb-1">المبلغ المطلوب تحويله:</p>
+                <p id="checkout-total-display" class="text-xl font-bold text-white"></p>
+                <p class="text-red-600 text-[11px] font-black mt-2">يرجى التحويل قبل فتح تذكرة</p>
+            </div>
+
+            <input type="text" id="discord-id" placeholder="ايدي ديسكوردك" class="mb-4 text-center">
+            <div class="bg-white p-2 mb-4 inline-block rounded-lg"><img id="pay-qr" src="" class="w-32 h-32"></div>
+            <button id="btn-open-ticket" onclick="handleOpenTicket()" class="w-full btn-gold py-3">فتح تذكرة ديسكورد</button>
+            <button onclick="document.getElementById('checkout-panel').classList.add('hidden')" class="mt-4 text-gray-500 text-xs">إلغاء</button>
+        </div>
     </div>
-
-    <div id="sec-shops" class="content-section p-10">
-        <h2 class="section-title gold-gradient-text">قسم المتاجر 🛍️</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto" id="shops-list"></div>
-    </div>
-
-    <button onclick="accessAdmin()" class="fixed bottom-5 right-5 z-50 p-3 bg-zinc-900/50 rounded-full border border-yellow-900/30 opacity-20 hover:opacity-100"><i class="fas fa-user-shield text-zinc-700"></i></button>
 
     <script>
+        const BOT_URL = 'https://ar-store-i6tw.onrender.com';
         let adminPass = "1234";
         let cart = [];
-        let productsDatabase = [];
-        let companies = ["Ford", "Mazda", "Toyota"];
-        let activeDiscounts = [];
+        let productsDatabase = JSON.parse(localStorage.getItem('alamariyah_products')) || [];
+        let companies = JSON.parse(localStorage.getItem('alamariyah_companies')) || ["فورد", "نيسان", "تويوتا"];
+        let activeDiscounts = JSON.parse(localStorage.getItem('alamariyah_discounts')) || [];
         let manualCoupon = null;
 
-        function showNotification(message) {
-            const container = document.getElementById('notification-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast-notify';
-            toast.innerHTML = `<i class="fas fa-check-circle text-yellow-500"></i> <span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.add('fade-out');
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
+        let currentCurrency = "SAR";
+        const rates = { "SAR": 1, "USD": 0.27, "EUR": 0.25, "KWD": 0.083, "AED": 0.98 };
+        
+        function setCurrency(curr) {
+            currentCurrency = curr;
+            document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`curr-${curr}`).classList.add('active');
+            renderProducts();
+            updateCartUI();
         }
 
-        function toggleDiscOptions() {
-            const type = document.getElementById('disc-type').value;
-            document.getElementById('disc-cat-div').classList.toggle('hidden', type !== 'cat');
-            document.getElementById('disc-prod-div').classList.toggle('hidden', type !== 'prod');
-            document.getElementById('disc-coupon-div').classList.toggle('hidden', type !== 'coupon');
-            if(type === 'prod') {
-                const select = document.getElementById('disc-prod-val');
-                select.innerHTML = productsDatabase.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        function formatPrice(price) {
+            let converted = price * rates[currentCurrency];
+            return converted.toFixed(2) + " " + currentCurrency;
+        }
+
+        function showNotification(msg) {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast-notify'; toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function accessAdmin() { if(prompt("كلمة سر الإدارة:") === adminPass) document.getElementById('admin-panel').style.transform = 'translateX(0)'; }
+        function closeAdmin() { document.getElementById('admin-panel').style.transform = 'translateX(-100%)'; }
+        
+        function addCompany() {
+            const name = document.getElementById('new-company-name').value;
+            if(!name) return;
+            companies.push(name);
+            localStorage.setItem('alamariyah_companies', JSON.stringify(companies));
+            document.getElementById('new-company-name').value = '';
+            refreshCompanySelects();
+            showNotification("تمت إضافة الشركة");
+        }
+
+        function deleteCompany() {
+            const name = document.getElementById('delete-company-select').value;
+            if(!name) return;
+            companies = companies.filter(c => c !== name);
+            localStorage.setItem('alamariyah_companies', JSON.stringify(companies));
+            refreshCompanySelects();
+            renderProducts();
+            showNotification("تم حذف الشركة");
+        }
+
+        function refreshCompanySelects() {
+            const selects = ['new-p-company-select', 'delete-company-select'];
+            selects.forEach(id => {
+                document.getElementById(id).innerHTML = companies.map(c => `<option value="${c}">${c}</option>`).join('');
+            });
+            document.getElementById('car-filter').innerHTML = `<option value="all">كل الشركات</option>` + companies.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        function toggleCart() {
+            const s = document.getElementById('cart-sidebar');
+            s.style.transform = s.style.transform === 'translateX(0px)' ? 'translateX(-100%)' : 'translateX(0px)';
+        }
+
+        setInterval(() => {
+            const now = Date.now();
+            document.querySelectorAll('.discount-timer').forEach(el => {
+                const expiry = parseInt(el.dataset.expiry);
+                const diff = expiry - now;
+                if (diff <= 0) { el.innerHTML = "انتهى العرض"; return; }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                el.innerHTML = `⏳ ينتهي خلال: ${h}س ${m}د ${s}ث`;
+            });
+        }, 1000);
+
+        function getProductPrice(p) {
+            let discount = 0; let expiry = 0;
+            const now = Date.now();
+            activeDiscounts.forEach(d => {
+                if(now < d.expiry) {
+                    let match = (d.type === 'all') || (d.type === 'cat' && p.cat === d.target) || (d.type === 'prod' && String(p.id) === String(d.target));
+                    if(match && d.percent > discount) { discount = d.percent; expiry = d.expiry; }
+                }
+            });
+            return { finalPrice: p.price - (p.price * (discount / 100)), discount, expiry };
+        }
+
+        function productCard(p) {
+            const { finalPrice, discount, expiry } = getProductPrice(p);
+            const imgHtml = p.img ? `<img src="${p.img}" class="product-img">` : `<div class="product-img bg-zinc-800"></div>`;
+            return `
+            <div class="bg-zinc-900/90 p-5 rounded-2xl border border-zinc-800 text-center relative overflow-hidden">
+                <span class="absolute top-2 left-2 bg-black/60 text-gold text-[9px] px-2 py-1 rounded-full z-10">📦 ${p.stock}</span>
+                ${discount > 0 ? `<span class="absolute top-2 right-2 discount-badge z-10">-${discount}%</span>` : ''}
+                ${imgHtml}
+                <h4 class="text-md font-bold mb-1">${p.name}</h4>
+                <div class="gold-gradient-text font-black text-lg">
+                    ${discount > 0 ? `<span class="old-price">${formatPrice(p.price)}</span>` : ''} ${formatPrice(finalPrice)}
+                </div>
+                ${discount > 0 ? `<div class="timer-box discount-timer" data-expiry="${expiry}"></div>` : ''}
+                <button onclick="addToCart(${p.id})" class="w-full btn-gold py-2 text-xs rounded-lg mt-4">إضافة للسلة</button>
+            </div>`;
+        }
+
+        function renderProducts() {
+            ['main', 'real', 'shops'].forEach(c => {
+                const el = document.getElementById(`${c}-list`);
+                if(el) el.innerHTML = '';
+            });
+            const carsContainer = document.getElementById('cars-container');
+            const carFilter = document.getElementById('car-filter').value;
+            carsContainer.innerHTML = '';
+            companies.forEach(comp => {
+                if (carFilter !== 'all' && carFilter !== comp) return;
+                const compProducts = productsDatabase.filter(p => p.cat === 'cars' && p.company === comp);
+                if(compProducts.length > 0) {
+                    let html = `<div class="mb-10"><h3 class="text-gold font-black mb-4 pr-2 border-r-4 border-gold">${comp}</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-6">`;
+                    compProducts.forEach(p => html += productCard(p));
+                    carsContainer.innerHTML += html + `</div></div>`;
+                }
+            });
+            productsDatabase.forEach(p => { if(p.cat !== 'cars') { const el = document.getElementById(`${p.cat}-list`); if(el) el.innerHTML += productCard(p); } });
+        }
+
+        function addToCart(id) {
+            const p = productsDatabase.find(x => x.id === id);
+            const existing = cart.find(x => x.id === id);
+            if (existing) {
+                if (existing.qty < p.stock) {
+                    existing.qty++; updateCartUI(); showNotification("تمت زيادة الكمية");
+                } else showNotification("عفواً، لا توجد نسخ إضافية بالمخزون");
+            } else {
+                if (p.stock > 0) {
+                    const { finalPrice } = getProductPrice(p);
+                    cart.push({...p, finalPrice, qty: 1}); updateCartUI(); showNotification("تمت الإضافة للسلة");
+                } else showNotification("المنتج نافذ من المخزون");
             }
         }
 
-        function setDiscount() {
-            const type = document.getElementById('disc-type').value;
-            const percent = parseFloat(document.getElementById('disc-percent').value);
-            const hours = parseFloat(document.getElementById('disc-hours').value);
-            const expiry = Date.now() + (hours * 3600 * 1000);
-            let target = null, code = null;
-            if(type === 'cat') target = document.getElementById('disc-cat-val').value;
-            if(type === 'prod') target = document.getElementById('disc-prod-val').value;
-            if(type === 'coupon') code = document.getElementById('disc-coupon-code').value;
-            if(!percent || !hours) return alert("املا البيانات");
-            activeDiscounts.push({ type, target, percent, expiry, code });
-            alert("تم تفعيل الخصم بنجاح!");
-            renderProducts();
+        function changeQty(id, delta) {
+            const p = productsDatabase.find(x => x.id === id);
+            const item = cart.find(x => x.id === id);
+            if (item) {
+                const newQty = item.qty + delta;
+                if (newQty > 0 && newQty <= p.stock) item.qty = newQty;
+                else if (newQty === 0) cart = cart.filter(x => x.id !== id);
+                updateCartUI();
+            }
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cart-items-list');
+            list.innerHTML = cart.map((item) => `
+                <div class="bg-zinc-900/80 p-3 rounded-lg border-r-2 border-gold flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold">${item.name}</span>
+                        <span class="gold-gradient-text text-xs">${formatPrice(item.finalPrice * item.qty)}</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeQty(${item.id}, -1)" class="qty-btn text-red-500">-</button>
+                            <span class="text-sm font-bold w-4 text-center">${item.qty}</span>
+                            <button onclick="changeQty(${item.id}, 1)" class="qty-btn text-green-500">+</button>
+                        </div>
+                        <button onclick="cart = cart.filter(x => x.id !== ${item.id}); updateCartUI()" class="text-gray-500 text-[10px] hover:text-red-500">إزالة</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            let total = cart.reduce((sum, item) => sum + (item.finalPrice * item.qty), 0);
+            if(manualCoupon) total = total - (total * (manualCoupon.percent / 100));
+            document.getElementById('cart-total').innerText = formatPrice(total);
+            document.getElementById('cart-count').innerText = cart.reduce((s, i) => s + i.qty, 0);
+        }
+
+        function applyCoupon() {
+            const code = document.getElementById('coupon-input').value;
+            const now = Date.now();
+            const disc = activeDiscounts.find(d => d.type === 'coupon' && d.code === code && now < d.expiry);
+            if(disc) {
+                manualCoupon = disc;
+                document.getElementById('coupon-msg').innerText = `تم تفعيل خصم ${disc.percent}% ✅`;
+                document.getElementById('coupon-msg').className = "text-green-500 text-[10px] mt-2 text-center font-bold";
+                updateCartUI();
+            } else {
+                document.getElementById('coupon-msg').innerText = "الكود خاطئ ❌";
+                document.getElementById('coupon-msg').className = "text-red-500 text-[10px] mt-2 text-center";
+            }
+        }
+
+        function addProduct() {
+            const name = document.getElementById('new-p-name').value;
+            const price = parseFloat(document.getElementById('new-p-price').value);
+            const stock = parseInt(document.getElementById('new-p-stock').value);
+            const cat = document.getElementById('new-p-cat').value;
+            const img = document.getElementById('new-p-img').value;
+            if(!name || !price) return alert("املا البيانات");
+            productsDatabase.push({ id: Date.now(), name, price, stock, cat, img, company: (cat === 'cars' ? document.getElementById('new-p-company-select').value : 'عام') });
+            localStorage.setItem('alamariyah_products', JSON.stringify(productsDatabase));
+            renderProducts(); showNotification("تمت الإضافة!");
         }
 
         function loadProductsToEdit() {
             const cat = document.getElementById('edit-cat-select').value;
-            const prodSelect = document.getElementById('edit-prod-select');
-            if(!cat) { prodSelect.classList.add('hidden'); return; }
+            const select = document.getElementById('edit-prod-select');
+            if(!cat) { select.classList.add('hidden'); return; }
             const filtered = productsDatabase.filter(p => p.cat === cat);
-            prodSelect.innerHTML = `<option value="">اختر المنتج</option>` + filtered.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            prodSelect.classList.remove('hidden');
+            select.innerHTML = '<option value="">اختر المنتج</option>' + filtered.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            select.classList.remove('hidden');
         }
 
         function fillEditData() {
             const id = document.getElementById('edit-prod-select').value;
-            const fields = document.getElementById('edit-fields');
-            if(!id) { fields.classList.add('hidden'); return; }
+            if(!id) return;
             const p = productsDatabase.find(x => String(x.id) === String(id));
             document.getElementById('edit-p-name').value = p.name;
             document.getElementById('edit-p-price').value = p.price;
             document.getElementById('edit-p-stock').value = p.stock;
-            fields.classList.remove('hidden');
+            document.getElementById('edit-p-img').value = p.img || '';
+            document.getElementById('edit-fields').classList.remove('hidden');
         }
 
         function saveProductEdits() {
@@ -318,234 +449,96 @@
             p.name = document.getElementById('edit-p-name').value;
             p.price = parseFloat(document.getElementById('edit-p-price').value);
             p.stock = parseInt(document.getElementById('edit-p-stock').value);
-            alert("تم تحديث المنتج بنجاح!");
-            renderProducts();
-            updateCartUI(); 
+            p.img = document.getElementById('edit-p-img').value;
+            localStorage.setItem('alamariyah_products', JSON.stringify(productsDatabase));
+            renderProducts(); showNotification("تم التحديث!");
         }
 
-        function updateCompanyName() {
-            const oldName = document.getElementById('admin-company-manage-select').value;
-            const newName = document.getElementById('edit-company-name-input').value;
-            if(!newName || newName === oldName) return;
-            const index = companies.indexOf(oldName);
-            if (index > -1) {
-                companies[index] = newName;
-                productsDatabase.forEach(p => { if(p.cat === 'cars' && p.company === oldName) p.company = newName; });
-                updateCompanySelects();
-                renderProducts();
-                document.getElementById('company-edit-fields').classList.add('hidden');
-                alert("تم تحديث اسم الشركة بنجاح");
-            }
+        function deleteProduct() {
+            const id = document.getElementById('edit-prod-select').value;
+            productsDatabase = productsDatabase.filter(x => String(x.id) !== String(id));
+            localStorage.setItem('alamariyah_products', JSON.stringify(productsDatabase));
+            renderProducts(); loadProductsToEdit();
         }
 
-        function deleteCompany() {
-            const name = document.getElementById('admin-company-manage-select').value;
-            if(!confirm(`هل أنت متأكد من حذف شركة ${name}؟`)) return;
-            companies = companies.filter(c => c !== name);
-            productsDatabase = productsDatabase.filter(p => !(p.cat === 'cars' && p.company === name));
-            updateCompanySelects();
-            renderProducts();
-            document.getElementById('company-edit-fields').classList.add('hidden');
+        function setDiscount() {
+            const type = document.getElementById('disc-type').value;
+            const percent = parseFloat(document.getElementById('disc-percent').value);
+            const hours = parseFloat(document.getElementById('disc-hours').value);
+            activeDiscounts.push({ type, target: type === 'cat' ? document.getElementById('disc-cat-val').value : (type === 'prod' ? document.getElementById('disc-prod-val').value : null), percent, expiry: Date.now() + (hours * 3600000), code: type === 'coupon' ? document.getElementById('disc-coupon-code').value : null });
+            localStorage.setItem('alamariyah_discounts', JSON.stringify(activeDiscounts));
+            renderProducts(); showNotification("تم تفعيل العرض!");
         }
 
-        function getProductPrice(p) {
-            let discount = 0;
-            const now = Date.now();
-            activeDiscounts.forEach(d => {
-                if(now < d.expiry) {
-                    if(d.type === 'all') discount = Math.max(discount, d.percent);
-                    if(d.type === 'cat' && p.cat === d.target) discount = Math.max(discount, d.percent);
-                    if(d.type === 'prod' && String(p.id) === String(d.target)) discount = Math.max(discount, d.percent);
-                }
-            });
-            const finalPrice = p.price - (p.price * (discount / 100));
-            return { finalPrice, discount, expiry: activeDiscounts.find(d => d.percent === discount && now < d.expiry)?.expiry };
-        }
-
-        function getTimeLeft(expiry) {
-            const diff = expiry - Date.now();
-            if(diff <= 0) return null;
-            const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
-            return `${h}:${m}:${s}`;
-        }
-
-        function renderProducts() {
-            ['main', 'real', 'shops'].forEach(c => document.getElementById(`${c}-list`).innerHTML = '');
-            const carsContainer = document.getElementById('cars-container');
-            const carFilter = document.getElementById('car-filter').value;
-            carsContainer.innerHTML = '';
-            companies.forEach(comp => {
-                if (carFilter !== 'all' && carFilter !== comp) return;
-                const compProducts = productsDatabase.filter(p => p.cat === 'cars' && p.company === comp);
-                if(compProducts.length > 0) {
-                    let compHtml = `<div class="mb-10"><h3 class="text-xl font-bold text-yellow-500 mb-2 text-right pr-4">${comp}</h3><div class="company-divider"></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6">`;
-                    compProducts.forEach(p => compHtml += productCardTemplate(p));
-                    carsContainer.innerHTML += compHtml + `</div></div>`;
-                }
-            });
-            productsDatabase.forEach(p => { if(p.cat !== 'cars') document.getElementById(`${p.cat}-list`).innerHTML += productCardTemplate(p); });
-        }
-
-        function productCardTemplate(p) {
-            const { finalPrice, discount, expiry } = getProductPrice(p);
-            const timerTag = (discount > 0 && expiry) ? `<div class="text-[10px] text-red-400 mt-1 italic countdown-timer" data-expiry="${expiry}">تنتهي في: ${getTimeLeft(expiry)}</div>` : '';
-            return `<div class="bg-zinc-900/80 p-6 rounded-xl border border-zinc-800 text-center relative">
-                <span class="absolute top-2 left-2 bg-yellow-600 text-black text-[10px] px-2 py-1 rounded font-bold">مخزون: ${p.stock}</span>
-                ${discount > 0 ? `<span class="absolute top-2 right-2 discount-badge">خصم ${discount}%</span>` : ''}
-                <h4 class="text-lg font-bold mb-2">${p.name}</h4>
-                <div class="gold-gradient-text font-bold mb-4">${discount > 0 ? `<span class="old-price">${p.price}</span> ${finalPrice.toFixed(2)}` : p.price} SR ${timerTag}</div>
-                <button onclick="addToCart(${p.id})" class="w-full btn-gold py-2 text-sm">إضافة للسلة</button>
-            </div>`;
-        }
-
-        // --- تحديثات نظام السلة الجديد ---
-
-        function addToCart(id) {
-            const p = productsDatabase.find(x => x.id === id);
-            const existing = cart.find(item => item.id === id);
-            const currentQty = existing ? existing.qty : 0;
-
-            if(p && p.stock > currentQty) {
-                if(existing) {
-                    existing.qty += 1;
-                } else {
-                    const { finalPrice } = getProductPrice(p);
-                    cart.push({...p, cartPrice: finalPrice, qty: 1});
-                }
-                updateCartUI();
-                showNotification(`تمت إضافة ${p.name} للسلة!`);
-            } else alert("عذراً، نفد المخزون!");
-        }
-
-        function updateCartUI() {
-            const list = document.getElementById('cart-items-list');
-            list.innerHTML = cart.map((item, i) => `
-                <div class="flex flex-col bg-zinc-800 p-3 rounded mb-2 border-r-2 border-yellow-600">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm font-bold">${item.name}</span>
-                        <span class="text-xs gold-gradient-text">${(item.cartPrice * item.qty).toFixed(2)} SR</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2 bg-black/40 rounded px-2 py-1">
-                            <button onclick="changeQty(${i}, 1)" class="text-green-500 hover:scale-125 transition"><i class="fas fa-plus-circle"></i></button>
-                            <span class="text-xs font-mono w-4 text-center">${item.qty}</span>
-                            <button onclick="changeQty(${i}, -1)" class="text-yellow-500 hover:scale-125 transition"><i class="fas fa-minus-circle"></i></button>
-                        </div>
-                        <button onclick="removeFromCart(${i})" class="text-red-500 text-sm"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>`).join('');
-            
-            let total = cart.reduce((sum, item) => sum + (item.cartPrice * item.qty), 0);
-            if(manualCoupon) total = total - (total * (manualCoupon.percent / 100));
-            
-            document.getElementById('cart-total').innerText = total.toFixed(2) + " SR";
-            document.getElementById('cart-count').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
-        }
-
-        function changeQty(index, delta) {
-            const item = cart[index];
-            const p = productsDatabase.find(x => x.id === item.id);
-            const newQty = item.qty + delta;
-
-            if (newQty > 0) {
-                if (delta > 0 && newQty > p.stock) {
-                    alert("لا يمكن تجاوز المخزون المتاح!");
-                    return;
-                }
-                item.qty = newQty;
-            } else {
-                cart.splice(index, 1);
-            }
-            updateCartUI();
-        }
-
-        function removeFromCart(index) { cart.splice(index, 1); updateCartUI(); }
-
-        // --- باقي الوظائف الأصلية ---
-
-        function applyCoupon() {
-            const codeInput = document.getElementById('coupon-input').value;
-            const disc = activeDiscounts.find(d => d.type === 'coupon' && d.code === codeInput && Date.now() < d.expiry);
-            if(disc) {
-                manualCoupon = disc;
-                document.getElementById('coupon-msg').innerText = `تم تطبيق خصم ${disc.percent}% ✅`;
-                document.getElementById('coupon-msg').className = "text-green-500 text-[10px] mt-1";
-                updateCartUI();
-            } else alert("كود غير صالح");
-        }
-
-        function addNewCompany() {
-            const name = document.getElementById('company-name-input').value.trim();
-            if(name && !companies.includes(name)) { companies.push(name); updateCompanySelects(); document.getElementById('company-name-input').value = ""; }
-        }
-
-        function updateCompanySelects() {
-            const optionsHtml = companies.map(c => `<option value="${c}">${c}</option>`).join('');
-            document.getElementById('new-p-company-select').innerHTML = optionsHtml;
-            document.getElementById('admin-company-manage-select').innerHTML = `<option value="">اختر شركة</option>` + optionsHtml;
-            document.getElementById('car-filter').innerHTML = `<option value="all">كل الشركات</option>` + optionsHtml;
-        }
-
-        function toggleCart() {
-            const sidebar = document.getElementById('cart-sidebar');
-            sidebar.style.transform = sidebar.style.transform === 'translateX(0px)' ? 'translateX(-100%)' : 'translateX(0px)';
-        }
-
-        function addProduct() {
-            const name = document.getElementById('new-p-name').value, price = parseFloat(document.getElementById('new-p-price').value), stock = parseInt(document.getElementById('new-p-stock').value), cat = document.getElementById('new-p-cat').value;
-            if(!name || !price || isNaN(stock)) return alert("املا البيانات");
-            productsDatabase.push({ id: Date.now(), name, price, stock, cat, company: (cat === 'cars' ? document.getElementById('new-p-company-select').value : 'عام') });
-            renderProducts(); alert("تمت الإضافة");
-        }
-
-        function openCheckout() {
-            if(cart.length === 0) return alert("السلة فارغة!");
-            toggleCart();
-            document.getElementById('checkout-count').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
-            document.getElementById('checkout-total').innerText = document.getElementById('cart-total').innerText;
-            document.getElementById('checkout-panel').classList.remove('hidden');
-        }
-
-        function closeCheckout() { document.getElementById('checkout-panel').classList.add('hidden'); }
-        function showPaymentModal() {
-            if(!document.getElementById('discord-id').value) return alert("يرجى كتابة ايدي الديسكورد");
-            document.getElementById('pay-amount-label').innerText = "المبلغ المطلوب: " + document.getElementById('cart-total').innerText;
-            document.getElementById('payment-panel').classList.remove('hidden');
+        function toggleDiscOptions() {
+            const type = document.getElementById('disc-type').value;
+            document.getElementById('disc-cat-div').classList.toggle('hidden', type !== 'cat');
+            document.getElementById('disc-prod-div').classList.toggle('hidden', type !== 'prod');
+            document.getElementById('disc-coupon-div').classList.toggle('hidden', type !== 'coupon');
+            if(type === 'prod') document.getElementById('disc-prod-val').innerHTML = productsDatabase.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
         }
 
         function updateBgs() {
-            ['main', 'cars', 'real', 'shops'].forEach(id => {
-                const url = document.getElementById(`bg-${id}-input`).value;
-                if(url) document.getElementById(`bg-${id}`).style.backgroundImage = `url('${url}')`;
-            });
-            alert("تم التحديث ✅");
+            const bgs = { main: document.getElementById('bg-main-input').value, cars: document.getElementById('bg-cars-input').value, real: document.getElementById('bg-real-input').value, shops: document.getElementById('bg-shops-input').value };
+            localStorage.setItem('alamariyah_bgs', JSON.stringify(bgs));
+            applyBgs(); showNotification("تم تحديث الخلفيات");
+        }
+
+        function applyBgs() {
+            const saved = JSON.parse(localStorage.getItem('alamariyah_bgs'));
+            if(saved) {
+                if(saved.main) document.getElementById('bg-main').style.backgroundImage = `url('${saved.main}')`;
+                if(saved.cars) document.getElementById('bg-cars').style.backgroundImage = `url('${saved.cars}')`;
+                if(saved.real) document.getElementById('bg-real').style.backgroundImage = `url('${saved.real}')`;
+                if(saved.shops) document.getElementById('bg-shops').style.backgroundImage = `url('${saved.shops}')`;
+            }
+        }
+
+        function openCheckout() {
+            if(cart.length === 0) return alert("السلة فارغة");
+            const finalTotal = document.getElementById('cart-total').innerText;
+            document.getElementById('checkout-total-display').innerText = finalTotal;
+            document.getElementById('pay-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${finalTotal}`;
+            document.getElementById('checkout-panel').classList.remove('hidden');
         }
 
         async function handleOpenTicket() {
-            document.getElementById('ticket-btn-text').innerText = "⏳ جاري فتح تذكرة...";
-            setTimeout(() => { alert("تم فتح التذكرة بنجاح!"); location.reload(); }, 2000);
+            const dId = document.getElementById('discord-id').value;
+            if(!dId) return alert("ايدي ديسكوردك مطلوب!");
+            const btn = document.getElementById('btn-open-ticket');
+            btn.innerText = "⏳ جاري الإرسال..."; btn.disabled = true;
+            try {
+                const res = await fetch(`${BOT_URL}/api/create-ticket`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ discordId: dId, orderDetails: cart.map(i => `${i.name} (${i.qty})`).join(' + '), totalPrice: document.getElementById('cart-total').innerText })
+                });
+                if(res.ok) { alert("✅ تم فتح تذكرة بنجاح!"); cart=[]; updateCartUI(); location.reload(); }
+                else alert("❌ فشل الاتصال بالبوت.");
+            } catch(e) { alert("❌ خطأ في الخادم."); }
+            finally { btn.disabled = false; btn.innerText = "فتح تذكرة ديسكورد"; }
         }
 
         function showSection(id) {
             document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
             document.querySelectorAll('.section-bg').forEach(bg => bg.classList.remove('active-bg'));
-            document.getElementById(`bg-${id}`).classList.add('active-bg');
-            document.getElementById(`sec-${id}`).style.display = 'block';
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            
+            const bgEl = document.getElementById(`bg-${id}`);
+            const secEl = document.getElementById(`sec-${id}`);
+            const navEl = document.getElementById(`nav-${id}`);
+
+            if(bgEl) bgEl.classList.add('active-bg');
+            if(secEl) secEl.style.display = 'block';
+            if(navEl) navEl.classList.add('active');
         }
 
-        function accessAdmin() { if(prompt("كلمة السر:") === adminPass) document.getElementById('admin-panel').style.transform = 'translateX(0)'; }
-        function closeAdmin() { document.getElementById('admin-panel').style.transform = 'translateX(-100%)'; }
         function toggleAdminCompanySelect() { document.getElementById('admin-company-div').classList.toggle('hidden', document.getElementById('new-p-cat').value !== 'cars'); }
 
-        setInterval(() => {
-            document.querySelectorAll('.countdown-timer').forEach(el => {
-                const timeStr = getTimeLeft(parseInt(el.getAttribute('data-expiry')));
-                if(timeStr) el.innerText = "تنتهي في: " + timeStr;
-            });
-        }, 1000);
-
-        updateCompanySelects();
-        showSection('main');
+        window.onload = () => {
+            refreshCompanySelects();
+            renderProducts(); applyBgs(); showSection('main');
+        };
     </script>
 </body>
 </html>
