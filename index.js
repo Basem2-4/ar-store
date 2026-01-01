@@ -2,13 +2,12 @@ const { Client, GatewayIntentBits, PermissionsBitField, EmbedBuilder } = require
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config(); // تفعيل مكتبة dotenv
+require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// الاتصال بـ MongoDB
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('Connected to MongoDB ✅'))
     .catch(err => console.error('MongoDB Connection Error ❌', err));
@@ -21,49 +20,53 @@ const client = new Client({
     ]
 });
 
-// جلب الإعدادات من متغيرات البيئة
+// الإعدادات الثابتة (تأكد من صحتها في سيرفرك)
 const GUILD_ID = process.env.GUILD_ID;
 const CATEGORY_ID = process.env.CATEGORY_ID; 
-const ADMIN_ROLE_ID = "1069269164667179109"; // تم وضع الأيدي الذي أرسلته هنا مباشرة لضمان الدقة
+const ADMIN_ROLE_ID = "1069269164667179109"; // الآيدي الذي أرسلته
 
 app.post('/api/create-ticket', async (req, res) => {
     const { discordId, orderDetails, totalPrice, orderId } = req.body;
 
+    // فحص أولي للبيانات لضمان عدم حدوث TypeError
+    if (!discordId || discordId === 'undefined') {
+        console.error("❌ خطأ: لم يتم استلام Discord ID من الموقع");
+        return res.status(400).json({ success: false, error: 'Discord ID is missing' });
+    }
+
     try {
         const guild = await client.guilds.fetch(GUILD_ID);
-        
-        // التأكد من أن الأيدي المرسل من الموقع لا يحتوي على مسافات
-        const memberId = discordId.trim();
+        const cleanDiscordId = discordId.trim();
 
         const channel = await guild.channels.create({
-            name: `ticket-${orderId}`,
+            name: `ticket-${orderId || 'new'}`,
             type: 0, 
             parent: CATEGORY_ID,
             permissionOverwrites: [
                 { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-                { id: memberId, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
                 { id: ADMIN_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+                { id: cleanDiscordId, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
             ],
         });
 
         const embed = new EmbedBuilder()
             .setTitle('📦 طلب جديد - تم تأكيد الدفع')
             .setColor('#FFD700') 
-            .setDescription(`أهلاً بك <@${memberId}>\nتم فتح هذه التذكرة لمتابعة طلبك.`)
+            .setDescription(`أهلاً بك <@${cleanDiscordId}>\nتم فتح هذه التذكرة لمتابعة طلبك.`)
             .addFields(
-                { name: 'رقم الطلب', value: `#${orderId}`, inline: true },
-                { name: 'الإجمالي', value: `${totalPrice}`, inline: true },
+                { name: 'رقم الطلب', value: `#${orderId || 'غير معروف'}`, inline: true },
+                { name: 'الإجمالي', value: `${totalPrice || '0'}`, inline: true },
                 { name: 'التفاصيل', value: orderDetails || 'لا توجد تفاصيل' }
             )
             .setTimestamp()
             .setFooter({ text: 'Al-Amariyah RP System' });
 
-        await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | <@${memberId}>`, embeds: [embed] });
+        await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | <@${cleanDiscordId}>`, embeds: [embed] });
 
         res.status(200).json({ success: true, channelId: channel.id });
     } catch (error) {
-        console.error('Error details:', error); // طباعة الخطأ بالتفصيل في الـ Logs
-        res.status(500).json({ success: false, error: 'Failed to create ticket' });
+        console.error('❌ تفاصيل الخطأ في الديسكورد:', error.message);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
