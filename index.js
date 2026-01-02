@@ -13,7 +13,17 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('Connected to MongoDB ✅'))
     .catch(err => console.error('MongoDB Connection Error ❌', err));
 
+// تعريف الجداول (Models)
 const Counter = mongoose.model('Counter', new mongoose.Schema({ id: String, seq: Number }));
+
+const orderSchema = new mongoose.Schema({
+    orderNumber: Number,
+    productName: String,
+    discordId: String,
+    totalPrice: String,
+    createdAt: { type: Date, default: Date.now }
+});
+const Order = mongoose.model('Order', orderSchema);
 
 // 2. إعداد البوت
 const client = new Client({
@@ -24,77 +34,79 @@ const GUILD_ID = process.env.GUILD_ID;
 const CATEGORY_ID = process.env.CATEGORY_ID; 
 const ADMIN_ROLE_ID = "1433835499918983218"; 
 
-// 3. مسار إنشاء التذكرة
-app.post('/api/create-ticket', async (req, res) => {
-    // طباعة البيانات في الكونسول لمعرفة المسميات الصحيحة من موقعك
-    console.log('--- بيانات قادمة من المتجر ---');
-    console.log(JSON.stringify(req.body, null, 2));
-    
-    const data = req.body;
+// 3. مسارات الـ API
 
-    // محاولة استخراج اسم المنتج من عدة احتمالات (بما فيها الأنظمة المعقدة)
-    let productName = data.productName || data.item || data.product || data.title || data.itemName || "غير معروف";
-    let quantity = data.quantity || data.qty || 1;
-
-    // إذا كانت البيانات داخل مصفوفة (مثل سلة أو زد)
-    if (data.items && Array.isArray(data.items) && data.items.length > 0) {
-        productName = data.items.map(i => i.name || i.product_name || i.title || "منتج").join(', ');
-        quantity = data.items[0].quantity || data.items[0].qty || quantity;
-    } else if (data.products && Array.isArray(data.products)) {
-        productName = data.products.map(p => p.name || p.title).join(', ');
+// مسار جلب الطلبات للمسؤول (جديد)
+app.get('/api/admin/orders', async (req, res) => {
+    try {
+        const orders = await Order.find().sort({ createdAt: -1 }).limit(20);
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ error: "فشل جلب الطلبات" });
     }
+});
 
-    const discordId = data.discordId || data.userId || data.user_id || data.customer_id;
-    const totalPrice = data.totalPrice || data.price || data.total || '0';
-    const categoryName = data.categoryName || data.category || 'عام';
+// مسار إنشاء التذكرة وحفظ الطلب
+app.post('/api/create-ticket', async (req, res) => {
+    const data = req.body;
+    
+    // استلام البيانات كما أرسلناها من الموقع
+    const productName = data.orderDetails || "منتج غير معروف";
+    const discordId = data.discordId;
+    const totalPrice = data.totalPrice || '0';
 
     if (!discordId) return res.status(400).json({ success: false, error: 'Discord ID missing' });
 
     try {
         const guild = client.guilds.cache.get(GUILD_ID) || await client.guilds.fetch(GUILD_ID);
         
-        // تنفيذ العداد وجلب العضو بالتوازي للسرعة
-        const [orderId, member] = await Promise.all([
-            Counter.findOneAndUpdate({ id: "orderId" }, { $inc: { seq: 1 } }, { new: true, upsert: true }).then(d => d.seq),
-            guild.members.fetch(discordId.trim()).catch(() => null)
-        ]);
+        // زيادة رقم الطلب
+        const counter = await Counter.findOneAndUpdate({ id: "orderId" }, { $inc: { seq: 1 } }, { new: true, upsert: true });
+        const orderId = counter.seq;
 
-        if (!member) return res.status(404).json({ success: false, error: 'User not found' });
+        const member = await guild.members.fetch(discordId.trim()).catch(() => null);
+        if (!member) return res.status(404).json({ success: false, error: 'User not found in Discord' });
 
-        // إنشاء القناة
+        // حفظ الطلب في MongoDB ليراه المسؤول في الموقع
+        const newOrder = new Order({
+            orderNumber: orderId,
+            productName: productName,
+            discordId: discordId,
+            totalPrice: totalPrice
+        });
+        await newOrder.save();
+
+        // إنشاء قناة التذكرة
         const channel = await guild.channels.create({
             name: `ticket-${orderId}`,
             type: 0,
             parent: CATEGORY_ID,
             permissionOverwrites: [
                 { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-                { id: ADMIN_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.AttachFiles] },
-                { id: member.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.AttachFiles] },
+                { id: ADMIN_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+                { id: member.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
             ],
         });
 
-        // الرد الفوري للموقع ليكون أسرع شيء
-        res.status(200).json({ success: true, channelId: channel.id });
-
-        // إرسال الإمبد في الخلفية
         const embed = new EmbedBuilder()
-            .setTitle('📦 طلب جديد - تم تأكيد الدفع')
-            .setColor('#FFD700') 
-            .setDescription(`أهلاً بك <@${member.id}>\nتم فتح هذه التذكرة لمتابعة طلبك مع الإدارة.`)
+            .setTitle('📦 طلب جديد - Al-Amariyah RP')
+            .setColor('#FFD700')
             .addFields(
                 { name: 'رقم الطلب', value: `#${orderId}`, inline: true },
-                { name: 'قسم الطلب', value: `${categoryName}`, inline: true },
-                { name: 'التفاصيل', value: `${productName} النسخ ${quantity}`, inline: false },
-                { name: 'الإجمالي', value: `${totalPrice}`, inline: false }
+                { name: 'ايدي الديسكورد', value: `${discordId}`, inline: true },
+                { name: 'التفاصيل', value: `${productName}`, inline: false },
+                { name: 'الإجمالي', value: `${totalPrice}`, inline: false },
+                { name: 'الوقت', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false }
             )
             .setTimestamp()
-            .setFooter({ text: 'Al-Amariyah RP System' });
+            .setFooter({ text: 'نظام الطلبات الآلي' });
 
         await channel.send({ content: `<@&${ADMIN_ROLE_ID}> | <@${member.id}>`, embeds: [embed] });
+        res.status(200).json({ success: true, channelId: channel.id });
 
     } catch (error) {
         console.error('❌ Error:', error.message);
-        if (!res.headersSent) res.status(500).json({ success: false });
+        res.status(500).json({ success: false });
     }
 });
 
