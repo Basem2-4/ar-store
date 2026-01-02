@@ -24,20 +24,7 @@
         .btn-gold { background: linear-gradient(45deg, #aa8418, #d4af37); color: black; font-weight: bold; border-radius: 5px; transition: 0.3s; }
         .btn-gold:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 0 15px var(--gold-glow); }
         .btn-gold:disabled { background: #333 !important; color: #777 !important; cursor: not-allowed; }
-        
-        /* تعديل القوائم والمدخلات لضمان الخلفية الداكنة */
-        input, select { 
-            background: #111 !important; 
-            border: 1px solid rgba(212, 175, 55, 0.3) !important; 
-            color: white !important; 
-            padding: 8px; 
-            border-radius: 8px; 
-            width: 100%; 
-            font-size: 12px; 
-            outline: none;
-        }
-        select option { background: #111; color: white; }
-
+        input, select { background: #111 !important; border: 1px solid rgba(212, 175, 55, 0.3) !important; color: white !important; padding: 8px; border-radius: 8px; width: 100%; font-size: 12px; outline: none; }
         #cart-sidebar { position: fixed; left: 0; top: 0; width: 320px; height: 100%; background: rgba(5, 5, 5, 0.85); backdrop-filter: blur(25px); border-right: 2px solid var(--gold); transform: translateX(-100%); transition: 0.3s; z-index: 2000; padding: 20px; display: flex; flex-direction: column; }
         #notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
         .toast-notify { background: rgba(17, 17, 17, 0.9); backdrop-filter: blur(5px); border: 1px solid var(--gold); color: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 10px; animation: slideIn 0.4s forwards; }
@@ -67,53 +54,42 @@
 
     <div id="admin-panel" class="fixed left-0 top-0 h-full w-full md:w-[450px] admin-modal translate-x-[-100%] overflow-y-auto p-6 shadow-2xl">
         <div class="flex justify-between items-center mb-6 border-b border-gold pb-2">
-            <h2 class="text-xl gold-gradient-text font-black">⚙️ لوحة التحكم الشاملة</h2>
+            <h2 class="text-xl gold-gradient-text font-black">⚙️ لوحة التحكم</h2>
             <button onclick="closeAdmin()" class="text-red-500 text-2xl">&times;</button>
         </div>
 
-        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-blue-500/30 backdrop-blur-md">
-            <h3 class="text-blue-400 text-sm mb-3 font-bold"><i class="fas fa-history"></i> آخر الطلبات</h3>
-            <div id="admin-orders-list" class="space-y-2 max-h-40 overflow-y-auto text-[10px]"></div>
-        </div>
-
-        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-red-500/30 backdrop-blur-md">
-            <h3 class="text-red-400 text-sm mb-3 font-bold"><i class="fas fa-tag"></i> إدارة الخصومات</h3>
-            <div class="space-y-2">
-                <select id="disc-type" onchange="toggleDiscTarget()">
-                    <option value="all">كل المتجر</option>
-                    <option value="cat">فئة كاملة</option>
-                    <option value="prod">منتج معين</option>
-                </select>
-                <div id="disc-target-container" class="hidden">
-                    <select id="disc-target"></select>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="disc-percent" placeholder="نسبة الخصم %">
-                    <input type="number" id="disc-hours" placeholder="المدة (ساعة)">
-                </div>
-                <button onclick="applyNewDiscount()" class="w-full bg-red-700 py-1 rounded text-[10px]">تفعيل الخصم الآن</button>
-            </div>
-        </div>
-
-        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-purple-500/30 backdrop-blur-md">
-            <h3 class="text-purple-400 text-sm mb-3 font-bold"><i class="fas fa-image"></i> تعديل خلفيات الأقسام</h3>
-            <div class="space-y-2">
-                <select id="bg-edit-select">
-                    <option value="main">الرئيسية</option>
-                    <option value="cars">السيارات</option>
-                    <option value="real">العقارات</option>
-                    <option value="shops">المتاجر</option>
-                </select>
-                <input type="text" id="bg-edit-url" placeholder="رابط الخلفية الجديد">
-                <button onclick="updateSectionBg()" class="w-full bg-purple-700 py-1 rounded text-[10px]">تحديث الخلفية</button>
-            </div>
-        </div>
-
-        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-yellow-500/30 backdrop-blur-md">
-            <h3 class="text-yellow-400 text-sm mb-3 font-bold"><i class="fas fa-edit"></i> تعديل / حذف منتج</h3>
-            <select id="edit-prod-select" onchange="loadProductToEdit()" class="mb-2">
-                <option value="">اختر منتجاً للتعديل...</option>
+        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-red-500/30">
+            <h3 class="text-red-400 text-sm mb-3 font-bold">إدارة الخصومات</h3>
+            <select id="disc-type" onchange="toggleDiscTarget()" class="mb-2">
+                <option value="all">كل المتجر</option>
+                <option value="cat">فئة كاملة</option>
+                <option value="prod">منتج معين</option>
             </select>
+            <div id="disc-target-container" class="hidden mb-2">
+                <select id="disc-target"></select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <input type="number" id="disc-percent" placeholder="% نسبة الخصم">
+                <input type="number" id="disc-hours" placeholder="المدة بالساعات">
+            </div>
+            <button onclick="applyNewDiscount()" class="w-full bg-red-700 py-1 rounded text-[10px]">تفعيل الخصم للجميع</button>
+        </div>
+
+        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-purple-500/30">
+            <h3 class="text-purple-400 text-sm mb-3 font-bold">تعديل الخلفيات</h3>
+            <select id="bg-edit-select" class="mb-2">
+                <option value="main">الرئيسية</option>
+                <option value="cars">السيارات</option>
+                <option value="real">العقارات</option>
+                <option value="shops">المتاجر</option>
+            </select>
+            <input type="text" id="bg-edit-url" placeholder="رابط الخلفية الجديد" class="mb-2">
+            <button onclick="updateSectionBg()" class="w-full bg-purple-700 py-1 rounded text-[10px]">تحديث الخلفية للجميع</button>
+        </div>
+
+        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-yellow-500/30">
+            <h3 class="text-yellow-400 text-sm mb-3 font-bold">تعديل / حذف منتج</h3>
+            <select id="edit-prod-select" onchange="loadProductToEdit()" class="mb-2"></select>
             <div id="edit-form" class="hidden space-y-2">
                 <input type="text" id="edit-p-name" placeholder="الاسم">
                 <div class="grid grid-cols-2 gap-2">
@@ -128,18 +104,16 @@
             </div>
         </div>
 
-        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-gold/20 backdrop-blur-md">
-            <h3 class="text-gold text-sm mb-3 font-bold">🏢 إدارة الشركات</h3>
-            <div class="space-y-2 mb-4">
-                <input type="text" id="new-company-name" placeholder="اسم الشركة">
-                <input type="text" id="new-company-logo" placeholder="رابط الشعار">
-                <button onclick="addCompany()" class="w-full bg-green-700 py-2 rounded text-xs">إضافة الشركة</button>
-            </div>
+        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-gold/20">
+            <h3 class="text-gold text-sm mb-3 font-bold">🏢 إضافة شركة (سيارات)</h3>
+            <input type="text" id="new-company-name" placeholder="اسم الشركة" class="mb-2">
+            <input type="text" id="new-company-logo" placeholder="رابط الشعار" class="mb-2">
+            <button onclick="addCompany()" class="w-full bg-green-700 py-1 rounded text-[10px] mb-4">إضافة شركة</button>
             <select id="delete-company-select" class="mb-2"></select>
             <button onclick="deleteCompany()" class="w-full bg-red-900/50 text-red-500 py-1 rounded text-[10px]">حذف الشركة</button>
         </div>
 
-        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg backdrop-blur-md">
+        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg">
             <h3 class="text-gold text-sm mb-3 font-bold">📦 إضافة منتج جديد</h3>
             <div class="grid grid-cols-2 gap-2">
                 <input type="text" id="new-p-name" placeholder="الاسم">
@@ -156,19 +130,19 @@
                     <select id="new-p-company-select"></select>
                 </div>
             </div>
-            <button onclick="addProduct()" class="w-full btn-gold py-2 text-xs mt-3">حفظ المنتج ✅</button>
+            <button onclick="addProduct()" class="w-full btn-gold py-2 text-xs mt-3">حفظ المنتج للجميع ✅</button>
         </div>
     </div>
 
     <div id="cart-sidebar">
         <div class="flex justify-between items-center mb-6 border-b border-gold pb-2">
-            <button onclick="toggleCart()" class="text-red-500"><i class="fas fa-times-circle fa-lg"></i></button>
+            <button onclick="toggleCart()" class="text-red-500 text-xl">&times;</button>
             <h2 class="text-xl gold-gradient-text font-bold">🛒 سلتك</h2>
         </div>
         <div id="cart-items-list" class="space-y-3 overflow-y-auto flex-1 mb-4"></div>
-        <div class="w-full p-6 bg-black/50 border-t border-gold backdrop-blur-md">
+        <div class="w-full p-4 border-t border-gold">
             <div class="flex justify-between mb-4">
-                <span class="text-sm text-gray-400">الإجمالي:</span>
+                <span class="text-gray-400">الإجمالي:</span>
                 <span id="cart-total" class="gold-gradient-text font-bold text-lg">0.00 SR</span>
             </div>
             <button onclick="openCheckout()" class="w-full btn-gold py-3 rounded">تأكيد الطلب ✅</button>
@@ -214,326 +188,357 @@
         </div>
     </div>
 
-    <script>
-        const BOT_URL = 'https://ar-store-i6tw.onrender.com';
-        let adminPass = "1234";
-        let cart = [];
-        let productsDatabase = JSON.parse(localStorage.getItem('alamariyah_products')) || [];
-        let companies = JSON.parse(localStorage.getItem('alamariyah_companies_v2')) || [
-            {name: "فورد", logo: ""}, {name: "نيسان", logo: ""}, {name: "تويوتا", logo: ""}
-        ];
-        let activeDiscounts = JSON.parse(localStorage.getItem('alamariyah_discounts')) || [];
-        let orderHistory = JSON.parse(localStorage.getItem('alamariyah_orders')) || [];
-        let sectionBgs = JSON.parse(localStorage.getItem('alamariyah_bgs')) || { main: '', cars: '', real: '', shops: '' };
-        let currentCurrency = "SAR";
-        const rates = { "SAR": 1, "USD": 0.27 };
+<script>
+    const BOT_URL = 'https://ar-store-i6tw.onrender.com';
+    let adminPass = "1234";
+    let cart = [];
+    let productsDatabase = [];
+    let companies = [];
+    let activeDiscounts = [];
+    let sectionBgs = { main: '', cars: '', real: '', shops: '' };
+    let currentCurrency = "SAR";
+    const rates = { "SAR": 1, "USD": 0.27 };
 
-        function showSection(id) {
-            document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
-            document.querySelectorAll('.section-bg').forEach(bg => bg.classList.remove('active-bg'));
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            document.getElementById('sec-' + id).style.display = 'block';
-            document.getElementById('bg-' + id).classList.add('active-bg');
-            document.getElementById('nav-' + id).classList.add('active');
-        }
-
-        function formatPrice(p) { return (p * rates[currentCurrency]).toFixed(2) + " " + currentCurrency; }
-
-        function showNotification(msg) {
-            const container = document.getElementById('notification-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast-notify'; toast.innerText = msg;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        function accessAdmin() { if(prompt("كلمة المرور:") === adminPass) { document.getElementById('admin-panel').style.transform = 'translateX(0)'; updateAdminLists(); } }
-        function closeAdmin() { document.getElementById('admin-panel').style.transform = 'translateX(-100%)'; }
-
-        function applyBackgrounds() {
-            Object.keys(sectionBgs).forEach(id => {
-                const el = document.getElementById('bg-' + id);
-                if(el && sectionBgs[id]) el.style.backgroundImage = `url('${sectionBgs[id]}')`;
-            });
-        }
-        
-        function updateSectionBg() {
-            const sec = document.getElementById('bg-edit-select').value;
-            const url = document.getElementById('bg-edit-url').value;
-            if(url) {
-                sectionBgs[sec] = url;
-                localStorage.setItem('alamariyah_bgs', JSON.stringify(sectionBgs));
+    // --- جلب البيانات ---
+    async function loadDataFromServer() {
+        try {
+            const response = await fetch(`${BOT_URL}/api/get-store-data`);
+            if (response.ok) {
+                const data = await response.json();
+                productsDatabase = data.products || [];
+                companies = data.companies || [];
+                activeDiscounts = data.discounts || [];
+                sectionBgs = data.backgrounds || sectionBgs;
+                
                 applyBackgrounds();
-                showNotification("تم تحديث الخلفية");
+                refreshCompanySelects();
+                renderProducts();
+                updateAdminLists();
             }
-        }
+        } catch (e) { console.error("Error fetching data", e); }
+    }
 
-        function updateAdminLists() {
-            const editSelect = document.getElementById('edit-prod-select');
-            editSelect.innerHTML = '<option value="">اختر منتجاً للتعديل...</option>' + 
-                productsDatabase.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            const orderList = document.getElementById('admin-orders-list');
-            orderList.innerHTML = orderHistory.length ? orderHistory.map(o => `
-                <div class="p-2 bg-black/40 rounded border border-white/10 mb-1">
-                    <p>ID: ${o.discordId} | ${o.price}</p>
-                    <p class="text-gray-400">${o.items}</p>
-                </div>
-            `).reverse().join('') : "لا يوجد طلبات حالياً";
-        }
-
-        function loadProductToEdit() {
-            const id = document.getElementById('edit-prod-select').value;
-            const p = productsDatabase.find(x => x.id == id);
-            const form = document.getElementById('edit-form');
-            if(p) {
-                form.classList.remove('hidden');
-                document.getElementById('edit-p-name').value = p.name;
-                document.getElementById('edit-p-price').value = p.price;
-                document.getElementById('edit-p-stock').value = p.stock;
-                document.getElementById('edit-p-img').value = p.img;
-            } else form.classList.add('hidden');
-        }
-
-        function saveProductEdit() {
-            const id = document.getElementById('edit-prod-select').value;
-            const idx = productsDatabase.findIndex(x => x.id == id);
-            if(idx > -1) {
-                productsDatabase[idx].name = document.getElementById('edit-p-name').value;
-                productsDatabase[idx].price = parseFloat(document.getElementById('edit-p-price').value);
-                productsDatabase[idx].stock = parseInt(document.getElementById('edit-p-stock').value);
-                productsDatabase[idx].img = document.getElementById('edit-p-img').value;
-                localStorage.setItem('alamariyah_products', JSON.stringify(productsDatabase));
-                renderProducts(); updateAdminLists();
-                showNotification("تم التعديل بنجاح");
-            }
-        }
-
-        function deleteProduct() {
-            const id = document.getElementById('edit-prod-select').value;
-            if(confirm("حذف المنتج؟")) {
-                productsDatabase = productsDatabase.filter(x => x.id != id);
-                localStorage.setItem('alamariyah_products', JSON.stringify(productsDatabase));
-                renderProducts(); updateAdminLists();
-                document.getElementById('edit-form').classList.add('hidden');
-            }
-        }
-
-        function addProduct() {
-            const p = {
-                id: Date.now(),
-                name: document.getElementById('new-p-name').value,
-                price: parseFloat(document.getElementById('new-p-price').value),
-                stock: parseInt(document.getElementById('new-p-stock').value),
-                cat: document.getElementById('new-p-cat').value,
-                img: document.getElementById('new-p-img').value,
-                company: document.getElementById('new-p-cat').value === 'cars' ? document.getElementById('new-p-company-select').value : 'عام'
-            };
-            if(p.name && p.price) { productsDatabase.push(p); localStorage.setItem('alamariyah_products', JSON.stringify(productsDatabase)); renderProducts(); updateAdminLists(); showNotification("تمت الإضافة"); }
-        }
-
-        function addCompany() {
-            const n = document.getElementById('new-company-name').value;
-            const l = document.getElementById('new-company-logo').value;
-            if(n) { companies.push({name: n, logo: l}); localStorage.setItem('alamariyah_companies_v2', JSON.stringify(companies)); refreshCompanySelects(); showNotification("تمت إضافة الشركة"); }
-        }
-
-        function deleteCompany() {
-            const name = document.getElementById('delete-company-select').value;
-            if(confirm(`حذف ${name}؟`)) { companies = companies.filter(c => c.name !== name); localStorage.setItem('alamariyah_companies_v2', JSON.stringify(companies)); refreshCompanySelects(); renderProducts(); }
-        }
-
-        function toggleAdminCompanySelect() {
-            document.getElementById('admin-company-div').classList.toggle('hidden', document.getElementById('new-p-cat').value !== 'cars');
-        }
-
-        // --- استعادة وظائف الخصم ---
-        function toggleDiscTarget() {
-            const type = document.getElementById('disc-type').value;
-            const container = document.getElementById('disc-target-container');
-            const targetSelect = document.getElementById('disc-target');
-            if(type === 'all') container.classList.add('hidden');
-            else {
-                container.classList.remove('hidden');
-                if(type === 'cat') {
-                    targetSelect.innerHTML = `<option value="main">الرئيسية</option><option value="cars">السيارات</option><option value="real">العقارات</option><option value="shops">المتاجر</option>`;
-                } else {
-                    targetSelect.innerHTML = productsDatabase.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-                }
-            }
-        }
-
-        function applyNewDiscount() {
-            const percent = parseInt(document.getElementById('disc-percent').value);
-            const hours = parseInt(document.getElementById('disc-hours').value);
-            if(!percent || !hours) return alert("املا البيانات");
-            const disc = {
-                type: document.getElementById('disc-type').value,
-                target: document.getElementById('disc-target').value,
-                percent: percent,
-                expiry: Date.now() + (hours * 3600 * 1000)
-            };
-            activeDiscounts.push(disc);
-            localStorage.setItem('alamariyah_discounts', JSON.stringify(activeDiscounts));
-            renderProducts();
-            showNotification("تم تفعيل الخصم!");
-        }
-
-        function getProductPrice(p) {
-            let discount = 0, expiry = 0, now = Date.now();
-            activeDiscounts.forEach(d => {
-                if(now < d.expiry) {
-                    let match = (d.type === 'all') || (d.type === 'cat' && p.cat === d.target) || (d.type === 'prod' && String(p.id) === String(d.target));
-                    if(match && d.percent > discount) { discount = d.percent; expiry = d.expiry; }
-                }
+    // --- مزامنة البيانات (المفتاح لحل مشكلتك) ---
+    async function syncWithServer(type, payload) {
+        try {
+            const res = await fetch(`${BOT_URL}/api/update-store-data`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, payload })
             });
-            return { finalPrice: p.price - (p.price * (discount / 100)), discount, expiry };
-        }
-
-        function addToCart(id) {
-            const p = productsDatabase.find(x => x.id == id);
-            if (!p) return;
-            const { finalPrice } = getProductPrice(p);
-            const existing = cart.find(x => x.id == id);
-            if(existing) { 
-                if(existing.qty < p.stock) existing.qty++; 
-                else showNotification("لا يوجد مخزون كافي");
-            } else { 
-                if(p.stock > 0) cart.push({id: p.id, name: p.name, finalPrice: finalPrice, qty: 1}); 
-                else showNotification("نفذت الكمية");
+            if(res.ok) {
+                showNotification("تم تحديث البيانات للجميع ✅");
             }
+        } catch (e) { showNotification("فشل التزامن مع السيرفر"); }
+    }
+
+    // --- وظائف التحكم ---
+    async function addProduct() {
+        const p = {
+            id: Date.now(),
+            name: document.getElementById('new-p-name').value,
+            price: parseFloat(document.getElementById('new-p-price').value),
+            stock: parseInt(document.getElementById('new-p-stock').value),
+            cat: document.getElementById('new-p-cat').value,
+            img: document.getElementById('new-p-img').value,
+            company: document.getElementById('new-p-cat').value === 'cars' ? document.getElementById('new-p-company-select').value : 'عام'
+        };
+        if(p.name && p.price) {
+            productsDatabase.push(p);
+            await syncWithServer('products', productsDatabase);
+            renderProducts(); updateAdminLists();
+        }
+    }
+
+    async function saveProductEdit() {
+        const id = document.getElementById('edit-prod-select').value;
+        const idx = productsDatabase.findIndex(x => x.id == id);
+        if(idx > -1) {
+            productsDatabase[idx].name = document.getElementById('edit-p-name').value;
+            productsDatabase[idx].price = parseFloat(document.getElementById('edit-p-price').value);
+            productsDatabase[idx].stock = parseInt(document.getElementById('edit-p-stock').value);
+            productsDatabase[idx].img = document.getElementById('edit-p-img').value;
+            await syncWithServer('products', productsDatabase);
+            renderProducts(); updateAdminLists();
+        }
+    }
+
+    async function deleteProduct() {
+        const id = document.getElementById('edit-prod-select').value;
+        if(confirm("حذف المنتج؟")) {
+            productsDatabase = productsDatabase.filter(x => x.id != id);
+            await syncWithServer('products', productsDatabase);
+            renderProducts(); updateAdminLists();
+            document.getElementById('edit-form').classList.add('hidden');
+        }
+    }
+
+    async function addCompany() {
+        const n = document.getElementById('new-company-name').value;
+        const l = document.getElementById('new-company-logo').value;
+        if(n) {
+            companies.push({name: n, logo: l});
+            await syncWithServer('companies', companies);
+            refreshCompanySelects();
+        }
+    }
+
+    async function deleteCompany() {
+        const name = document.getElementById('delete-company-select').value;
+        if(confirm(`حذف ${name}؟`)) {
+            companies = companies.filter(c => c.name !== name);
+            await syncWithServer('companies', companies);
+            refreshCompanySelects(); renderProducts();
+        }
+    }
+
+    async function applyNewDiscount() {
+        const percent = parseInt(document.getElementById('disc-percent').value);
+        const hours = parseInt(document.getElementById('disc-hours').value);
+        if(!percent || !hours) return alert("أكمل البيانات");
+        const disc = {
+            type: document.getElementById('disc-type').value,
+            target: document.getElementById('disc-target').value,
+            percent: percent,
+            expiry: Date.now() + (hours * 3600 * 1000)
+        };
+        activeDiscounts.push(disc);
+        await syncWithServer('discounts', activeDiscounts);
+        renderProducts();
+    }
+
+    async function updateSectionBg() {
+        const sec = document.getElementById('bg-edit-select').value;
+        const url = document.getElementById('bg-edit-url').value;
+        if(url) {
+            sectionBgs[sec] = url;
+            await syncWithServer('backgrounds', sectionBgs);
+            applyBackgrounds();
+        }
+    }
+
+    // --- النظام الأساسي ---
+    function formatPrice(val) { return (val * rates[currentCurrency]).toFixed(2) + " " + (currentCurrency === "SAR" ? "SR" : "$"); }
+    
+    function showNotification(msg) {
+        const container = document.getElementById('notification-container');
+        const n = document.createElement('div');
+        n.className = 'toast-notify';
+        n.innerText = msg;
+        container.appendChild(n);
+        setTimeout(() => n.remove(), 3000);
+    }
+
+    function applyBackgrounds() {
+        Object.keys(sectionBgs).forEach(id => {
+            if(sectionBgs[id]) document.getElementById(`bg-${id}`).style.backgroundImage = `url('${sectionBgs[id]}')`;
+        });
+    }
+
+    function showSection(id) {
+        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+        document.querySelectorAll('.section-bg').forEach(b => b.classList.remove('active-bg'));
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.getElementById(`sec-${id}`).style.display = 'block';
+        document.getElementById(`bg-${id}`).classList.add('active-bg');
+        document.getElementById(`nav-${id}`).classList.add('active');
+        if(id === 'main') document.body.style.overflow = 'hidden'; else document.body.style.overflow = 'auto';
+    }
+
+    function refreshCompanySelects() {
+        const html = companies.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        document.getElementById('new-p-company-select').innerHTML = html;
+        document.getElementById('car-filter').innerHTML = '<option value="all">كل الوكالات</option>' + html;
+        document.getElementById('delete-company-select').innerHTML = html;
+    }
+
+    function updateAdminLists() {
+        const editSelect = document.getElementById('edit-prod-select');
+        editSelect.innerHTML = '<option value="">اختر منتجاً للتعديل...</option>' + 
+            productsDatabase.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
+
+    function loadProductToEdit() {
+        const id = document.getElementById('edit-prod-select').value;
+        const p = productsDatabase.find(x => x.id == id);
+        if(p) {
+            document.getElementById('edit-form').classList.remove('hidden');
+            document.getElementById('edit-p-name').value = p.name;
+            document.getElementById('edit-p-price').value = p.price;
+            document.getElementById('edit-p-stock').value = p.stock;
+            document.getElementById('edit-p-img').value = p.img;
+        } else document.getElementById('edit-form').classList.add('hidden');
+    }
+
+    function toggleDiscTarget() {
+        const type = document.getElementById('disc-type').value;
+        const container = document.getElementById('disc-target-container');
+        const targetSelect = document.getElementById('disc-target');
+        if(type === 'all') container.classList.add('hidden');
+        else {
+            container.classList.remove('hidden');
+            if(type === 'cat') {
+                targetSelect.innerHTML = `<option value="main">الرئيسية</option><option value="cars">السيارات</option><option value="real">العقارات</option><option value="shops">المتاجر</option>`;
+            } else {
+                targetSelect.innerHTML = productsDatabase.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            }
+        }
+    }
+
+    function getProductPrice(p) {
+        let discount = 0, expiry = 0, now = Date.now();
+        activeDiscounts.forEach(d => {
+            if(now < d.expiry) {
+                let match = (d.type === 'all') || (d.type === 'cat' && p.cat === d.target) || (d.type === 'prod' && String(p.id) === String(d.target));
+                if(match && d.percent > discount) { discount = d.percent; expiry = d.expiry; }
+            }
+        });
+        return { finalPrice: p.price - (p.price * (discount / 100)), discount, expiry };
+    }
+
+    function productCard(p) {
+        const { finalPrice, discount, expiry } = getProductPrice(p);
+        const isOutOfStock = p.stock <= 0;
+        return `
+        <div class="glass-card p-5 rounded-2xl text-center relative ${isOutOfStock ? 'opacity-50' : ''}">
+            <span class="absolute top-2 left-2 bg-black/60 text-gold text-[9px] px-2 py-1 rounded-full z-10">📦 ${p.stock}</span>
+            ${discount > 0 ? `<span class="absolute top-2 right-2 discount-badge">-${discount}%</span>` : ''}
+            <img src="${p.img || 'https://via.placeholder.com/150'}" class="product-img">
+            <h4 class="text-sm font-bold mb-1 text-white">${p.name}</h4>
+            <div class="gold-gradient-text font-black text-lg">
+                ${discount > 0 ? `<span class="old-price text-xs mr-2">${formatPrice(p.price)}</span>` : ''} ${formatPrice(finalPrice)}
+            </div>
+            ${discount > 0 ? `<div class="timer-box discount-timer" data-expiry="${expiry}"></div>` : ''}
+            <button onclick="addToCart(${p.id})" class="w-full btn-gold py-2 text-xs rounded-lg mt-4" ${isOutOfStock ? 'disabled' : ''}>
+                ${isOutOfStock ? 'نفذت الكمية' : 'إضافة للسلة'}
+            </button>
+        </div>`;
+    }
+
+    function renderProducts() {
+        ['main', 'real', 'shops'].forEach(cat => {
+            const el = document.getElementById(`${cat}-list`);
+            if(el) el.innerHTML = productsDatabase.filter(p => p.cat === cat).map(p => productCard(p)).join('');
+        });
+        const container = document.getElementById('cars-container');
+        const filter = document.getElementById('car-filter').value;
+        container.innerHTML = '';
+        companies.forEach(comp => {
+            if (filter !== 'all' && filter !== comp.name) return;
+            const prods = productsDatabase.filter(p => p.cat === 'cars' && p.company === comp.name);
+            if(prods.length > 0) {
+                container.innerHTML += `
+                    <div class="company-section mb-12">
+                        <div class="company-header">
+                            ${comp.logo ? `<img src="${comp.logo}" class="company-logo-img">` : ''}
+                            <h3 class="text-gold font-black text-xl">${comp.name}</h3>
+                        </div>
+                        <hr class="company-divider">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">${prods.map(p => productCard(p)).join('')}</div>
+                    </div>`;
+            }
+        });
+    }
+
+    function toggleCart() { document.getElementById('cart-sidebar').style.transform = document.getElementById('cart-sidebar').style.transform === 'translateX(0%)' ? 'translateX(-100%)' : 'translateX(0%)'; }
+    
+    function addToCart(id) {
+        const p = productsDatabase.find(x => x.id == id);
+        const { finalPrice } = getProductPrice(p);
+        const existing = cart.find(x => x.id == id);
+        if(existing) { if(existing.qty < p.stock) existing.qty++; else showNotification("لا يوجد مخزون كافي"); }
+        else { if(p.stock > 0) cart.push({id: p.id, name: p.name, finalPrice: finalPrice, qty: 1}); else showNotification("نفذت الكمية"); }
+        updateCartUI();
+    }
+
+    function updateCartUI() {
+        const list = document.getElementById('cart-items-list');
+        list.innerHTML = cart.map(item => `
+            <div class="bg-white/5 p-3 rounded-lg border-r-2 border-gold flex justify-between items-center">
+                <div><p class="text-[10px] font-bold text-white">${item.name}</p><p class="text-gold text-[9px]">${formatPrice(item.finalPrice)}</p></div>
+                <div class="flex items-center gap-2">
+                    <button onclick="changeQty(${item.id}, -1)" class="qty-btn">-</button>
+                    <span class="text-xs text-white">${item.qty}</span>
+                    <button onclick="changeQty(${item.id}, 1)" class="qty-btn">+</button>
+                </div>
+            </div>`).join('');
+        let total = cart.reduce((sum, i) => sum + (i.finalPrice * i.qty), 0);
+        document.getElementById('cart-total').innerText = formatPrice(total);
+        document.getElementById('cart-count').innerText = cart.reduce((s, i) => s + i.qty, 0);
+    }
+
+    function changeQty(id, delta) {
+        const item = cart.find(x => x.id == id);
+        const p = productsDatabase.find(x => x.id == id);
+        if(item && p) {
+            const n = item.qty + delta;
+            if(n > 0 && n <= p.stock) item.qty = n;
+            else if(n === 0) cart = cart.filter(x => x.id != id);
             updateCartUI();
         }
+    }
 
-        function updateCartUI() {
-            const list = document.getElementById('cart-items-list');
-            list.innerHTML = cart.map(item => `
-                <div class="bg-white/5 backdrop-blur-md p-3 rounded-lg border-r-2 border-gold flex justify-between items-center">
-                    <div><p class="text-[10px] font-bold text-white">${item.name}</p><p class="text-gold text-[9px]">${formatPrice(item.finalPrice)}</p></div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="changeQty(${item.id}, -1)" class="qty-btn">-</button>
-                        <span class="text-xs text-white">${item.qty}</span>
-                        <button onclick="changeQty(${item.id}, 1)" class="qty-btn">+</button>
-                    </div>
-                </div>
-            `).join('');
-            let total = cart.reduce((sum, i) => sum + (i.finalPrice * i.qty), 0);
-            document.getElementById('cart-total').innerText = formatPrice(total);
-            document.getElementById('cart-count').innerText = cart.reduce((s, i) => s + i.qty, 0);
-        }
+    function openCheckout() {
+        if(cart.length === 0) return showNotification("السلة فارغة");
+        document.getElementById('checkout-total-display').innerText = "المجموع: " + document.getElementById('cart-total').innerText;
+        document.getElementById('checkout-panel').classList.remove('hidden');
+    }
 
-        function changeQty(id, delta) {
-            const item = cart.find(x => x.id == id);
-            const p = productsDatabase.find(x => x.id == id);
-            if(item && p) {
-                const n = item.qty + delta;
-                if(n > 0 && n <= p.stock) item.qty = n;
-                else if(n === 0) cart = cart.filter(x => x.id != id);
-                updateCartUI();
+    async function handleOpenTicket() {
+        const dId = document.getElementById('discord-id').value;
+        if(!dId) return alert("يرجى إدخال ايدي الديسكورد");
+        const btn = document.getElementById('btn-open-ticket');
+        btn.disabled = true; btn.innerText = "جاري المعالجة...";
+        const orderData = {
+            discordId: dId,
+            items: cart.map(i => `${i.name} (x${i.qty})`).join(', '),
+            price: document.getElementById('cart-total').innerText,
+            date: new Date().toLocaleString()
+        };
+        try {
+            const res = await fetch(`${BOT_URL}/api/create-ticket`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(orderData)
+            });
+            if(res.ok) {
+                cart.forEach(cItem => { const p = productsDatabase.find(x => x.id == cItem.id); if(p) p.stock -= cItem.qty; });
+                await syncWithServer('products', productsDatabase); // تحديث المخزون للجميع
+                alert("✅ تم إرسال الطلب!");
+                cart = []; updateCartUI(); renderProducts();
+                document.getElementById('checkout-panel').classList.add('hidden');
             }
-        }
+        } catch (e) { alert("خطأ في الاتصال"); }
+        btn.disabled = false; btn.innerText = "فتح تذكرة وتثبيت الطلب";
+    }
 
-        async function handleOpenTicket() {
-            const dId = document.getElementById('discord-id').value;
-            if(!dId) return alert("يرجى إدخال ايدي الديسكورد");
-            const btn = document.getElementById('btn-open-ticket');
-            btn.disabled = true; btn.innerText = "جاري المعالجة...";
-            const orderData = {
-                discordId: dId,
-                items: cart.map(i => `${i.name} (x${i.qty})`).join(', '),
-                price: document.getElementById('cart-total').innerText,
-                date: new Date().toLocaleString()
-            };
-            try {
-                const response = await fetch(`${BOT_URL}/api/create-ticket`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(orderData)
-                });
-                if(response.ok) {
-                    cart.forEach(cItem => { const p = productsDatabase.find(x => x.id == cItem.id); if(p) p.stock -= cItem.qty; });
-                    orderHistory.push(orderData);
-                    localStorage.setItem('alamariyah_products', JSON.stringify(productsDatabase));
-                    localStorage.setItem('alamariyah_orders', JSON.stringify(orderHistory));
-                    alert("✅ تم إرسال الطلب بنجاح!");
-                    cart = []; updateCartUI(); renderProducts();
-                    document.getElementById('checkout-panel').classList.add('hidden');
-                } else alert("❌ خطأ في الاتصال بالبوت");
-            } catch (e) { alert("❌ خطأ غير متوقع"); }
-            btn.disabled = false; btn.innerText = "فتح تذكرة وتثبيت الطلب";
-        }
+    function setCurrency(c) {
+        currentCurrency = c;
+        document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`curr-${c}`).classList.add('active');
+        renderProducts(); updateCartUI();
+    }
 
-        function updateTimers() {
-            document.querySelectorAll('.discount-timer').forEach(el => {
-                const expiry = parseInt(el.dataset.expiry);
-                const diff = expiry - Date.now();
-                if(diff <= 0) { el.parentElement.remove(); return; }
-                const h = Math.floor(diff / 3600000);
-                const m = Math.floor((diff % 3600000) / 60000);
-                const s = Math.floor((diff % 60000) / 1000);
-                el.innerText = `تنتهي خلال: ${h}س ${m}د ${s}ث`;
-            });
-        }
-        setInterval(updateTimers, 1000);
+    function accessAdmin() {
+        if(prompt("كلمة المرور:") === adminPass) document.getElementById('admin-panel').style.transform = 'translateX(0)';
+    }
 
-        function productCard(p) {
-            const { finalPrice, discount, expiry } = getProductPrice(p);
-            const isOutOfStock = p.stock <= 0;
-            return `
-            <div class="glass-card p-5 rounded-2xl text-center relative ${isOutOfStock ? 'opacity-50' : ''}">
-                <span class="absolute top-2 left-2 bg-black/60 text-gold text-[9px] px-2 py-1 rounded-full z-10">📦 ${p.stock}</span>
-                ${discount > 0 ? `<span class="absolute top-2 right-2 discount-badge">-${discount}%</span>` : ''}
-                <img src="${p.img || 'https://via.placeholder.com/150'}" class="product-img">
-                <h4 class="text-sm font-bold mb-1 text-white">${p.name}</h4>
-                <div class="gold-gradient-text font-black text-lg">
-                    ${discount > 0 ? `<span class="old-price text-xs mr-2">${formatPrice(p.price)}</span>` : ''} ${formatPrice(finalPrice)}
-                </div>
-                ${discount > 0 ? `<div class="timer-box discount-timer" data-expiry="${expiry}"></div>` : ''}
-                <button onclick="addToCart(${p.id})" class="w-full btn-gold py-2 text-xs rounded-lg mt-4" ${isOutOfStock ? 'disabled' : ''}>
-                    ${isOutOfStock ? 'نفذت الكمية' : 'إضافة للسلة'}
-                </button>
-            </div>`;
-        }
+    function closeAdmin() { document.getElementById('admin-panel').style.transform = 'translateX(-100%)'; }
+    
+    function toggleAdminCompanySelect() {
+        document.getElementById('admin-company-div').classList.toggle('hidden', document.getElementById('new-p-cat').value !== 'cars');
+    }
 
-        function renderProducts() {
-            ['main', 'real', 'shops'].forEach(cat => {
-                const el = document.getElementById(`${cat}-list`);
-                if(el) el.innerHTML = productsDatabase.filter(p => p.cat === cat).map(p => productCard(p)).join('');
-            });
-            const container = document.getElementById('cars-container');
-            const filter = document.getElementById('car-filter').value;
-            container.innerHTML = '';
-            companies.forEach(comp => {
-                if (filter !== 'all' && filter !== comp.name) return;
-                const prods = productsDatabase.filter(p => p.cat === 'cars' && p.company === comp.name);
-                if(prods.length > 0) {
-                    container.innerHTML += `
-                        <div class="company-section mb-12">
-                            <div class="company-header">
-                                ${comp.logo ? `<img src="${comp.logo}" class="company-logo-img">` : ''}
-                                <h3 class="text-gold font-black text-xl">${comp.name}</h3>
-                            </div>
-                            <hr class="company-divider">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">${prods.map(p => productCard(p)).join('')}</div>
-                        </div>`;
-                }
-            });
-        }
+    setInterval(() => {
+        document.querySelectorAll('.discount-timer').forEach(el => {
+            const diff = parseInt(el.dataset.expiry) - Date.now();
+            if(diff <= 0) { renderProducts(); return; }
+            const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+            el.innerText = `ينتهي خلال: ${h}س ${m}د ${s}ث`;
+        });
+    }, 1000);
 
-        function refreshCompanySelects() {
-            const opts = companies.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-            const adminPComp = document.getElementById('new-p-company-select');
-            const adminDelComp = document.getElementById('delete-company-select');
-            const filter = document.getElementById('car-filter');
-            if(adminPComp) adminPComp.innerHTML = opts;
-            if(adminDelComp) adminDelComp.innerHTML = opts;
-            if(filter) filter.innerHTML = '<option value="all">كل الشركات</option>' + opts;
-        }
-
-        function setCurrency(c) { currentCurrency = c; document.querySelectorAll('.currency-btn').forEach(b => b.classList.toggle('active', b.id === 'curr-'+c)); renderProducts(); updateCartUI(); }
-        function toggleCart() { const s = document.getElementById('cart-sidebar'); s.style.transform = s.style.transform === 'translateX(0%)' ? 'translateX(-100%)' : 'translateX(0%)'; }
-        function openCheckout() { if(!cart.length) return; document.getElementById('checkout-total-display').innerText = "المبلغ: " + document.getElementById('cart-total').innerText; document.getElementById('checkout-panel').classList.remove('hidden'); }
-
-        window.onload = () => { applyBackgrounds(); renderProducts(); refreshCompanySelects(); showSection('main'); };
-    </script>
+    window.onload = () => { loadDataFromServer(); showSection('main'); };
+</script>
 </body>
 </html>
