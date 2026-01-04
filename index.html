@@ -15,12 +15,12 @@
         nav { background: rgba(0, 0, 0, 0.4) !important; backdrop-filter: blur(15px); border: 2px solid var(--gold) !important; margin: 15px 25px; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         .nav-link { font-size: 1.1rem; transition: 0.3s; position: relative; cursor: pointer; }
         .nav-link.active { color: var(--gold); font-weight: 900; text-shadow: 0 0 10px var(--gold-glow); }
-        .admin-trigger { position: fixed; bottom: 10px; right: 10px; z-index: 9999; opacity: 0; transition: 0.5s; cursor: pointer; padding: 10px; }
-        .admin-trigger:hover { opacity: 0.5; transform: rotate(90deg); color: var(--gold); }
+        .admin-trigger { position: fixed; bottom: 10px; right: 10px; z-index: 9999; opacity: 0.1; transition: 0.5s; cursor: pointer; padding: 10px; }
+        .admin-trigger:hover { opacity: 1; transform: rotate(90deg); color: var(--gold); }
         .section-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-size: cover; background-position: center; z-index: -1; opacity: 0; transition: opacity 0.8s ease-in-out; }
         .active-bg { opacity: 1; }
         .content-section { display: none; padding-top: 20px; min-height: 100vh; }
-        .admin-modal { background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--gold); border-radius: 15px; z-index: 6000; transition: 0.4s; }
+        .admin-modal { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(20px); border: 1px solid var(--gold); border-radius: 15px; z-index: 6000; transition: 0.4s; }
         .btn-gold { background: linear-gradient(45deg, #aa8418, #d4af37); color: black; font-weight: bold; border-radius: 5px; transition: 0.3s; }
         .btn-gold:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 0 15px var(--gold-glow); }
         .btn-gold:disabled { background: #333 !important; color: #777 !important; cursor: not-allowed; }
@@ -33,7 +33,8 @@
         .qty-btn { background: rgba(255,255,255,0.1); border: 1px solid #444; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; border-radius: 5px; font-weight: bold; }
         .currency-btn { background: #111; border: 1px solid #333; padding: 4px 8px; border-radius: 5px; font-size: 10px; }
         .currency-btn.active { border-color: var(--gold); color: var(--gold); }
-        .glass-card { background: rgba(255, 255, 255, 0.03) !important; backdrop-filter: blur(15px); border: 1px solid rgba(212, 175, 55, 0.15); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
+        .glass-card { background: rgba(255, 255, 255, 0.03) !important; backdrop-filter: blur(15px); border: 1px solid rgba(212, 175, 55, 0.15); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); transition: 0.3s; }
+        .glass-card:hover { border-color: var(--gold); }
         .discount-badge { background: #ff3e3e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
         .old-price { text-decoration: line-through; color: #777; font-size: 0.8em; }
         .timer-box { font-size: 10px; background: rgba(255, 62, 62, 0.2); color: #ff3e3e; padding: 2px 6px; border-radius: 4px; border: 1px solid #ff3e3e; margin-top: 5px; display: inline-block; }
@@ -59,10 +60,11 @@
         </div>
 
         <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-blue-500/30">
-            <h3 class="text-blue-400 text-sm mb-3 font-bold">📦 سجل طلبات المتجر</h3>
-            <div id="orders-log-list" class="space-y-2 max-h-60 overflow-y-auto text-[10px]">
-                <p class="text-gray-500 text-center">لا يوجد طلبات حالياً</p>
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-blue-400 text-sm font-bold">📦 سجل طلبات المتجر</h3>
+                <button onclick="clearOrdersLog()" class="text-red-500 text-[10px] border border-red-500/30 px-2 py-0.5 rounded hover:bg-red-500/10">حذف السجل</button>
             </div>
+            <div id="orders-log-list" class="space-y-2 max-h-60 overflow-y-auto text-[10px]"></div>
         </div>
 
         <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-red-500/30">
@@ -79,7 +81,7 @@
                 <input type="number" id="disc-percent" placeholder="% نسبة الخصم">
                 <input type="number" id="disc-hours" placeholder="المدة بالساعات">
             </div>
-            <button onclick="applyNewDiscount()" class="w-full bg-red-700 py-1 rounded text-[10px]">تفعيل الخصم للجميع</button>
+            <button onclick="applyNewDiscount()" class="w-full bg-red-700 py-1 rounded text-[10px]">تفعيل الخصم</button>
         </div>
 
         <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-purple-500/30">
@@ -91,7 +93,7 @@
                 <option value="shops">المتاجر</option>
             </select>
             <input type="text" id="bg-edit-url" placeholder="رابط الخلفية الجديد" class="mb-2">
-            <button onclick="updateSectionBg()" class="w-full bg-purple-700 py-1 rounded text-[10px]">تحديث الخلفية للجميع</button>
+            <button onclick="updateSectionBg()" class="w-full bg-purple-700 py-1 rounded text-[10px]">تحديث الخلفية</button>
         </div>
 
         <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-yellow-500/30">
@@ -105,8 +107,8 @@
                 </div>
                 <input type="text" id="edit-p-img" placeholder="رابط الصورة">
                 <div class="flex gap-2">
-                    <button onclick="saveProductEdit()" class="flex-1 bg-green-700 py-1 rounded text-[10px]">حفظ التعديل</button>
-                    <button onclick="deleteProduct()" class="flex-1 bg-red-700 py-1 rounded text-[10px]">حذف المنتج</button>
+                    <button onclick="saveProductEdit()" class="flex-1 bg-green-700 py-1 rounded text-[10px]">حفظ</button>
+                    <button onclick="deleteProduct()" class="flex-1 bg-red-700 py-1 rounded text-[10px]">حذف</button>
                 </div>
             </div>
         </div>
@@ -120,7 +122,7 @@
             <button onclick="deleteCompany()" class="w-full bg-red-900/50 text-red-500 py-1 rounded text-[10px]">حذف الشركة</button>
         </div>
 
-        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg">
+        <div class="p-4 bg-zinc-900/50 rounded-lg">
             <h3 class="text-gold text-sm mb-3 font-bold">📦 إضافة منتج جديد</h3>
             <div class="grid grid-cols-2 gap-2">
                 <input type="text" id="new-p-name" placeholder="الاسم">
@@ -137,7 +139,7 @@
                     <select id="new-p-company-select"></select>
                 </div>
             </div>
-            <button onclick="addProduct()" class="w-full btn-gold py-2 text-xs mt-3">حفظ المنتج للجميع ✅</button>
+            <button onclick="addProduct()" class="w-full btn-gold py-2 text-xs mt-3">حفظ المنتج ✅</button>
         </div>
     </div>
 
@@ -191,6 +193,7 @@
         <div class="admin-modal p-8 max-w-sm w-full text-center border-2 border-gold">
             <h2 class="text-2xl gold-gradient-text font-black mb-4">تأكيد البيانات</h2>
             <p id="checkout-total-display" class="text-xl font-bold mb-4"></p>
+            <input type="text" id="discord-id" placeholder="أدخل ID الديسكورد الخاص بك" class="mb-4 text-center border-gold">
             <button id="btn-open-ticket" onclick="handleOpenTicket()" class="w-full btn-gold py-3">فتح تذكرة وتثبيت الطلب</button>
             <button onclick="document.getElementById('checkout-panel').classList.add('hidden')" class="mt-4 text-gray-500 text-xs">إلغاء</button>
         </div>
@@ -208,10 +211,10 @@
     let currentCurrency = "SAR";
     const rates = { "SAR": 1, "USD": 0.27, "KWD": 0.082, "AED": 0.98 };
 
-    // تشغيل جلب البيانات فور تحميل الصفحة
     window.onload = function() {
         loadDataFromServer();
         showSection('main');
+        setInterval(updateTimers, 1000);
     };
 
     async function loadDataFromServer() {
@@ -224,7 +227,6 @@
                 activeDiscounts = data.discounts || [];
                 sectionBgs = data.backgrounds || sectionBgs;
                 
-                // تحديث الواجهة بعد وصول البيانات من MongoDB
                 applyBackgrounds();
                 refreshCompanySelects();
                 renderProducts();
@@ -244,10 +246,21 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type, payload })
             });
-            if(res.ok) {
-                showNotification("تم تحديث البيانات للجميع ✅");
-            }
-        } catch (e) { showNotification("فشل التزامن مع السيرفر"); }
+            if(res.ok) showNotification("تم التحديث بنجاح ✅");
+        } catch (e) { showNotification("فشل التزامن"); }
+    }
+
+    // --- Admin Functions ---
+    function accessAdmin() {
+        if(prompt("كلمة المرور:") === adminPass) {
+            document.getElementById('admin-panel').style.transform = 'translateX(0%)';
+        } else {
+            alert("خطأ في كلمة المرور");
+        }
+    }
+
+    function closeAdmin() {
+        document.getElementById('admin-panel').style.transform = 'translateX(-100%)';
     }
 
     async function addProduct() {
@@ -263,8 +276,7 @@
         if(p.name && p.price) {
             productsDatabase.push(p);
             await syncWithServer('products', productsDatabase);
-            renderProducts(); 
-            updateAdminLists();
+            renderProducts(); updateAdminLists();
         }
     }
 
@@ -335,9 +347,9 @@
         }
     }
 
+    // --- Core Logic ---
     function formatPrice(val) { 
-        let symbol = currentCurrency;
-        if(currentCurrency === "SAR") symbol = "SR";
+        let symbol = currentCurrency === "SAR" ? "SR" : currentCurrency;
         return (val * rates[currentCurrency]).toFixed(2) + " " + symbol; 
     }
     
@@ -352,10 +364,8 @@
 
     function applyBackgrounds() {
         Object.keys(sectionBgs).forEach(id => {
-            if(sectionBgs[id]) {
-                const el = document.getElementById(`bg-${id}`);
-                if(el) el.style.backgroundImage = `url('${sectionBgs[id]}')`;
-            }
+            const el = document.getElementById(`bg-${id}`);
+            if(el && sectionBgs[id]) el.style.backgroundImage = `url('${sectionBgs[id]}')`;
         });
     }
 
@@ -363,12 +373,10 @@
         document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
         document.querySelectorAll('.section-bg').forEach(b => b.classList.remove('active-bg'));
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        const targetSec = document.getElementById(`sec-${id}`);
-        const targetBg = document.getElementById(`bg-${id}`);
-        if(targetSec) targetSec.style.display = 'block';
-        if(targetBg) targetBg.classList.add('active-bg');
+        document.getElementById(`sec-${id}`).style.display = 'block';
+        document.getElementById(`bg-${id}`).classList.add('active-bg');
         document.getElementById(`nav-${id}`).classList.add('active');
-        if(id === 'main') document.body.style.overflow = 'hidden'; else document.body.style.overflow = 'auto';
+        document.body.style.overflow = (id === 'main') ? 'hidden' : 'auto';
     }
 
     function refreshCompanySelects() {
@@ -379,14 +387,12 @@
     }
 
     function updateAdminLists() {
-        const editSelect = document.getElementById('edit-prod-select');
-        editSelect.innerHTML = '<option value="">اختر منتجاً للتعديل...</option>' + 
+        document.getElementById('edit-prod-select').innerHTML = '<option value="">اختر للتعديل...</option>' + 
             productsDatabase.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     }
 
     function loadProductToEdit() {
-        const id = document.getElementById('edit-prod-select').value;
-        const p = productsDatabase.find(x => x.id == id);
+        const p = productsDatabase.find(x => x.id == document.getElementById('edit-prod-select').value);
         if(p) {
             document.getElementById('edit-form').classList.remove('hidden');
             document.getElementById('edit-p-name').value = p.name;
@@ -397,25 +403,16 @@
     }
 
     function toggleAdminCompanySelect() {
-        const cat = document.getElementById('new-p-cat').value;
-        const div = document.getElementById('admin-company-div');
-        if(cat === 'cars') div.classList.remove('hidden');
-        else div.classList.add('hidden');
+        document.getElementById('admin-company-div').classList.toggle('hidden', document.getElementById('new-p-cat').value !== 'cars');
     }
 
     function toggleDiscTarget() {
         const type = document.getElementById('disc-type').value;
         const container = document.getElementById('disc-target-container');
-        const targetSelect = document.getElementById('disc-target');
-        if(type === 'all') container.classList.add('hidden');
-        else {
-            container.classList.remove('hidden');
-            if(type === 'cat') {
-                targetSelect.innerHTML = `<option value="main">الرئيسية</option><option value="cars">السيارات</option><option value="real">العقارات</option><option value="shops">المتاجر</option>`;
-            } else {
-                targetSelect.innerHTML = productsDatabase.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            }
-        }
+        const sel = document.getElementById('disc-target');
+        container.classList.toggle('hidden', type === 'all');
+        if(type === 'cat') sel.innerHTML = `<option value="main">الرئيسية</option><option value="cars">السيارات</option><option value="real">العقارات</option><option value="shops">المتاجر</option>`;
+        else if(type === 'prod') sel.innerHTML = productsDatabase.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     }
 
     function getProductPrice(p) {
@@ -486,8 +483,7 @@
     }
 
     function updateCartUI() {
-        const list = document.getElementById('cart-items-list');
-        list.innerHTML = cart.map(item => `
+        document.getElementById('cart-items-list').innerHTML = cart.map(item => `
             <div class="bg-white/5 p-3 rounded-lg border-r-2 border-gold flex justify-between items-center">
                 <div><p class="text-[10px] font-bold text-white">${item.name}</p><p class="text-gold text-[9px]">${formatPrice(item.finalPrice)}</p></div>
                 <div class="flex items-center gap-2">
@@ -503,8 +499,8 @@
 
     function changeQty(id, delta) {
         const item = cart.find(x => x.id == id);
-        const p = productsDatabase.find(x => x.id == id);
-        if(item && p) {
+        if(item) {
+            const p = productsDatabase.find(x => x.id == id);
             const n = item.qty + delta;
             if(n > 0 && n <= p.stock) item.qty = n;
             else if(n === 0) cart = cart.filter(x => x.id != id);
@@ -518,36 +514,19 @@
         document.getElementById('checkout-panel').classList.remove('hidden');
     }
 
-    function renderOrdersLog() {
-        const list = document.getElementById('orders-log-list');
-        if(ordersLog.length === 0) {
-            list.innerHTML = `<p class="text-gray-500 text-center">لا يوجد طلبات حالياً</p>`;
-            return;
-        }
-        list.innerHTML = ordersLog.map(o => `
-            <div class="bg-black/40 p-2 rounded border border-gold/20 mb-2">
-                <div class="flex justify-between text-gold mb-1">
-                    <span>#${o.orderNum}</span>
-                    <span>${o.price}</span>
-                </div>
-                <div class="text-white">المنتج: ${o.items}</div>
-                <div class="text-gray-400">الوقت: ${o.date}</div>
-            </div>
-        `).reverse().join('');
-    }
-
     async function handleOpenTicket() {
+        const discordId = document.getElementById('discord-id').value;
+        if(!discordId) return alert("يرجى إدخال Discord ID الخاص بك");
+
         const btn = document.getElementById('btn-open-ticket');
         btn.disabled = true; btn.innerText = "جاري المعالجة...";
         
-        const totalStr = document.getElementById('cart-total').innerText;
-        const orderNum = Math.floor(1000 + Math.random() * 9000);
-        
         const orderData = {
             items: cart.map(i => `${i.name} (x${i.qty})`).join(', '),
-            price: totalStr,
+            price: document.getElementById('cart-total').innerText,
             date: new Date().toLocaleString('ar-EG'),
-            orderNum: orderNum
+            orderNum: Math.floor(1000 + Math.random() * 9000),
+            discordId: discordId
         };
 
         try {
@@ -556,45 +535,59 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(orderData)
             });
-            
             if(res.ok) {
                 ordersLog.push(orderData);
                 localStorage.setItem('alamariyah_orders_log', JSON.stringify(ordersLog));
                 renderOrdersLog();
-
-                cart.forEach(cItem => { 
-                    const p = productsDatabase.find(x => x.id == cItem.id); 
-                    if(p) p.stock -= cItem.qty; 
-                });
+                cart.forEach(cItem => { const p = productsDatabase.find(x => x.id == cItem.id); if(p) p.stock -= cItem.qty; });
                 await syncWithServer('products', productsDatabase);
-                
                 alert("✅ تم إرسال الطلب بنجاح!");
                 cart = []; updateCartUI(); renderProducts();
                 document.getElementById('checkout-panel').classList.add('hidden');
-            } else {
-                alert("فشل في فتح التذكرة، تأكد من إعدادات السيرفر");
+                document.getElementById('discord-id').value = "";
             }
-        } catch (e) { alert("خطأ في الاتصال بالسيرفر"); }
-        
+        } catch (e) { alert("خطأ في الاتصال"); }
         btn.disabled = false; btn.innerText = "فتح تذكرة وتثبيت الطلب";
+    }
+
+    function renderOrdersLog() {
+        const list = document.getElementById('orders-log-list');
+        list.innerHTML = ordersLog.length ? ordersLog.slice().reverse().map(o => `
+            <div class="bg-black/40 p-2 rounded border border-gold/20 mb-2">
+                <div class="flex justify-between text-gold mb-1"><span>#${o.orderNum}</span><span>${o.price}</span></div>
+                <div class="text-white">${o.items}</div>
+                <div class="text-[9px] text-blue-400 mt-1">Discord ID: ${o.discordId || 'غير معروف'}</div>
+                <div class="text-gray-400 text-[8px]">${o.date}</div>
+            </div>`).join('') : '<p class="text-gray-500 text-center">لا يوجد طلبات</p>';
+    }
+
+    function clearOrdersLog() {
+        if(confirm("هل أنت متأكد من رغبتك في حذف سجل الطلبات بالكامل؟")) {
+            ordersLog = [];
+            localStorage.setItem('alamariyah_orders_log', JSON.stringify(ordersLog));
+            renderOrdersLog();
+            showNotification("تم حذف السجل بنجاح");
+        }
+    }
+
+    function updateTimers() {
+        document.querySelectorAll('.discount-timer').forEach(el => {
+            const expiry = parseInt(el.dataset.expiry);
+            const diff = expiry - Date.now();
+            if(diff <= 0) { el.parentElement.remove(); return; }
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            el.innerText = `تنتهي خلال: ${h}h ${m}m ${s}s`;
+        });
     }
 
     function setCurrency(c) {
         currentCurrency = c;
         document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`curr-${c}`).classList.add('active');
-        renderProducts(); updateCartUI();
-    }
-
-    function accessAdmin() {
-        if(prompt("كلمة المرور:") === adminPass) {
-            document.getElementById('admin-panel').style.transform = 'translateX(0)';
-            renderOrdersLog();
-        }
-    }
-
-    function closeAdmin() { 
-        document.getElementById('admin-panel').style.transform = 'translateX(-100%)'; 
+        renderProducts();
+        updateCartUI();
     }
 </script>
 </body>
