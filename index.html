@@ -200,13 +200,19 @@
     const BOT_URL = 'https://ar-store-i6tw.onrender.com';
     let adminPass = "1234";
     let cart = [];
-    let productsDatabase = JSON.parse(localStorage.getItem('temp_products')) || [];
-    let companies = JSON.parse(localStorage.getItem('temp_companies')) || [];
+    let productsDatabase = [];
+    let companies = [];
     let activeDiscounts = [];
     let ordersLog = JSON.parse(localStorage.getItem('alamariyah_orders_log')) || [];
     let sectionBgs = { main: '', cars: '', real: '', shops: '' };
     let currentCurrency = "SAR";
     const rates = { "SAR": 1, "USD": 0.27, "KWD": 0.082, "AED": 0.98 };
+
+    // تشغيل جلب البيانات فور تحميل الصفحة
+    window.onload = function() {
+        loadDataFromServer();
+        showSection('main');
+    };
 
     async function loadDataFromServer() {
         try {
@@ -218,9 +224,7 @@
                 activeDiscounts = data.discounts || [];
                 sectionBgs = data.backgrounds || sectionBgs;
                 
-                localStorage.setItem('temp_products', JSON.stringify(productsDatabase));
-                localStorage.setItem('temp_companies', JSON.stringify(companies));
-
+                // تحديث الواجهة بعد وصول البيانات من MongoDB
                 applyBackgrounds();
                 refreshCompanySelects();
                 renderProducts();
@@ -229,9 +233,7 @@
             }
         } catch (e) { 
             console.error("Error fetching data", e);
-            // في حال الفشل نعتمد على المخزن محلياً
-            renderProducts();
-            refreshCompanySelects();
+            showNotification("فشل تحميل البيانات من السيرفر");
         }
     }
 
@@ -244,7 +246,6 @@
             });
             if(res.ok) {
                 showNotification("تم تحديث البيانات للجميع ✅");
-                localStorage.setItem('temp_' + type, JSON.stringify(payload));
             }
         } catch (e) { showNotification("فشل التزامن مع السيرفر"); }
     }
@@ -262,7 +263,8 @@
         if(p.name && p.price) {
             productsDatabase.push(p);
             await syncWithServer('products', productsDatabase);
-            renderProducts(); updateAdminLists();
+            renderProducts(); 
+            updateAdminLists();
         }
     }
 
@@ -361,8 +363,10 @@
         document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
         document.querySelectorAll('.section-bg').forEach(b => b.classList.remove('active-bg'));
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        document.getElementById(`sec-${id}`).style.display = 'block';
-        document.getElementById(`bg-${id}`).classList.add('active-bg');
+        const targetSec = document.getElementById(`sec-${id}`);
+        const targetBg = document.getElementById(`bg-${id}`);
+        if(targetSec) targetSec.style.display = 'block';
+        if(targetBg) targetBg.classList.add('active-bg');
         document.getElementById(`nav-${id}`).classList.add('active');
         if(id === 'main') document.body.style.overflow = 'hidden'; else document.body.style.overflow = 'auto';
     }
@@ -390,6 +394,13 @@
             document.getElementById('edit-p-stock').value = p.stock;
             document.getElementById('edit-p-img').value = p.img;
         } else document.getElementById('edit-form').classList.add('hidden');
+    }
+
+    function toggleAdminCompanySelect() {
+        const cat = document.getElementById('new-p-cat').value;
+        const div = document.getElementById('admin-company-div');
+        if(cat === 'cars') div.classList.remove('hidden');
+        else div.classList.add('hidden');
     }
 
     function toggleDiscTarget() {
@@ -582,25 +593,9 @@
         }
     }
 
-    function closeAdmin() { document.getElementById('admin-panel').style.transform = 'translateX(-100%)'; }
-    
-    function toggleAdminCompanySelect() {
-        document.getElementById('admin-company-div').classList.toggle('hidden', document.getElementById('new-p-cat').value !== 'cars');
+    function closeAdmin() { 
+        document.getElementById('admin-panel').style.transform = 'translateX(-100%)'; 
     }
-
-    setInterval(() => {
-        document.querySelectorAll('.discount-timer').forEach(el => {
-            const diff = parseInt(el.dataset.expiry) - Date.now();
-            if(diff <= 0) { renderProducts(); return; }
-            const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
-            el.innerText = `ينتهي خلال: ${h}س ${m}د ${s}ث`;
-        });
-    }, 1000);
-
-    window.onload = () => {
-        loadDataFromServer();
-        showSection('main');
-    };
 </script>
 </body>
 </html>
