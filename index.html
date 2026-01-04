@@ -200,8 +200,8 @@
     const BOT_URL = 'https://ar-store-i6tw.onrender.com';
     let adminPass = "1234";
     let cart = [];
-    let productsDatabase = [];
-    let companies = [];
+    let productsDatabase = JSON.parse(localStorage.getItem('temp_products')) || [];
+    let companies = JSON.parse(localStorage.getItem('temp_companies')) || [];
     let activeDiscounts = [];
     let ordersLog = JSON.parse(localStorage.getItem('alamariyah_orders_log')) || [];
     let sectionBgs = { main: '', cars: '', real: '', shops: '' };
@@ -217,13 +217,22 @@
                 companies = data.companies || [];
                 activeDiscounts = data.discounts || [];
                 sectionBgs = data.backgrounds || sectionBgs;
+                
+                localStorage.setItem('temp_products', JSON.stringify(productsDatabase));
+                localStorage.setItem('temp_companies', JSON.stringify(companies));
+
                 applyBackgrounds();
                 refreshCompanySelects();
                 renderProducts();
                 updateAdminLists();
                 renderOrdersLog();
             }
-        } catch (e) { console.error("Error fetching data", e); }
+        } catch (e) { 
+            console.error("Error fetching data", e);
+            // في حال الفشل نعتمد على المخزن محلياً
+            renderProducts();
+            refreshCompanySelects();
+        }
     }
 
     async function syncWithServer(type, payload) {
@@ -233,7 +242,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type, payload })
             });
-            if(res.ok) showNotification("تم تحديث البيانات للجميع ✅");
+            if(res.ok) {
+                showNotification("تم تحديث البيانات للجميع ✅");
+                localStorage.setItem('temp_' + type, JSON.stringify(payload));
+            }
         } catch (e) { showNotification("فشل التزامن مع السيرفر"); }
     }
 
@@ -338,7 +350,10 @@
 
     function applyBackgrounds() {
         Object.keys(sectionBgs).forEach(id => {
-            if(sectionBgs[id]) document.getElementById(`bg-${id}`).style.backgroundImage = `url('${sectionBgs[id]}')`;
+            if(sectionBgs[id]) {
+                const el = document.getElementById(`bg-${id}`);
+                if(el) el.style.backgroundImage = `url('${sectionBgs[id]}')`;
+            }
         });
     }
 
@@ -428,6 +443,7 @@
             if(el) el.innerHTML = productsDatabase.filter(p => p.cat === cat).map(p => productCard(p)).join('');
         });
         const container = document.getElementById('cars-container');
+        if(!container) return;
         const filter = document.getElementById('car-filter').value;
         container.innerHTML = '';
         companies.forEach(comp => {
@@ -531,7 +547,6 @@
             });
             
             if(res.ok) {
-                // حفظ في سجل الطلبات
                 ordersLog.push(orderData);
                 localStorage.setItem('alamariyah_orders_log', JSON.stringify(ordersLog));
                 renderOrdersLog();
@@ -545,6 +560,8 @@
                 alert("✅ تم إرسال الطلب بنجاح!");
                 cart = []; updateCartUI(); renderProducts();
                 document.getElementById('checkout-panel').classList.add('hidden');
+            } else {
+                alert("فشل في فتح التذكرة، تأكد من إعدادات السيرفر");
             }
         } catch (e) { alert("خطأ في الاتصال بالسيرفر"); }
         
@@ -580,7 +597,10 @@
         });
     }, 1000);
 
-    window.onload = () => { loadDataFromServer(); showSection('main'); };
+    window.onload = () => {
+        loadDataFromServer();
+        showSection('main');
+    };
 </script>
 </body>
 </html>
