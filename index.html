@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alamariyah RP - العمارية أر بي</title>
+    <title>Alamariyah RP - العمارية أر بي </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -56,6 +56,13 @@
         <div class="flex justify-between items-center mb-6 border-b border-gold pb-2">
             <h2 class="text-xl gold-gradient-text font-black">⚙️ لوحة التحكم</h2>
             <button onclick="closeAdmin()" class="text-red-500 text-2xl">&times;</button>
+        </div>
+
+        <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-blue-500/30">
+            <h3 class="text-blue-400 text-sm mb-3 font-bold">📦 سجل طلبات المتجر</h3>
+            <div id="orders-log-list" class="space-y-2 max-h-60 overflow-y-auto text-[10px]">
+                <p class="text-gray-500 text-center">لا يوجد طلبات حالياً</p>
+            </div>
         </div>
 
         <div class="mb-6 p-4 bg-zinc-900/50 rounded-lg border border-red-500/30">
@@ -155,6 +162,8 @@
             <div class="flex gap-1 mt-1">
                 <button onclick="setCurrency('SAR')" class="currency-btn active" id="curr-SAR">SR</button>
                 <button onclick="setCurrency('USD')" class="currency-btn" id="curr-USD">$</button>
+                <button onclick="setCurrency('KWD')" class="currency-btn" id="curr-KWD">KWD</button>
+                <button onclick="setCurrency('AED')" class="currency-btn" id="curr-AED">AED</button>
             </div>
         </div>
         <div class="hidden md:flex gap-8 text-sm font-bold">
@@ -182,7 +191,6 @@
         <div class="admin-modal p-8 max-w-sm w-full text-center border-2 border-gold">
             <h2 class="text-2xl gold-gradient-text font-black mb-4">تأكيد البيانات</h2>
             <p id="checkout-total-display" class="text-xl font-bold mb-4"></p>
-            <input type="text" id="discord-id" placeholder="ايدي ديسكوردك" class="mb-4 text-center">
             <button id="btn-open-ticket" onclick="handleOpenTicket()" class="w-full btn-gold py-3">فتح تذكرة وتثبيت الطلب</button>
             <button onclick="document.getElementById('checkout-panel').classList.add('hidden')" class="mt-4 text-gray-500 text-xs">إلغاء</button>
         </div>
@@ -195,11 +203,11 @@
     let productsDatabase = [];
     let companies = [];
     let activeDiscounts = [];
+    let ordersLog = JSON.parse(localStorage.getItem('alamariyah_orders_log')) || [];
     let sectionBgs = { main: '', cars: '', real: '', shops: '' };
     let currentCurrency = "SAR";
-    const rates = { "SAR": 1, "USD": 0.27 };
+    const rates = { "SAR": 1, "USD": 0.27, "KWD": 0.082, "AED": 0.98 };
 
-    // --- جلب البيانات ---
     async function loadDataFromServer() {
         try {
             const response = await fetch(`${BOT_URL}/api/get-store-data`);
@@ -209,16 +217,15 @@
                 companies = data.companies || [];
                 activeDiscounts = data.discounts || [];
                 sectionBgs = data.backgrounds || sectionBgs;
-                
                 applyBackgrounds();
                 refreshCompanySelects();
                 renderProducts();
                 updateAdminLists();
+                renderOrdersLog();
             }
         } catch (e) { console.error("Error fetching data", e); }
     }
 
-    // --- مزامنة البيانات (المفتاح لحل مشكلتك) ---
     async function syncWithServer(type, payload) {
         try {
             const res = await fetch(`${BOT_URL}/api/update-store-data`, {
@@ -226,13 +233,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type, payload })
             });
-            if(res.ok) {
-                showNotification("تم تحديث البيانات للجميع ✅");
-            }
+            if(res.ok) showNotification("تم تحديث البيانات للجميع ✅");
         } catch (e) { showNotification("فشل التزامن مع السيرفر"); }
     }
 
-    // --- وظائف التحكم ---
     async function addProduct() {
         const p = {
             id: Date.now(),
@@ -317,8 +321,11 @@
         }
     }
 
-    // --- النظام الأساسي ---
-    function formatPrice(val) { return (val * rates[currentCurrency]).toFixed(2) + " " + (currentCurrency === "SAR" ? "SR" : "$"); }
+    function formatPrice(val) { 
+        let symbol = currentCurrency;
+        if(currentCurrency === "SAR") symbol = "SR";
+        return (val * rates[currentCurrency]).toFixed(2) + " " + symbol; 
+    }
     
     function showNotification(msg) {
         const container = document.getElementById('notification-container');
@@ -484,31 +491,63 @@
         document.getElementById('checkout-panel').classList.remove('hidden');
     }
 
+    function renderOrdersLog() {
+        const list = document.getElementById('orders-log-list');
+        if(ordersLog.length === 0) {
+            list.innerHTML = `<p class="text-gray-500 text-center">لا يوجد طلبات حالياً</p>`;
+            return;
+        }
+        list.innerHTML = ordersLog.map(o => `
+            <div class="bg-black/40 p-2 rounded border border-gold/20 mb-2">
+                <div class="flex justify-between text-gold mb-1">
+                    <span>#${o.orderNum}</span>
+                    <span>${o.price}</span>
+                </div>
+                <div class="text-white">المنتج: ${o.items}</div>
+                <div class="text-gray-400">الوقت: ${o.date}</div>
+            </div>
+        `).reverse().join('');
+    }
+
     async function handleOpenTicket() {
-        const dId = document.getElementById('discord-id').value;
-        if(!dId) return alert("يرجى إدخال ايدي الديسكورد");
         const btn = document.getElementById('btn-open-ticket');
         btn.disabled = true; btn.innerText = "جاري المعالجة...";
+        
+        const totalStr = document.getElementById('cart-total').innerText;
+        const orderNum = Math.floor(1000 + Math.random() * 9000);
+        
         const orderData = {
-            discordId: dId,
             items: cart.map(i => `${i.name} (x${i.qty})`).join(', '),
-            price: document.getElementById('cart-total').innerText,
-            date: new Date().toLocaleString()
+            price: totalStr,
+            date: new Date().toLocaleString('ar-EG'),
+            orderNum: orderNum
         };
+
         try {
             const res = await fetch(`${BOT_URL}/api/create-ticket`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(orderData)
             });
+            
             if(res.ok) {
-                cart.forEach(cItem => { const p = productsDatabase.find(x => x.id == cItem.id); if(p) p.stock -= cItem.qty; });
-                await syncWithServer('products', productsDatabase); // تحديث المخزون للجميع
-                alert("✅ تم إرسال الطلب!");
+                // حفظ في سجل الطلبات
+                ordersLog.push(orderData);
+                localStorage.setItem('alamariyah_orders_log', JSON.stringify(ordersLog));
+                renderOrdersLog();
+
+                cart.forEach(cItem => { 
+                    const p = productsDatabase.find(x => x.id == cItem.id); 
+                    if(p) p.stock -= cItem.qty; 
+                });
+                await syncWithServer('products', productsDatabase);
+                
+                alert("✅ تم إرسال الطلب بنجاح!");
                 cart = []; updateCartUI(); renderProducts();
                 document.getElementById('checkout-panel').classList.add('hidden');
             }
-        } catch (e) { alert("خطأ في الاتصال"); }
+        } catch (e) { alert("خطأ في الاتصال بالسيرفر"); }
+        
         btn.disabled = false; btn.innerText = "فتح تذكرة وتثبيت الطلب";
     }
 
@@ -520,7 +559,10 @@
     }
 
     function accessAdmin() {
-        if(prompt("كلمة المرور:") === adminPass) document.getElementById('admin-panel').style.transform = 'translateX(0)';
+        if(prompt("كلمة المرور:") === adminPass) {
+            document.getElementById('admin-panel').style.transform = 'translateX(0)';
+            renderOrdersLog();
+        }
     }
 
     function closeAdmin() { document.getElementById('admin-panel').style.transform = 'translateX(-100%)'; }
